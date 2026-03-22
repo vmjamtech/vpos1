@@ -1,0 +1,325 @@
+/* Dashboard content and scroll */
+.dashboard-container {
+  height: 100vh;
+  overflow-y: auto;
+  padding-top: 70px; /* leave space for fixed header */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--ion-background-color, #f8fafc);
+  padding-bottom: 16px;
+}
+/* Container – sticks under header */
+.date-filter-container {
+  position: sticky;
+  top: 85px;
+  z-index: 999;
+  background: var(--ion-background-color);
+  padding: 6px 10px;
+}
+
+/* Toolbar style wrapper */
+.date-filter {
+  background: var(--ion-background-color, #f8fafc);
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Make ion-item slim */
+.date-item {
+  --min-height: 40px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --background: transparent;
+}
+
+/* Label small & subtle */
+.date-item ion-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--ion-text-color, black);
+}
+
+/* Native date input style */
+.date-item input[type="date"] {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--ion-background-color, #f8fafc);
+  border-radius: 6px;
+  background: var(--ion-background-color, #f8fafc);
+  height: 32px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Highlight on focus */
+.date-item input[type="date"]:focus {
+  border-color: var(--ion-background-color, #f8fafc);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); /* Soft glow */
+  outline: none; /* Remove default outline */
+  background: var(--ion-background-color, #f8fafc);
+}
+
+/* Reduce spacing between cols */
+ion-col[size="6"] {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.summary-cards-grid {
+  margin: 0; /* remove default grid margin */
+  padding: 0; /* remove grid padding */
+}
+
+.summary-cards-grid ion-row {
+  --ion-grid-column-gap: 8px; /* horizontal gap between columns */
+  --ion-grid-row-gap: 8px; /* vertical gap between rows */
+}
+
+.summary-card {
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--ion-card-background, #fff);
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  font-size: 32px;
+  color: var(--ion-background-color, #f8fafc);
+  padding: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific card colors */
+.sales-card .card-icon {
+  background: #10b981; /* green */
+}
+
+.profit-card .card-icon {
+  background: #f59e0b; /* yellow/orange */
+}
+
+.expenses-card .card-icon {
+  background: #ef4444; /* red */
+}
+
+.card-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ion-text-color, #475569);
+  margin-bottom: 4px;
+}
+
+.card-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ion-text-color, #111827);
+}
+
+/* Card Title Styling */
+ion-card-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ion-text-color, #111827);
+}
+
+/* Chart Cards */
+.chart-card {
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  background: var(--ion-card-background, #fff);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* Highcharts styling */
+highcharts-chart {
+  display: block;
+}
+
+.chart-host {
+  width: 100%;
+  min-height: 300px;
+}
+
+/* Optional: spacing inside ion-card-content */
+ion-card-content {
+  padding: 12px;
+  font-size: 1rem;
+  color: var(--ion-text-color, #111827);
+}
+
+.chart-spinner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--ion-background-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.expenses-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px; /* same as chart height */
+  overflow-y: auto;
+
+  li {
+    border-left: 2px solid #ef4444; /* timeline line */
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    position: relative;
+
+    &:before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 10px;
+      width: 12px;
+      height: 12px;
+      background-color: #ef4444;
+      border-radius: 50%;
+    }
+  }
+
+  .expense-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 14px;
+
+    .expense-date {
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--ion-text-color, #475569);
+      margin-left: 5px;
+    }
+  }
+
+  .expense-amount {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: var(--ion-text-color);
+  }
+}
+
+.low-stock-list-card {
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  background: var(--ion-card-background, #fff);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.low-stock-list-card ion-card-header {
+  flex-shrink: 1;
+}
+
+.low-stock-list-card ion-card-header .header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* title left, select right */
+  gap: 6px;
+}
+
+.low-stock-list-card ion-card-header ion-select {
+  width: 120px; /* adjust as needed */
+  --padding-start: 4px;
+  --padding-end: 4px;
+}
+
+.low-stock-list-card ion-card-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ion-text-color);
+  scrollbar-gutter: stable;
+}
+
+.low-stock-list-card ion-card-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.low-stock-list-card ion-card-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.low-stock-list-card ion-card-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--ion-color-primary),
+    var(--ion-color-primary-shade)
+  );
+  border-radius: 8px;
+}
+
+.low-stock-list-card ion-card-content::-webkit-scrollbar-thumb:hover {
+  background: var(--ion-color-primary);
+}
+
+.low-stock-list-card ion-list {
+  background: transparent;
+  padding: 0;
+}
+
+.low-stock-list-card ion-item {
+  --background: transparent;
+  --padding-start: 0;
+}
+
+.low-stock-list-card ion-badge {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}

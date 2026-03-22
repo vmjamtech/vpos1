@@ -1,0 +1,121 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Business Info Slip Layout</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- ====================== -->
+  <!-- Field Editors (unchanged) -->
+  <!-- ====================== -->
+  <div class="group card">
+    <h3 class="group-title">Logo & Business Name</h3>
+
+    <div class="logo-wrapper" (click)="triggerLogoPicker()">
+      <img
+        *ngIf="fields[0].value"
+        [src]="fields[0].value"
+        alt="Business Logo"
+      />
+      <div *ngIf="!fields[0].value" class="placeholder">
+        <ion-icon name="camera-outline"></ion-icon>
+      </div>
+    </div>
+    <p class="logo-text">Tap to update business logo</p>
+    <input
+      type="file"
+      accept="image/*"
+      hidden
+      #logoInput
+      (change)="onLogoSelected($event)"
+    />
+
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[1].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[1].value"></ion-input>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[2].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[2].value"></ion-input>
+    </ion-item>
+  </div>
+
+  <div class="group card">
+    <h3 class="group-title">Address</h3>
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[3].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[3].value"></ion-input>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[4].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[4].value"></ion-input>
+    </ion-item>
+  </div>
+
+  <div class="group card">
+    <h3 class="group-title">Contact Information</h3>
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[5].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[5].value"></ion-input>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[6].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[6].value"></ion-input>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label position="stacked">{{ fields[7].label }}</ion-label>
+      <ion-input [(ngModel)]="fields[7].value"></ion-input>
+    </ion-item>
+  </div>
+
+  <!-- ====================== -->
+  <!-- Actions -->
+  <!-- ====================== -->
+  <div class="group card actions-group">
+    <!-- <ion-button
+      expand="block"
+      color="secondary"
+      (click)="showPreview = !showPreview"
+    >
+      {{ showPreview ? "Hide Preview" : "Show Preview" }}
+    </ion-button> -->
+
+    <ion-button expand="block" color="primary" (click)="saveLayout()"
+      >Save / Update</ion-button
+    >
+    <ion-button expand="block" color="tertiary" (click)="printPreview()"
+      >Print Preview</ion-button
+    >
+  </div>
+
+  <!-- ====================== -->
+  <!-- Live Print Preview + Reorder -->
+  <!-- ====================== -->
+  <!-- <div class="preview-container" *ngIf="showPreview">
+    <div class="receipt-slip">
+      <ion-reorder-group
+        (ionItemReorder)="reorderItems($event)"
+        disabled="false"
+      >
+        <ion-item *ngFor="let field of fields" lines="none">
+          <div *ngIf="field.visible !== false">
+            <img
+              *ngIf="field.type === 'image' && field.value"
+              [src]="field.value"
+              class="preview-logo"
+            />
+            <p *ngIf="field.type === 'text'">{{ field.value }}</p>
+          </div>
+          <ion-reorder slot="end"></ion-reorder>
+        </ion-item>
+      </ion-reorder-group>
+    </div>
+  </div> -->
+</ion-content>

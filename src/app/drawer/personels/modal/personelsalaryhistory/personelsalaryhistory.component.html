@@ -1,0 +1,106 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Personnel Salary History</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [scrollEvents]="true">
+  <!-- Pull-to-refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="search-container">
+    <div class="total-balance" *ngIf="!isLoading">
+      <strong>Total Salary Paid:</strong> ₱{{ totalsalary | number : "1.2-2" }}
+    </div>
+    <!-- <div class="total-balance" *ngIf="!isLoading">
+      <strong>Total Transaction(s):</strong> ₱{{
+        totalamount | number : "1.2-2"
+      }}
+    </div> -->
+    <ion-button fill="clear" class="filter-btn" (click)="openFilter()">
+      <ion-icon name="filter-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Product list -->
+
+    <!-- Skeleton loader -->
+    <ng-container *ngIf="isLoading">
+      <ion-item *ngFor="let s of skeletonArray">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 100%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ng-container>
+    <ion-list
+      *ngIf="!isLoading && items.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <!-- Real data -->
+      <ion-item *ngFor="let item of filteredItems">
+        <ion-label>
+          <div class="meta">
+            <strong>Date :</strong>
+            {{ item.saldate | date : "yyyy-MM-dd" }}
+          </div>
+          <div class="meta">
+            <strong>Salary :</strong> ₱ {{ item.saltotal | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Daily :</strong> ₱ {{ item.saldailypay | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Additional :</strong> ₱{{
+              item.saladdpay | number : "1.2-2"
+            }}
+            <strong>Less :</strong> ₱ {{ item.sallesspay | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Paid Amount :</strong> ₱
+            {{ item.salpaid | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Paid By :</strong> {{ item.salpaidby }}
+          </div>
+          <div class="meta">
+            <strong>Payment Method :</strong> {{ item.salpaymethod }}
+          </div>
+          <div class="meta">
+            <strong>Remarks :</strong> {{ item.salremarks }}
+          </div>  
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Empty state -->
+    <ion-item *ngIf="!isLoading && filteredItems.length === 0">
+      <ion-label class="ion-text-center">
+        <ion-icon name="cube-outline"></ion-icon>
+        <p>No data found.</p>
+      </ion-label>
+    </ion-item>
+  </div>
+  <!-- Infinite scroll -->
+  <ion-infinite-scroll
+    threshold="150px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more data..."
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

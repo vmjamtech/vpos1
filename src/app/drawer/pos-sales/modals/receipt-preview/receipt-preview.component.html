@@ -1,0 +1,94 @@
+<ion-content class="ion-padding">
+  <!-- Scrollable receipt content -->
+  <div class="receipt-scroll">
+    <!-- Logo -->
+    <div class="center" *ngIf="logo && withlogo === 'Y'">
+      <img [src]="logo" alt="Logo" class="logo-image" />
+    </div>
+
+    <!-- HEADER -->
+    <div class="header-text bold center">{{ compName }}</div>
+    <div class="header-text center">{{ compName1 }}</div>
+    <div class="header-text wrap center">{{ compAddress }}</div>
+    <div class="header-text center">{{ compContact }}</div>
+
+    <hr />
+
+    <div class="customer-info">Sales Invoice: {{ salesreference }}</div>
+    <hr />
+
+    <!-- ITEM COLUMNS HEADER -->
+    <!-- ITEM COLUMNS HEADER -->
+    <pre class="item-header">
+      Qty  Item                 Total
+</pre
+    >
+    <hr />
+
+    <hr />
+
+    <!-- ITEMS -->
+    <pre *ngFor="let item of cart" class="item-line">
+      {{ formatItemLine(item.qty, item.itemcode, item.amount) }}
+    </pre>
+
+    <hr />
+
+    <!-- TOTALS -->
+    <pre class="totals">{{
+      formatLine("", "Total Amount:", totalAmount.toFixed(2))
+    }}</pre>
+    <pre class="totals">{{
+      formatLine("", "Total Item(s):", totalItems.toFixed(1))
+    }}</pre>
+    <pre class="totals">{{
+      formatLine("", "Discount:", posData.discount.toFixed(2))
+    }}</pre>
+    <pre class="totals">{{
+      formatLine("", paymentMethod.toUpperCase() + ":", tenderedAmount)
+    }}</pre>
+    <pre class="totals">{{
+      formatLine("", "Change:", changeAmount.toFixed(2))
+    }}</pre>
+    <pre class="totals">{{
+      formatLine("", "Vatable Sales:", totalSub.toFixed(2))
+    }}</pre>
+    <pre class="totals">{{ formatLine("", "VAT:", totalVat.toFixed(2)) }}</pre>
+    <pre class="totals">{{ formatLine("", "Vat Amount:", "0.00") }}</pre>
+    <pre class="totals">{{ formatLine("", "Non-Vatable Sales:", "0.00") }}</pre>
+    <pre class="totals">{{ formatLine("", "VAT Exempt Sales:", "0.00") }}</pre>
+    <pre class="totals">{{ formatLine("", "Zero Rated Sales:", "0.00") }}</pre>
+
+    <hr />
+
+    <!-- CUSTOMER & ORDER INFO -->
+    <div class="customer-info">Cashier: {{ cashierName }}</div>
+    <div class="customer-info">Date: {{ datestr }}</div>
+    <div class="customer-info">Category: {{ posData.category }}</div>
+    <hr />
+    <div class="customer-info">
+      Personnel: {{ posData.personnel1Name }}
+      <span *ngIf="posData.personnel2Name">, {{ posData.personnel2Name }}</span>
+    </div>
+    <div class="customer-info">Name: {{ posData.customerName }}</div>
+    <div class="customer-info wrap">Address: {{ posData.customeraddress }}</div>
+
+    <hr />
+    <div class="customer-info"><strong>Notes:</strong></div>
+    <div class="customer-info wrap">{{ notes }}</div>
+
+    <hr />
+    <!-- FOOTER -->
+    <div class="header-text center">{{ receiptEndGreet }}</div>
+  </div>
+
+  <!-- Sticky action buttons -->
+  <div class="action-buttons">
+    <ion-button expand="block" color="primary" (click)="confirm()"
+      >Print</ion-button
+    >
+    <ion-button expand="block" fill="clear" (click)="cancel()"
+      >Cancel</ion-button
+    >
+  </div>
+</ion-content>

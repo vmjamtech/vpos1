@@ -1,0 +1,69 @@
+<ion-content class="ion-padding">
+  <!-- DATE FROM -->
+  <ion-item>
+    <ion-label class="notify-label">Date From</ion-label>
+    <ion-datetime-button datetime="partialDate"></ion-datetime-button>
+    <!-- Date Modal -->
+    <ion-popover [keepContentsMounted]="true" [dismissOnSelect]="true">
+      <ng-template>
+        <ion-datetime
+          id="partialDate"
+          presentation="date"
+          [preferWheel]="true"
+          [(ngModel)]="dateFrom"
+          name="dateFrom"
+        >
+        </ion-datetime>
+      </ng-template>
+    </ion-popover>
+  </ion-item>
+
+  <!-- DATE TO -->
+  <ion-item>
+    <ion-label class="notify-label">Date From</ion-label>
+    <ion-datetime-button datetime="dateToDate"></ion-datetime-button>
+    <!-- Date Modal -->
+    <ion-popover [keepContentsMounted]="true" [dismissOnSelect]="true">
+      <ng-template>
+        <ion-datetime
+          id="dateToDate"
+          presentation="date"
+          [preferWheel]="true"
+          [(ngModel)]="dateTo"
+          name="dateTo"
+        >
+        </ion-datetime>
+      </ng-template>
+    </ion-popover>
+  </ion-item>
+
+  <!-- RADIO FILTER -->
+  <ion-list class="ion-margin-top">
+    <ion-radio-group [(ngModel)]="filterType" name="filterType">
+      <ion-item>
+        <ion-label>LENDED</ion-label>
+        <ion-radio value="LENDED"></ion-radio>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>RETURNED</ion-label>
+        <ion-radio value="RETURNED"></ion-radio>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>All</ion-label>
+        <ion-radio value="ALL"></ion-radio>
+      </ion-item>
+    </ion-radio-group>
+  </ion-list>
+
+  <!-- APPLY BUTTON -->
+  <ion-button
+    expand="block"
+    color="primary"
+    class="ion-margin-top"
+    (click)="applyFilter()"
+  >
+    Apply Filter
+  </ion-button>
+</ion-content>

@@ -1,0 +1,68 @@
+.form-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.sticky-btn {
+  position: sticky;
+  bottom: 16px;
+  z-index: 1000;
+  margin: 0 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  height: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.display-row {
+  border-radius: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.display-row ion-select {
+  width: 160px; /* fixed width for select */
+  text-align: right; /* align selected value to the right */
+}
+
+.label-left {
+  font-weight: 600;
+}
+
+.row-label {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+  .label-text {
+    font-weight: 600;
+  }
+
+  .value-text {
+    font-weight: 500;
+    text-align: right;
+  }
+
+  ion-input.input-right,
+  ion-select.input-right {
+    width: 140px; /* fixed width */
+    text-align: right;
+    font-weight: 500;
+    --padding-start: 0;
+  }
+}
+
+.total-pay {
+  --background: rgba(var(--ion-color-primary-rgb), 0.3);
+
+  .label-text {
+    font-size: 16px;
+  }
+
+  .value-text {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}

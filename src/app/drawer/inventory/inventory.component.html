@@ -1,0 +1,173 @@
+<ion-content>
+  <!-- Header -->
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">Inventory</h2>
+
+      <ion-button
+        fill="clear"
+        class="header-options"
+        (click)="showOptionsSheet()"
+      >
+        <ion-icon name="apps-outline"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
+
+  <ion-refresher
+    slot="fixed"
+    (ionRefresh)="doRefresh($event)"
+    [pullFactor]="0.5"
+    [pullMin]="100"
+    [pullMax]="200"
+  >
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Search Section -->
+  <div class="search-container">
+    <ion-searchbar
+      [debounce]="300"
+      [placeholder]="searchFieldLabels[searchField]"
+      [(ngModel)]="searchValue"
+      (ionInput)="onSearchChange()"
+    ></ion-searchbar>
+
+    <ion-button fill="clear" (click)="selectSearchField()" class="filter-btn">
+      <ion-icon name="funnel-outline"></ion-icon>
+    </ion-button>
+    <ion-button fill="clear" (click)="selectSortField()" class="filter-btn">
+      <ion-icon name="swap-vertical-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <div class="category-container">
+    <div class="category-scroll">
+      <ion-chip
+        *ngFor="let cat of categories"
+        (click)="selectCategory(cat.category)"
+        [ngClass]="{ selected: selectedCategory === cat.category }"
+        class="category-chip"
+      >
+        <ion-label>{{ cat.category }}</ion-label>
+      </ion-chip>
+    </div>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Skeleton Loader -->
+    <ion-list
+      *ngIf="isLoading && filteredItems.length === 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item *ngFor="let skeleton of skeletonArray">
+        <ion-label>
+          <h2>
+            <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+          </h2>
+          <div class="meta">
+            <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
+          </div>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Real Data -->
+    <ion-list
+      *ngIf="!isLoading && items.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item-sliding *ngFor="let item of filteredItems">
+        <ion-item (click)="openEditItemModal(item)">
+          <ion-label>
+            <h2 class="desc">{{ item.itemcode }} ({{ item.itemname }})</h2>
+
+            <div class="meta">
+              <span><strong>Size:</strong> {{ item.itemsize || "" }}</span>
+            </div>
+            <div class="meta">
+              <span><strong>Fill:</strong> {{ item.fillqty }}</span>
+              <span><strong>Empty:</strong> {{ item.emptyqty }}</span>
+            </div>
+            <div class="meta">
+              <span
+                ><strong>Refill:</strong> ₱{{
+                  item.Refill | number : "1.2-2"
+                }}</span
+              >
+              <span
+                ><strong>Non-Refill:</strong> ₱{{
+                  item.Non_Refill | number : "1.2-2"
+                }}</span
+              >
+              <span
+                ><strong>Cost:</strong> ₱{{
+                  item.itemcost | number : "1.2-2"
+                }}</span
+              >
+            </div>
+            <div class="meta">
+              <span><strong>Lended:</strong> {{ item.lendqty }}</span>
+            </div>
+          </ion-label>
+          <!-- Warning badge -->
+          <ion-badge
+            *ngIf="item.alertnum > 0 && item.fillqty < item.alertnum"
+            color="danger"
+            class="status-badge"
+            slot="end"
+          >
+            Low Stock
+          </ion-badge>
+        </ion-item>
+
+        <!-- Swipe to delete -->
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deleteItemConfirm(item)">
+            <ion-icon name="trash-outline"></ion-icon> Delete
+          </ion-item-option>
+        </ion-item-options>
+
+        <!-- Swipe left to view item history -->
+        <ion-item-options side="start">
+          <ion-item-option color="primary" (click)="viewItemHistory(item)">
+            <ion-icon name="time-outline"></ion-icon> History
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+
+    <!-- No Products Found -->
+    <div *ngIf="!isLoading && filteredItems.length === 0" class="empty-state">
+      <ion-icon name="cube-outline"></ion-icon>
+      <p>No products found.</p>
+    </div>
+
+    <!-- Infinite Scroll -->
+    <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)">
+      <ion-infinite-scroll-content
+        loadingSpinner="bubbles"
+        loadingText="Loading more products..."
+      >
+      </ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </div>
+</ion-content>
+<ion-fab
+  vertical="bottom"
+  horizontal="end"
+  slot="fixed"
+  class="fab-custom"
+  (click)="openAddItemModal()"
+>
+  <ion-fab-button color="primary">
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>

@@ -1,0 +1,195 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Sales Details</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Sales Info Card (Sticky Header) -->
+  <ion-card class="sales-info-card">
+    <ion-card-content style="padding: 0px 8px">
+      <div class="row">
+        <span class="label">Reference Number:</span>
+        <span class="value">{{ sales?.salesrefnum }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Date:</span>
+        <span class="value">{{ sales?.salesdate | date : "short" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Customer:</span>
+        <span class="value">{{ sales?.salescust || "" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Address:</span>
+        <span class="value">{{ sales?.custadd || "" }}</span>
+      </div>
+      <div class="row">
+        <span class="tender">{{ sales?.salespaym || "" }}</span>
+        <span class="tender">{{ sales?.salestender | currency : "PHP" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Change:</span>
+        <span class="value">{{ sales?.saleschange | currency : "PHP" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Cashier:</span>
+        <span class="value">{{ sales?.salescashier || "" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">{{ sales?.salescat || "" }} </span>
+        <span class="value">Personnel:{{ getPersonnel() }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Items Container Card -->
+  <ion-card class="items-container-card">
+    <ion-card-header>
+      <div class="header-row">
+        <span class="title">Items</span>
+        <span class="total-items">Total : {{ sales?.salestotalitem }}</span>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content class="scrollable-items">
+      <div class="items-list">
+        <ion-item-sliding *ngFor="let item of items; let i = index" #sliding>
+          <!-- invisible, neutral ion-item that won't mess up layout -->
+          <ion-item lines="none">
+            <div class="item-card">
+              <div class="item-header">
+                <div class="item-left">
+                  <span class="item-code">{{ item.scitemcode }}</span>
+                  <span class="item-desc">({{ item.scitemdesc }})</span>
+                </div>
+
+                <span class="item-lended" *ngIf="item.sclendqty > 0">
+                  Lended: {{ item.sclendqty }}
+                </span>
+              </div>
+
+              <div class="item-details">
+                <div class="unit-row">
+                  <span><strong>Unit:</strong> {{ item.scunit || "" }}</span>
+                </div>
+
+                <div class="row">
+                  <span><strong>Qty:</strong> {{ item.scqty }}</span>
+                  <span
+                    ><strong>Unit Price:</strong>
+                    {{ item.scprice | currency : "PHP" }}</span
+                  >
+                  <span
+                    ><strong>Total:</strong>
+                    {{ item.sctotal | currency : "PHP" }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </ion-item>
+
+          <!-- Sliding OPTIONS -->
+          <ion-item-options
+            side="end"
+            *ngIf="sales?.salestatus !== 'CANCELLED'"
+          >
+            <ion-item-option color="danger" (click)="cancelItem(item, sliding)"
+              >Cancel Item</ion-item-option
+            >
+          </ion-item-options>
+          <ion-item-options
+            side="start"
+            *ngIf="sales?.salestatus !== 'CANCELLED'"
+          >
+            <ion-item-option color="primary" (click)="lendItem(item, sliding)"
+              >Lend Item</ion-item-option
+            >
+          </ion-item-options>
+        </ion-item-sliding>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Totals Card (Sticky Above Footer) -->
+  <ion-card class="totals-card">
+    <ion-card-content style="padding: 0px 8px">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span>{{ sales?.salessub | currency : "PHP" }}</span>
+      </div>
+      <div class="totals-row">
+        <span>VAT</span>
+        <span>{{ sales?.salesvat | currency : "PHP" }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Special Discount</span>
+        <span>{{ sales?.specialdisc | currency : "PHP" }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Discount</span>
+        <span>{{ sales?.salesdisc | currency : "PHP" }}</span>
+      </div>
+      <div class="totals-row grand-total">
+        <strong>Grand Total</strong>
+        <strong>{{ sales?.salestotalamount | currency : "PHP" }}</strong>
+      </div>
+    </ion-card-content> </ion-card
+  ><!-- Sticky Footer Buttons -->
+  <ion-footer>
+    <ion-toolbar>
+      <div class="footer-buttons">
+        <ion-button
+          expand="block"
+          color="success"
+          *ngIf="sales?.tenderbalance > 0 && sales?.salestatus !== 'CANCELLED'"
+          (click)="openPayBalance()"
+        >
+          <ion-icon name="cash-outline"></ion-icon>&nbsp; Pay Balance
+        </ion-button>
+        <ion-button
+          expand="block"
+          color="primary"
+          (click)="ReprintReceipt()"
+          *ngIf="sales?.salestatus !== 'CANCELLED'"
+        >
+          <ion-icon name="print-outline"></ion-icon>&nbsp; RePrint
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          color="danger"
+          (click)="cancelOrder()"
+          *ngIf="sales?.salestatus !== 'CANCELLED'"
+        >
+          <ion-icon name="close-circle-outline"></ion-icon>&nbsp; Cancel Order
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          color="secondary"
+          (click)="openCreditHistory()"
+        >
+          <ion-icon name="document-text-outline"></ion-icon>&nbsp; Credit
+          History
+        </ion-button>
+
+        <ion-button expand="block" color="success" (click)="openAndAddNote()">
+          <ion-icon name="clipboard-outline"></ion-icon>&nbsp; Notes
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          color="warning"
+          *ngIf="sales?.salestatus !== 'CANCELLED'"
+          (click)="editPayment()"
+        >
+          <ion-icon name="create-outline"></ion-icon>&nbsp; Edit Payment
+        </ion-button>
+      </div>
+    </ion-toolbar>
+  </ion-footer>
+</ion-content>

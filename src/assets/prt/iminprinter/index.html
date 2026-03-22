@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>print Demo</title>
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mui/3.7.1/css/mui.min.css"
+        integrity="sha512-uclHupzhjfJ5Zbsweb6eEK3HyTUpSfiWq/+ORo20uQLZg3yI5Jg4iCZYOD5Q1Q5Ftm4FG9kCzwT82bVcNgFMRw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @charset"utf-8";
+
+        html {
+            color: #000;
+            background: #fff;
+            overflow-y: scroll;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%
+        }
+
+        html * {
+            outline: 0;
+            -webkit-text-size-adjust: none;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0)
+        }
+
+        html,
+        body {
+            font-family: sans-serif
+        }
+
+        body,
+        div,
+        dl,
+        dt,
+        dd,
+        ul,
+        ol,
+        li,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        pre,
+        code,
+        form,
+        fieldset,
+        legend,
+        input,
+        textarea,
+        p,
+        blockquote,
+        th,
+        td,
+        hr,
+        button,
+        article,
+        aside,
+        details,
+        figcaption,
+        figure,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        section {
+            margin: 0;
+            padding: 0
+        }
+
+        input,
+        select,
+        textarea {
+            font-size: 100%
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0
+        }
+
+        fieldset,
+        img {
+            border: 0
+        }
+
+        abbr,
+        acronym {
+            border: 0;
+            font-variant: normal
+        }
+
+        del {
+            text-decoration: line-through
+        }
+
+        address,
+        caption,
+        cite,
+        code,
+        dfn,
+        em,
+        th,
+        var {
+            font-style: normal;
+            font-weight: 500
+        }
+
+        ol,
+        ul {
+            list-style: none
+        }
+
+        caption,
+        th {
+            text-align: left
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: 100%;
+            font-weight: 500
+        }
+
+        q:before,
+        q:after {
+            content: ''
+        }
+
+        sub,
+        sup {
+            font-size: 75%;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline
+        }
+
+        sup {
+            top: -.5em
+        }
+
+        sub {
+            bottom: -.25em
+        }
+
+        a:hover {
+            text-decoration: underline
+        }
+
+        ins,
+        a {
+            text-decoration: none
+        }
+
+        .contianer {
+            padding: 0.3rem 0.2rem;
+        }
+
+        .mobile-select-box {
+            position: relative;
+            display: inline-block;
+        }
+
+        .mobile-select-box .mobile-select-selectd {
+            width: 3rem;
+            height: 0.62rem;
+            line-height: 0.63rem;
+            color: #666;
+            border-radius: 0.15rem;
+            border: 1px solid #ddd;
+            padding: 0 0.5rem;
+            font-size: 0.3rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mobile-select-box .mobile-select-selectd::after {
+            border: 0.1rem solid transparent;
+            content: ' ';
+            height: 0;
+            position: absolute;
+            width: 0;
+            top: 0.23rem;
+            border-top: 0.15rem solid #666;
+            right: 0.15rem;
+
+        }
+
+        .mobile-select-box.focus .mobile-select-selectd {
+            box-shadow: 0 0.1rem 0.5rem rgb(0 0 0 / 20%);
+        }
+
+        .mobile-select-box .mobile-select-list {
+            width: 100%;
+            border-radius: 0.1rem;
+            box-shadow: 0 0.1rem 0.5rem rgb(0 0 0 / 20%);
+            background-color: #fff;
+            padding: 0.3rem 0;
+            position: absolute;
+            top: 0.85rem;
+            left: 0;
+            z-index: 999;
+            display: none;
+        }
+
+        .mobile-select-box .mobile-select-list::before {
+            border: 0.1rem solid transparent;
+            content: ' ';
+            height: 0;
+            position: absolute;
+            width: 0;
+            top: -0.24rem;
+            border-bottom: 0.15rem solid #fff;
+            box-shadow: 0 0.1rem 0.5rem rgb(0 0 0 / 20%);
+            right: 0.3rem;
+        }
+
+        .mobile-select-box .mobile-select-list .mobile-select-list-item:hover {
+            background-color: rgba(189, 176, 176, 0.3);
+        }
+
+        .mobile-select-box .mobile-select-list .mobile-select-list-item.selectd {
+            color: rgb(131, 121, 244);
+        }
+
+        .mobile-select-box .mobile-select-list .mobile-select-list-item {
+            padding: 0 0.5rem;
+            line-height: 0.64rem;
+            cursor: pointer;
+        }
+
+        .print-box {
+            display: flex;
+            justify-content: space-around;
+            /* justify-content: space-between; */
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .print-box .print-box-item:hover {
+            box-shadow: 0 0.1rem 0.5rem rgb(0 0 0 / 20%);
+        }
+
+        .print-box .print-box-item {
+            width: 3rem;
+            height: 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 0.2rem;
+            border-radius: 0.1rem;
+            background-color: #ddd;
+        }
+    </style>
+    <style>
+        html {
+            border: 0px solid #FFFFFF !important;
+        }
+
+        body {
+            font-size: 12px !important;
+            font-family: Arial;
+            background-color: #F5F5F5;
+            color: #333333;
+            border: 0px solid #FFFFFF !important;
+        }
+
+        #PrintContent {
+            width: 556px;
+            padding: 20px 10px;
+            line-height: 35px;
+            overflow: auto;
+            background-color: #FFFFFF;
+            border: 0px solid #FFFFFF !important;
+        }
+
+        .clearboth {
+            clear: both;
+        }
+
+        .fs12 {
+            font-size: 12px !important;
+        }
+
+        .fs13 {
+            font-size: 13px !important;
+        }
+
+        .fs16 {
+            font-size: 28px !important;
+        }
+
+        .fs18 {
+            font-size: 30px !important;
+        }
+
+        .fs28 {
+            font-size: 28px !important;
+        }
+
+        .fs22 {
+            font-size: 28px !important;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .left {
+            float: left;
+        }
+
+        .right {
+            float: right;
+        }
+
+        .mgt5 {
+            margin-top: 5px;
+        }
+
+        .mgt10 {
+            margin-top: 20px;
+        }
+
+        .pdt20 {
+            padding-top: 20px;
+        }
+
+        .pdt10 {
+            padding-top: 20px;
+        }
+
+        .line {
+            border-bottom: 1px dotted #333333;
+            height: 5px;
+        }
+
+        .middle {
+            position: absolute;
+            right: 80px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .relative {
+            position: relative;
+        }
+
+        .mgl20 {
+            margin-left: 20px;
+        }
+
+        .PrintEvent {
+            width: 90px;
+            height: 35px;
+            font-size: 28px;
+            background-color: #0050F1;
+            color: #FFFFFF;
+            text-align: center;
+            border: 0px;
+            margin: 20px auto;
+            display: inherit;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .PrintEvent:hover {
+            background-color: #0146d2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="contianer">
+        <div class="mobile-select-box">
+            <div class="mobile-select-selectd">local IP</div>
+            <div class="mobile-select-list">
+                <div class="mobile-select-list-item">Custom IP</div>
+                <div class="mobile-select-list-item selectd">Local IP</div>
+            </div>
+        </div>
+        <div class="print-box">
+            <div class="print-box-item">
+                init printer
+            </div>
+            <div class="print-box-item">
+                get printer status
+            </div>
+            <div class="print-box-item">
+                feed paper
+            </div>
+            <div class="print-box-item">
+                blank lines
+            </div>
+            <div class="print-box-item">
+                cut paper
+            </div>
+            <a href="#setAlignment" style="color: #000;" class="print-box-item">
+                set text alignment
+            </a>
+            <div class="print-box-item">
+                set text size
+            </div>
+            <a href="#setFont" style="color: #000;" class="print-box-item">
+                set font
+            </a>
+            <a href="#setTextStyle" style="color: #000;" class="print-box-item">
+                set font style
+            </a>
+            <div class="print-box-item">
+                set line spacing
+            </div>
+            <div class="print-box-item">
+                set print width
+            </div>
+            <div class="print-box-item">
+                set print text
+            </div>
+            <a href="#printText" style="color: #000;" class="print-box-item">
+                set print text
+            </a>
+            <div class="print-box-item">
+                print a row of the table
+            </div>
+            <div class="print-box-item">
+                Set barcode width
+            </div>
+            <div class="print-box-item">
+                Set the height of the barcode
+            </div>
+
+            <a href="#setBarCodeContentPrintPos" style="color: #000;" class="print-box-item">
+                set barCode Content print position
+            </a>
+            <div class="print-box-item">
+                print barcode
+            </div>
+            <div class="print-box-item">
+                print barcode
+            </div>
+            <div class="print-box-item" style="display: none;">
+                set qrcode size
+            </div>
+            <div class="print-box-item">
+                set qR code error correction
+            </div>
+            <div class="print-box-item">
+                set left margin of barcode and QR code
+            </div>
+            <div class="print-box-item">
+                Printer QR code
+            </div>
+            <a href="#alignModel" style="color: #000;" class="print-box-item">
+                Printer QR code
+            </a>
+            <div class="print-box-item">
+                Set paper specifications
+            </div>
+            <div class="print-box-item">
+                openCashBox
+            </div>
+            <div class="print-box-item">
+                print Image
+            </div>
+            <div class="print-box-item">
+                set Double QR Size
+            </div>
+            <div class="print-box-item">
+                set Double QR1 Level
+            </div>
+            <div class="print-box-item">
+                set Double QR2 Level
+            </div>
+            <div class="print-box-item">
+                set Double QR1 <br /> Margin Left
+            </div>
+            <div class="print-box-item">
+                set Double QR2 <br />Margin Left
+            </div>
+            <div class="print-box-item">
+                set Double <br />QR1 Version
+            </div>
+            <div class="print-box-item">
+                set Double<br /> QR2 Version
+            </div>
+            <div class="print-box-item">
+                printDoubleQR
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="setFont" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">DEFAULT</a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">MONOSPACE </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">DEFAULT_BOLD </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">SANS_SERIF </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">SERIF </a>
+            </li>
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#printText"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="setAlignment" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">left（default）</a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">center</a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">right</a>
+            </li>
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#setAlignment"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="setTextStyle" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">NORMAL </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">BOLD </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">ITALIC </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">BOLD_ITALIC </a>
+            </li>
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#setTextStyle"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="printText" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">default </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">Word wrap </a>
+            </li>
+
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#printText"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="alignModel" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">left（default） </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">center </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">right </a>
+            </li>
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#printText"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="printImagesAlignModel" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">left </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">center（default） </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">right </a>
+            </li>
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#printText"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+
+
+    <div id="setBarCodeContentPrintPos" class="mui-popover mui-popover-action mui-popover-bottom">
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#">no print</a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#"> Above barcode </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#">Below the barcode </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a href="#"> barcode are printed above and below </a>
+            </li>
+
+        </ul>
+        <ul class="mui-table-view">
+            <li class="mui-table-view-cell">
+                <a href="#setBarCodeContentPrintPos"><b>cancel</b></a>
+            </li>
+        </ul>
+    </div>
+    <div id="printImages">
+
+        <div id="PrintContent">
+            <div style="padding-top:10px;width: 100%;text-align: center;">
+                <img src="https://mp.imin.sg/logo2.png">
+            </div>
+            <div style="text-align:center;font-size: 30px;margin-top: 10px;">Hoshino Coffce - ION Orchand</div>
+            <div style="text-align:center;margin-top: 20px;font-size: 28px;">
+                REG Nn：200501519R<br>
+                GST No.：20-0501519-R
+            </div>
+            <div style="font-size: 28px;text-align:center;margin-top:20px;width: 100%;">
+                2 Orchand Turn，#B3-25/26，ION Orchand
+            </div>
+            <div style="font-size: 28px;text-align:center;width: 100%;">
+                Singapore 30px8801<br>
+                PHONE：+65 6509 8638
+            </div>
+            <div style="font-size: 28px;text-align:left; margin-top:20px;width: 100%;">
+                CUSTOMER: Chen Kai hui
+            </div>
+            <div style="font-size: 30px;text-align:center;width: 100%;padding-top: 20px;"><strong>Table 06</strong>
+            </div>
+            <div style="font-size: 28px;text-align:center;width: 100%;padding-top: 5px;"><strong>#Pax:2</strong></div>
+            <div style="font-size: 28px;text-align:center;width: 100%;">
+                Order:#698727
+            </div>
+            <div style="font-size: 28px;text-align:left; margin-top:20px;width: 100%;">
+                RECEIPT: #703396
+            </div>
+
+            <div style="font-size: 28px;text-align:left; padding-top:20px;width: 100%;">
+                <span style="font-size: 28px;!important;width: 50%;">Date: 11/11/2019</span> <span
+                    style="font-size: 28px; !important;float: right; text-align: right;width: 50%;">Time:
+                    18:47</span>
+            </div>
+
+            <div style="font-size: 28px;position: relative;height: 57px; padding-top:20px;width: 100%;">
+                <span style="font-size: 28px;float: left; width: 50%;">Dish(es)</span> <span
+                    style="font-size: 28px;position: absolute; right: 30%;width: 20px!important;text-align: center;">Qty</span>
+                <span style="font-size: 28px;float: right;text-align: right; width: 50%;">Amount</span>
+            </div>
+            <div style="padding-top:20px;width: 100%;border-bottom: 1px dotted #333333;height: 5px!important;"></div>
+
+            <div style="font-size: 28px;position: relative;height: 32px; padding-top:5px;width: 100%;">
+                <span style="font-size: 24px;float: left; width: 50%;">D1 HOSHINO COFFCE</span> <span
+                    style="font-size: 24px;position: absolute; right: 30%;width: 20px!important;text-align: center;">1</span>
+                <span style="font-size: 24px;float: right;text-align: right; width: 50%;">S$6.20</span>
+            </div>
+
+            <div style="font-size: 24px;height: 50px; position: relative; padding-top:20px;width: 100%;">
+                <span style="font-size: 24px;float: left; width: 50%;">Hoshino SP set 2pax</span> <span
+                    style="font-size: 24px;position: absolute; right: 30%;width: 20px!important;text-align: center;">1</span>
+                <span style="font-size: 24px;float: right;text-align: right; width: 50%;">S$59.90</span>
+            </div>
+
+            <div style="font-size: 24px;margin-top: 5px; margin-left: 2% ; width: 98%;">
+                [1] D13 ICE FRUIT TEA
+            </div>
+            <div style="font-size: 24px;margin-top: 5px; margin-left: 2% ; width: 98%;">
+                [1] Darjeeling Tea(Straight)
+            </div>
+
+            <div style="font-size: 24px;margin-top: 5px; margin-left: 2% ; width: 98%;">
+                [1] F9 SALAD OMU STEAK
+            </div>
+            <div style="font-size: 24px;margin-top: 5px; margin-left: 2% ; width: 98%;">
+                [1] Roast Beef Cabonara
+            </div>
+            <div style="font-size: 24px;margin-top: 5px; margin-left: 2% ; width: 98%;">
+                [1] S2 DOUBLE PANCAKE
+            </div>
+            <div style="padding-top:20px;width: 100%;border-bottom: 1px dotted #333333;height: 5px!important;"></div>
+
+            <div style="font-size: 28px;padding-top:20px;width:100%;">
+                <span style="font-size: 28px!important;width: 60%;">Sub-total</span> <span
+                    style="font-size: 28px !important;float: right; text-align: right;width: 40%;">S$66.10</span>
+            </div>
+
+            <div style="font-size: 28px;padding-top:20px;width: 100%;">
+                <span style="font-size: 28px!important;width: 50%;">Service charge (10%)</span> <span
+                    style="font-size: 28px!important;float: right; text-align: right;width: 40%;">S$6.10</span>
+            </div>
+            <div style="font-size: 28px;padding-top:20px;width: 100%;">
+                <span style="font-size: 28px!important;width: 50%;">GTS (7%)</span> <span
+                    style="font-size: 28px !important;float: right; text-align: right;width: 40%;">S$5.09</span>
+            </div>
+
+            <div style="padding-top:20px;width: 100%;border-bottom: 1px dotted #333333;height: 5px!important;"></div>
+            <div style="font-size: 28px;padding-top:20px;width: 100%;">
+                <span style="font-size: 28px!important;width: 50%;">Grand total (SGD)</span> <span
+                    style="font-size: 28px !important;float: right; text-align: right;width: 50%;">S$5.09</span>
+            </div>
+            <div style="font-size: 28px;padding-top:20px;width: 100%;">
+                <span style="font-size: 28px!important;width: 50%;">Card (UnlonPay)</span> <span
+                    style="font-size: 28px!important;float: right; text-align: right;width: 40%;">S$77.90</span>
+            </div>
+
+            <div style="font-size: 28px;padding-top:20px;width: 100%;text-align: center;">
+                We want to hear from you!
+            </div>
+
+            <div style="font-size: 28px;padding-top:20px;width: 100%;text-align: center;">
+                Please scan the OR code and fill-in our feedback form
+            </div>
+
+        </div>
+    </div>
+</body>
+
+</html>
+
+<script>
+    ! function () {
+        var a =
+            "@charset \"utf-8\";html{color:#000;background:#fff;overflow-y:scroll;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}html *{outline:0;-webkit-text-size-adjust:none;-webkit-tap-highlight-color:rgba(0,0,0,0)}html,body{font-family:sans-serif}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td,hr,button,article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{margin:0;padding:0}input,select,textarea{font-size:100%}table{border-collapse:collapse;border-spacing:0}fieldset,img{border:0}abbr,acronym{border:0;font-variant:normal}del{text-decoration:line-through}address,caption,cite,code,dfn,em,th,var{font-style:normal;font-weight:500}ol,ul{list-style:none}caption,th{text-align:left}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:500}q:before,q:after{content:''}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-.5em}sub{bottom:-.25em}a:hover{text-decoration:underline}ins,a{text-decoration:none}",
+            b = document.createElement("style");
+        if (document.getElementsByTagName("head")[0].appendChild(b),
+            b.styleSheet)
+            b.styleSheet.disabled || (b.styleSheet.cssText = a);
+        else
+            try {
+                b.innerHTML = a
+            } catch (c) {
+                b.innerText = a
+            }
+    }();
+    ! function (a, b) {
+        function c() {
+            var b = f.getBoundingClientRect().width;
+            b / i > 540 && (b = 540 * i);
+            var c = b / 10;
+            f.style.fontSize = c + "px",
+                k.rem = a.rem = c
+        }
+        var d, e = a.document,
+            f = e.documentElement,
+            g = e.querySelector('meta[name="viewport"]'),
+            h = e.querySelector('meta[name="flexible"]'),
+            i = 0,
+            j = 0,
+            k = b.flexible || (b.flexible = {});
+        if (g) {
+            console.warn("将根据已有的meta标签来设置缩放比例");
+            var l = g.getAttribute("content").match(/initial\-scale=([\d\.]+)/);
+            l && (j = parseFloat(l[1]),
+                i = parseInt(1 / j))
+        } else if (h) {
+            var m = h.getAttribute("content");
+            if (m) {
+                var n = m.match(/initial\-dpr=([\d\.]+)/),
+                    o = m.match(/maximum\-dpr=([\d\.]+)/);
+                n && (i = parseFloat(n[1]),
+                        j = parseFloat((1 / i).toFixed(2))),
+                    o && (i = parseFloat(o[1]),
+                        j = parseFloat((1 / i).toFixed(2)))
+            }
+        }
+        if (!i && !j) {
+            var p = (a.navigator.appVersion.match(/android/gi),
+                    a.navigator.appVersion.match(/iphone/gi)),
+                q = a.devicePixelRatio;
+            i = p ? q >= 3 && (!i || i >= 3) ? 3 : q >= 2 && (!i || i >= 2) ? 2 : 1 : 1,
+                j = 1 / i
+        }
+        if (f.setAttribute("data-dpr", i),
+            !g)
+            if (g = e.createElement("meta"),
+                g.setAttribute("name", "viewport"),
+                g.setAttribute("content", "initial-scale=" + j + ", maximum-scale=" + j + ", minimum-scale=" + j +
+                    ", user-scalable=no"),
+                f.firstElementChild)
+                f.firstElementChild.appendChild(g);
+            else {
+                var r = e.createElement("div");
+                r.appendChild(g),
+                    e.write(r.innerHTML)
+            }
+        a.addEventListener("resize", function () {
+                clearTimeout(d),
+                    d = setTimeout(c, 300)
+            }, !1),
+            a.addEventListener("pageshow", function (a) {
+                a.persisted && (clearTimeout(d),
+                    d = setTimeout(c, 300))
+            }, !1),
+            "complete" === e.readyState ? e.body.style.fontSize = 12 * i + "px" : e.addEventListener("DOMContentLoaded",
+                function () {
+                    e.body.style.fontSize = 12 * i + "px"
+                }, !1),
+            c(),
+            k.dpr = a.dpr = i,
+            k.refreshRem = c,
+            k.rem2px = function (a) {
+                var b = parseFloat(a) * this.rem;
+                return "string" == typeof a && a.match(/rem$/) && (b += "px"),
+                    b
+            },
+            k.px2rem = function (a) {
+                var b = parseFloat(a) / this.rem;
+                return "string" == typeof a && a.match(/px$/) && (b += "rem"),
+                    b
+            }
+    }(window, window.lib || (window.lib = {}));
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mui/3.7.1/js/mui.min.js"
+    integrity="sha512-5LSZkoyayM01bXhnlp2T6+RLFc+dE4SIZofQMxy/ydOs3D35mgQYf6THIQrwIMmgoyjI+bqjuuj4fQcGLyJFYg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript" src="./imin-printer.min.js"></script>
+<script type="text/javascript" src="./dom-to-image.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.9.1/vconsole.min.js"></script>
+<!-- <script crossorigin="anonymous" integrity="sha384-qSrEYLMHSuUya7HioxgwmVKxoqyVbT2Xmu87cJyVwFm1oq4M6Tz5lcdiFrOrS93l"
+    src="https://lib.baomitu.com/fastclick/1.0.6/fastclick.min.js"></script> -->
+<script type="text/javascript">
+    var vConsole = new VConsole();
+    // $(function () {
+    //     FastClick.attach(document.body);
+    // });
+    $('.mobile-select-box').off('click').on('click', function (e) {
+        e.stopPropagation();
+        $('.mobile-select-box').addClass('focus')
+        $('.mobile-select-list').slideDown(200)
+    })
+
+    $('.mobile-select-box .mobile-select-list .mobile-select-list-item').off('click').on('click', function (e) {
+        e.stopPropagation();
+        $(this).addClass('selectd').siblings().removeClass('selectd')
+        $('.mobile-select-selectd').text($(this).text())
+        $('.mobile-select-box').removeClass('focus')
+        $('.mobile-select-list').slideUp(200)
+        if (!$(this).index()) {
+            mui.prompt('Please enter Custom IP:', '127.0.0.1', 'set', ['cofirm', 'cancel'],
+                function (e) {
+                    if (e.index == 0) {
+                        localStorage.setItem('IP', e.value)
+                        location.reload()
+                    }
+                })
+
+        } else {
+            localStorage.setItem('IP', '127.0.0.1')
+            location.reload()
+        }
+
+
+    })
+    var IminPrintInstance = new IminPrinter('10.0.21.53');
+  
+    //初始化连接
+    IminPrintInstance.connect().then(async (isConnect) => {
+          if (isConnect) {
+            console.log( await IminPrintInstance.getPrinterStatus())
+            var QrCodeSize;
+            mui('body').on('tap', '.print-box .print-box-item', async function (e) {
+                e.preventDefault();
+                switch ($(this).index()) {
+                    // 初始化打印机
+                    case 0:
+                        IminPrintInstance.initPrinter();
+                        break;
+                        //获取打印机状态
+                    case 1:
+                        const status = await IminPrintInstance.getPrinterStatus()
+                        mui.toast('printer status: ' + status.value);
+                        console.log('printer status:' + JSON.stringify(status));
+                        break;
+                        // 打印进纸
+                    case 2:
+                        IminPrintInstance.printAndLineFeed()
+                        break;
+                    case 3:
+                        mui.prompt('Please enter height:', '', 'printAndFeedPaper', ['cofirm',
+                                'cancel'
+                            ],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.printAndFeedPaper(e.value)
+                                }
+                            })
+                        $('.mui-popup-input input').val(100)
+                        break;
+                    case 4:
+                        IminPrintInstance.partialCut()
+                        break;
+                    case 5:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#setAlignment').popover('hide');
+                                IminPrintInstance.setAlignment($(a).parent().index());
+                            })
+
+                        break;
+                    case 6:
+                        mui.prompt('Please enter Text size:', '', 'setTextSize', ['cofirm',
+                                'cancel'
+                            ],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.setTextSize(e.value)
+                                }
+                            })
+                        $('.mui-popup-input input').val(28)
+                        break;
+                    case 7:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#setFont').popover('hide');
+                                IminPrintInstance.setTextTypeface($(a).parent().index())
+                            })
+                        break;
+                    case 8:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#setTextStyle').popover('hide');
+                                IminPrintInstance.setTextStyle($(a).parent().index())
+                            })
+
+                        break;
+                    case 9:
+                        mui.prompt('Please enter spacing:', '', 'setTextLineSpacing', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setTextLineSpacing(e.value)
+                            }
+                        })
+                        $('.mui-popup-input input').val('1.0f')
+                        break;
+                    case 10:
+                        mui.prompt('Please enter print width:', '', 'setTextWidth', ['cofirm',
+                                'cancel'
+                            ],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.setTextWidth(e.value)
+                                }
+                            })
+                        $('.mui-popup-input input').val(576)
+                        break;
+                        // 打印文字
+                    case 11:
+                        mui.prompt('Please enter print text:', '', 'printText', ['cofirm',
+                                'cancel'
+                            ],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.printText(e.value + '\n')
+                                    IminPrintInstance.printAndFeedPaper(100)
+                                }
+                            })
+                        $('.mui-popup-input input').val(
+                            'iMin is a service provider who focuses mainly on the field of business intelligence, bringing IoT, AI and cloud service to the business sector. We develop and provide a wide range of intelligent commercial hardware solutions which help businesses to run more cost effectively.'
+                        )
+                        // IminPrintInstance.setTextSize(26)
+                        // IminPrintInstance.printText('打印打印测试sdfdsfdsfdsfdsfdsfdsfsdfsd\n')
+                        // IminPrintInstance.printAndFeedPaper(50)
+                        break;
+                    case 12:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#printText').popover('hide');
+                                mui.prompt('Please enter print text:', '', 'printText', [
+                                    'cofirm',
+                                    'cancel'
+                                ], function (e) {
+                                    if (e.index == 0) {
+                                        IminPrintInstance.printText(e.value, parseInt(
+                                            $(a)
+                                            .parent().index()))
+                                        IminPrintInstance.printAndFeedPaper(100)
+                                    }
+                                })
+                                $('.mui-popup-input input').val(
+                                    'iMin advocates the core values of "Integrity, Customer First, Invention&Creation, Patience”, using cloud-based technology to help businesses to get  access to the Internet and also increases their data base, by providing more solutions so that their business can take a step further. Through their efficiency enhancement, cost improvement, service innovation, and  better services for consumers, these aspect will drives the entire industry development.'
+                                )
+                            })
+                        break;
+                    case 13:
+                        mui.confirm(`
+                         <form class="printColumnsText">
+                            <div class="mui-input-row">
+					     <input type="text" value="1,iMin,iMin" name="colTextArr" placeholder="Array of text strings" style="height:25px"  />
+                         </div>
+                       <div class="mui-input-row">
+					<input type="text" value="1,2,1" style="height:25px" name="colWidthArr" placeholder="Array of widths" /></div>
+                    <div class="mui-input-row">
+					<input type="text" value="1,0,2" style="height:25px" name="colAlign"  placeholder="Align: 0 -> left, 1->center, 2->right" />
+                    </div>
+                    <div class="mui-input-row">
+					<input type="text" value="26,26,26" style="height:25px" name="size" placeholder="size" /></div>
+                    <div class="mui-input-row">
+					<input type="text" value="576"  style="height:25px" name="width" placeholder="Prints the total width of a line" /></div>
+                            </form>
+                    `, 'printColumnsText', ['cofirm', 'cancel'], function (e) {
+                            if (e.index == 0) {
+                                var arr = [];
+                                $('.printColumnsText').children().find('input').each(
+                                    function (
+                                        i, item) {
+                                        console.log($(this).val());
+                                        if (i !== 4) {
+                                            arr.push($(this).val().split(','))
+                                        } else {
+                                            arr[4] = $(this).val()
+                                        }
+                                    })
+                                IminPrintInstance.printColumnsText(arr[0], arr[1], arr[2],
+                                    arr[
+                                        3], arr[4])
+                                IminPrintInstance.printAndFeedPaper(100)
+                            }
+                        })
+
+                        $('.printColumnsText').find('br').remove()
+
+
+                        break;
+                    case 14:
+                        mui.prompt('Please enter barcode width:', '', 'setBarCodeWidth', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setBarCodeWidth(e.value)
+                            }
+                        })
+                        $('.mui-popup-input input').val(3)
+                        break;
+                    case 15:
+                        mui.prompt('Please enter barcode height:', '', 'setBarCodeHeight', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setBarCodeHeight(e.value)
+                            }
+                        })
+                        $('.mui-popup-input input').val(100)
+                        break;
+                    case 16:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#setBarCodeContentPrintPos').popover('hide');
+                                IminPrintInstance.setBarCodeContentPrintPos($(a).parent()
+                                    .index())
+                            })
+                        break;
+                    case 17:
+                        mui.confirm(`
+                         <form class="printBarCode">
+                            <div class="mui-input-row">
+					     <input type="text" value="4" style="height:25px" name="barCodeType" placeholder="Barcode Type Ranges: 0- 6"  />
+                         </div>
+                       <div class="mui-input-row">
+					     <input type="text" value="012345" style="height:25px" name="barCodeContent" placeholder="Printed barcode characters" /></div>
+                            </form>
+                    `, 'printBarCode', ['cofirm', 'cancel'], function (e) {
+                            if (e.index == 0) {
+                                var arr = [];
+                                $('.printBarCode').children().find('input').each(function (
+                                    i, item) {
+                                    arr.push($(this).val())
+                                })
+                                IminPrintInstance.printBarCode(arr[0], arr[1])
+                                IminPrintInstance.printAndFeedPaper(100)
+                            }
+                        })
+                        $('.printBarCode').find('br').remove()
+                        break;
+                    case 18:
+                        mui.confirm(`
+                         <form class="printBarCode">
+                            <div class="mui-input-row">
+					     <input type="text" value="4" style="height:25px" name="barCodeType" placeholder="Barcode Type Ranges from: 0 - 6"  />
+                         </div>
+                       <div class="mui-input-row">
+					     <input type="text" value="012345" style="height:25px"  name="barCodeContent" placeholder="Printed barcode characters" /></div>
+                         <div class="mui-input-row">
+					     <input type="text" value="0" style="height:25px" name="alignModel" placeholder="align:  0 = left / 1 = center / 2 = right" /></div>
+                            </form>
+                    `, 'printBarCode', ['cofirm', 'cancel'], function (e) {
+                            if (e.index == 0) {
+                                var arr = [];
+                                $('.printBarCode').children().find('input').each(function (
+                                    i, item) {
+                                    arr.push($(this).val())
+                                })
+                                IminPrintInstance.printBarCode(arr[0], arr[1], arr[2])
+                                IminPrintInstance.printAndFeedPaper(100)
+                            }
+                        })
+                        $('.printBarCode').find('br').remove()
+                        break;
+                    case 19:
+                        mui.prompt('Please enter the size of qrcode:', '', 'setQrCodeSize', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                window.QrCodeSize = e.value
+                                IminPrintInstance.setQrCodeSize(e.value)
+                            }
+                        })
+                        $('.mui-popup-input input').val(2)
+                        break;
+                    case 20:
+                        mui.prompt('Please enter the qrcode error correction level:', '',
+                            'setQrCodeErrorCorrectionLev', ['cofirm', 'cancel'],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.setQrCodeErrorCorrectionLev(e.value)
+                                }
+                            })
+                        $('.mui-popup-input input').val(51)
+                        break;
+                    case 21:
+                        mui.prompt('Please enter barcode and left margin of QRcode:', '',
+                            'setLeftMargin', ['cofirm', 'cancel'],
+                            function (e) {
+                                if (e.index == 0) {
+                                    IminPrintInstance.setLeftMargin(e.value)
+                                }
+                            })
+                        $('.mui-popup-input input').val(100)
+                        break;
+                    case 22:
+                        mui.confirm(`
+                         <form class="printQrCode">
+                            <div class="mui-input-row">
+					     <input type="text" style="height:25px" value="9" name="size" placeholder="Size of QR code"  />
+                         </div>
+                       <div class="mui-input-row">
+					<input type="text" style="height:25px" value="https://www.imin.sg" name="centent" placeholder=" centent of Qrcode" /></div>
+                            </form>
+                    `, 'printQrCode', ['cofirm', 'cancel'], function (e) {
+                            if (e.index == 0) {
+                                var arr = [];
+                                $('.printQrCode').children().find('input').each(function (
+                                    i, item) {
+                                    arr.push($(this).val())
+                                })
+                                IminPrintInstance.setQrCodeSize(arr[0])
+                                IminPrintInstance.printQrCode(arr[1])
+                                IminPrintInstance.printAndFeedPaper(100)
+                            }
+                        })
+                        $('.printBarCode').find('br').remove()
+
+                        break;
+                    case 23:
+                        mui('body').off('tap', '.mui-popover-action li>a').on('tap',
+                            '.mui-popover-action li>a',
+                            function (e) {
+                                e.preventDefault();
+                                var a = this,
+                                    parent;
+                                //根据点击按钮，反推当前是哪个actionsheet
+                                for (parent = a.parentNode; parent != document.body; parent =
+                                    parent
+                                    .parentNode) {
+                                    if (parent.classList.contains('mui-popover-action')) {
+                                        break;
+                                    }
+                                }
+                                //关闭actionsheet
+                                mui('#alignModel').popover('hide');
+                                mui.confirm(`
+                         <form class="printQrCode">
+                            <div class="mui-input-row">
+					     <input type="text" value="9" style="height:25px" name="size" placeholder="Size of QR code"  />
+                         </div>
+                       <div class="mui-input-row">
+					<input type="text" value="https://www.imin.sg" style="height:25px" name="centent" placeholder="centent of Qrcode" /></div>
+                            </form>
+                    `, 'printQrCode', ['cofirm', 'cancel'], function (e) {
+                                    if (e.index == 0) {
+                                        var arr = [];
+                                        $('.printQrCode').children().find('input').each(
+                                            function (
+                                                i, item) {
+                                                arr.push($(this).val())
+                                            })
+                                        IminPrintInstance.setQrCodeSize(arr[0])
+                                        IminPrintInstance.printQrCode(arr[1], $(a)
+                                            .parent()
+                                            .index())
+                                        IminPrintInstance.printAndFeedPaper(100)
+                                    }
+                                })
+                                $('.printBarCode').find('br').remove()
+
+                            })
+                        break;
+                    case 24:
+                        mui.prompt('Please enter the paper size:', '', 'setPageFormat', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setPageFormat(e.value)
+                            }
+                        })
+                        $('.mui-popup-input input').val(1)
+                        break;
+                    case 25:
+                        IminPrintInstance.openCashBox();
+                        break;
+                    case 26:
+                        var node = document.getElementById('PrintContent');
+                        domtoimage.toJpeg(node).then(function (dataUrl) {
+                            IminPrintInstance.printSingleBitmap(dataUrl)
+                            IminPrintInstance.printAndFeedPaper(100)
+                        });
+                        break;
+                    case 27:
+                        mui.prompt('Please enter the size:', '', 'setDoubleQRSize', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQRSize(e.value)
+                            }
+                        })
+                        break;
+                    case 28:
+                        mui.prompt('Please enter the level:', '', 'setDoubleQR1Level', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR1Level(e.value)
+                            }
+                        })
+                        break;
+                    case 29:
+                        mui.prompt('Please enter the level:', '', 'setDoubleQR2Level', ['cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR2Level(e.value)
+                            }
+                        })
+                        break;
+                    case 30:
+                        mui.prompt('Please enter the margin left:', '', 'setDoubleQR1MarginLeft', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR1MarginLeft(e.value)
+                            }
+                        })
+                        break;
+                    case 31:
+                        mui.prompt('Please enter the margin left:', '', 'setDoubleQR2MarginLeft', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR2MarginLeft(e.value)
+                            }
+                        })
+                        break;
+                    case 32:
+                        mui.prompt('Please enter the version:', '', 'setDoubleQR1Version', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR1Version(e.value)
+                            }
+                        })
+                        break;
+                    case 33:
+                        mui.prompt('Please enter the version:', '', 'setDoubleQR2Version', [
+                            'cofirm',
+                            'cancel'
+                        ], function (e) {
+                            if (e.index == 0) {
+                                IminPrintInstance.setDoubleQR2Version(e.value)
+                            }
+                        })
+                        break;
+                    case 34:
+                        mui.confirm(`
+                         <form class="printQrCode">
+                            <div class="mui-input-row">
+					     <input type="text" value="https://www.facebook.com" style="height:25px" name="centent1" placeholder="centent of Qrcode"  />
+                         </div>
+                       <div class="mui-input-row">
+					<input type="text" value="https://www.imin.sg" style="height:25px" name="centent" placeholder="centent of Qrcode" /></div>
+                            </form>
+                    `, 'printQrCode', ['cofirm', 'cancel'], function (e) {
+                            if (e.index == 0) {
+                                var arr = [];
+                                $('.printQrCode').children().find('input').each(
+                                    function (
+                                        i, item) {
+                                        arr.push($(this).val())
+                                    })
+                                IminPrintInstance.printDoubleQR(arr)
+                                IminPrintInstance.printAndFeedPaper(100)
+                            }
+                        })
+                        $('.printBarCode').find('br').remove();
+                        break;
+                }
+            })
+          }
+    })
+</script>

@@ -1,0 +1,39 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Notes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <div class="section-title">Existing Notes</div>
+
+    <ion-textarea
+      readonly
+      [value]="notes || 'No notes yet.'"
+      class="existing-notes"
+      autoGrow="true"
+    ></ion-textarea>
+
+    <div class="section-title">Add New Note</div>
+
+    <ion-textarea
+      [(ngModel)]="newNote"
+      autoGrow="true"
+      placeholder="Write your note..."
+      class="new-note"
+    ></ion-textarea>
+  </div>
+
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="save()"
+  >
+    Save Note
+  </ion-button>
+</ion-content>

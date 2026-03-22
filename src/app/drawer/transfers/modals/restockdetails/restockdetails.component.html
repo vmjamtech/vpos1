@@ -1,0 +1,136 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">{{ pouttype }} Details</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Sales Info Card (Sticky Header) -->
+  <ion-card class="sales-info-card">
+    <ion-card-content style="padding: 0px 8px">
+      <div class="row">
+        <span class="label">Transfer Order Number:</span>
+        <span class="value">{{ data?.poutrefnum }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Supplier:</span>
+        <span class="value">{{ data?.pullsupplier }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Driver:</span>
+        <span class="value">{{ drivername }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Supplier:</span>
+        <span class="value">{{ data?.restockprice | currency : "PHP" }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Encoder:</span>
+        <span class="value">{{ data?.poutencoder }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Date:</span>
+        <span class="value">{{ data?.pulldate }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Items Container Card -->
+  <ion-card class="items-container-card">
+    <ion-card-header>
+      <div class="header-row">
+        <span class="title">{{ cart1 }} </span>
+        <span class="total-items">Total Qty: {{ getFillTotalQty() }}</span>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content class="scrollable-items">
+      <div class="items-list">
+        <ion-item-sliding
+          *ngFor="let item of fillitems; let i = index"
+          #sliding
+        >
+          <ion-item lines="none">
+            <div class="item-card">
+              <div class="item-header">
+                <div class="item-left">
+                  <span class="item-code">{{ item.poutitemcode }}</span>
+                  <span class="item-desc">({{ item.poutitemname }})</span>
+                </div>
+                <span><strong>Qty:</strong> {{ item.poutqty }}</span>
+              </div>
+            </div>
+          </ion-item>
+        </ion-item-sliding>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card class="items-container-card">
+    <ion-card-header>
+      <div class="header-row">
+        <span class="title">{{ cart2 }} </span>
+        <span class="total-items">Total Qty: {{ getEmptyTotalQty() }}</span>
+      </div>
+    </ion-card-header>
+
+    <ion-card-content class="scrollable-items">
+      <div class="items-list">
+        <ion-item-sliding
+          *ngFor="let item of emptyitems; let i = index"
+          #sliding
+        >
+          <ion-item lines="none">
+            <div class="item-card">
+              <div class="item-header">
+                <div class="item-left">
+                  <span class="item-code">{{ item.poutitemcode }}</span>
+                  <span class="item-desc">({{ item.poutitemname }})</span>
+                </div>
+                <span><strong>Qty:</strong> {{ item.poutqty }}</span>
+              </div>
+            </div>
+          </ion-item>
+        </ion-item-sliding>
+      </div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+
+<ion-footer>
+  <ion-card class="totals-card">
+    <ion-card-content style="padding: 0px 8px">
+      <div class="totals-row grand-total">
+        <span>Total Items</span>
+        <span>{{ data?.pouttotalqty }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+  <ion-toolbar>
+    <div class="footer-buttons">
+      <ion-button expand="block" color="success" (click)="openAndAddNote()">
+        <ion-icon name="clipboard-outline"></ion-icon>&nbsp; Notes </ion-button
+      ><ion-button
+        expand="block"
+        color="danger"
+        *ngIf="
+          data.pulloutremarks !== 'Waiting' &&
+          data.pulloutremarks !== 'CANCELLED'
+        " 
+        (click)="cancelTransfer()"
+      >
+        <ion-icon name="close-circle-outline"></ion-icon>&nbsp; Cancel
+      </ion-button>
+      <ion-button
+        expand="block"
+        *ngIf="data.pulloutremarks == 'Waiting'"
+        (click)="saveTransfer()"
+      >
+        <ion-icon name="checkmark-circle-outline"></ion-icon>&nbsp; Confirm
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

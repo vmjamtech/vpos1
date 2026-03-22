@@ -1,0 +1,87 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Credit History</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [scrollEvents]="true">
+  <div class="search-container">
+    <ion-card class="sales-info-card">
+      <ion-card-content style="padding: 0px 8px">
+        <div class="row">
+          <span class="label">Reference Number:</span>
+          <span class="value">{{ sales?.salesrefnum }}</span>
+        </div>
+        <div class="row">
+          <span class="label">Customer:</span>
+          <span class="value">{{ sales?.salescust || "" }}</span>
+        </div>
+        <div class="row">
+          <span class="Date:">Customer:</span>
+          <span class="value">{{ sales?.salesdate || "" }}</span>
+        </div>
+        <div class="row">
+          <span class="tender">Total Paid:</span>
+          <span class="tender">{{ totalPaid | currency : "PHP" }}</span>
+        </div>
+        <div class="row">
+          <span class="tender">Total Balance:</span>
+          <span class="tender">{{
+            sales?.tenderbalance | currency : "PHP"
+          }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Product list -->
+
+    <!-- Skeleton loader -->
+    <ng-container *ngIf="isLoading">
+      <ion-item *ngFor="let s of skeletonArray">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 100%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ng-container>
+    <ion-list
+      *ngIf="!isLoading && items.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <!-- Real data -->
+      <ion-item *ngFor="let item of items">
+        <ion-label>
+          <div class="meta">
+            <strong>Date :</strong>
+            {{ item.cppaydate | date : "yyyy-MM-dd" }}
+          </div>
+          <div class="meta">
+            <strong>Balance :</strong> ₱ {{ item.cpbalance | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Paid :</strong> ₱ {{ item.cppay | number : "1.2-2" }}
+          </div>
+          <div class="meta">
+            <strong>Payment Method :</strong> {{ item.cppaymethod }}
+          </div>
+          <div class="meta">
+            <strong>Cashier :</strong> {{ item.cpcashier }}
+          </div>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Empty state -->
+    <ion-item *ngIf="!isLoading && items.length === 0">
+      <ion-label class="ion-text-center">
+        <ion-icon name="cube-outline"></ion-icon>
+        <p>No data found.</p>
+      </ion-label>
+    </ion-item>
+  </div>
+</ion-content>

@@ -1,0 +1,47 @@
+<ion-content class="subscription-page" fullscreen>
+  <div class="subscription-container">
+    <!-- Logo -->
+    <img src="assets/imgs/image2.png" class="subscription-logo" />
+
+    <!-- Header -->
+    <div class="subscription-header">
+      <h2>Select Your Plan</h2>
+      <p>All features included, no limits.</p>
+    </div>
+
+    <!-- Subscription Plans -->
+    <div class="subscription-cards">
+      <div
+        class="subscription-card"
+        *ngFor="let plan of plans"
+        [class.selected]="selectedPlan === plan"
+        (click)="selectPlan(plan)"
+      >
+        <img class="plan-image" [src]="plan.image" alt="{{ plan.name }}" />
+        <div class="card-top">
+          <span class="plan-name">{{ plan.name }}</span>
+          <span class="plan-price">{{ plan.priceText }}</span>
+        </div>
+        <div class="card-bottom">
+          <span class="plan-duration">{{ plan.duration }}</span>
+          <span class="plan-popular" *ngIf="plan.mostPopular"
+            >Most Popular</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Activate Button -->
+    <ion-button
+      expand="block"
+      class="subscription-button"
+      (click)="subscribe()"
+      [disabled]="!selectedPlan"
+    >
+      Activate Plan
+    </ion-button>
+
+    <!-- Version -->
+    <div class="version-label">v{{ version }}</div>
+  </div>
+</ion-content>

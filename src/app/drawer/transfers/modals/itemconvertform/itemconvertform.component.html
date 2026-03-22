@@ -1,0 +1,198 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <div class="pos-container">
+    <ion-card class="pos-card-option">
+      <ion-card-content>
+        <ion-item lines="full" class="display-row">
+          <ion-label class="row-label">
+            <span class="label-text">Transfer Order Number:</span>
+            <span class="value-text">{{ poutrefnum }}</span>
+          </ion-label>
+        </ion-item>
+        <ion-item lines="full" class="display-row">
+          <ion-label class="row-label">
+            <span class="label-text">To:</span>
+            <span class="value-text">{{ pullsupplier }}</span>
+          </ion-label>
+        </ion-item>
+        <ion-item lines="full" class="display-row">
+          <ion-label class="row-label">
+            <span class="label-text">Encoder:</span>
+            <span class="value-text">{{ poutencoder }}</span>
+          </ion-label>
+        </ion-item>
+        <ion-item lines="full" class="display-row">
+          <ion-label class="row-label">
+            <span class="label-text">Date:</span>
+            <span class="value-text">{{ pulldate }}</span>
+          </ion-label>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Fill Items -->
+    <ion-card class="pos-card">
+      <ion-card-header>
+        <div class="header-content">
+          <div class="title-badge">
+            <ion-title>{{ cart1 }}</ion-title>
+            <ion-badge>{{ getFillTotalQty() }}</ion-badge>
+          </div>
+          <ion-button
+            size="small"
+            color="primary"
+            (click)="openAddFillItemModal()"
+          >
+            <ion-icon slot="start" name="add-outline"></ion-icon>
+            Add Item
+          </ion-button>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Cart Items -->
+        <ion-list class="cart-list">
+          <ion-item-sliding *ngFor="let item of fillitems">
+            <ion-item>
+              <ion-label>
+                <h3>{{ item.itemcode }} ({{ item.itemname }})</h3>
+
+                <!-- Qty Row -->
+                <div class="qty-row">
+                  <label>Quantity:</label>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="decrementQty(item)"
+                    >-</ion-button
+                  >
+                  <ion-input
+                    type="number"
+                    [value]="item.qty"
+                    (ionChange)="onQtyChange(item, $event)"
+                    min="1"
+                    class="qty-input"
+                  >
+                  </ion-input>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="incrementQty(item)"
+                    >+</ion-button
+                  >
+                </div>
+              </ion-label>
+            </ion-item>
+
+            <!-- Sliding options -->
+            <ion-item-options side="end">
+              <ion-item-option color="danger" (click)="removeItem(item)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+        </ion-list>
+
+        <!-- No items -->
+        <div *ngIf="fillitems.length === 0" class="no-items">
+          {{ cart1 }} is empty
+        </div>
+      </ion-card-content>
+    </ion-card>
+    <!-- Cart -->
+    <ion-card class="pos-card">
+      <ion-card-header>
+        <div class="header-content">
+          <div class="title-badge">
+            <ion-title>{{ cart2 }}</ion-title>
+            <ion-badge>{{ getEmptyTotalQty() }}</ion-badge>
+          </div>
+          <ion-button
+            size="small"
+            color="primary"
+            (click)="openAddEmptyItemModal()"
+          >
+            <ion-icon slot="start" name="add-outline"></ion-icon>
+            Add Item
+          </ion-button>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Cart Items -->
+        <ion-list class="cart-list">
+          <ion-item-sliding *ngFor="let item of emptyitems">
+            <ion-item>
+              <ion-label>
+                <h3>{{ item.itemcode }} ({{ item.itemname }})</h3>
+
+                <!-- Qty Row -->
+                <div class="qty-row">
+                  <label>Quantity:</label>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="decrementQtyEmpty(item)"
+                    >-</ion-button
+                  >
+                  <ion-input
+                    type="number"
+                    [value]="item.qty"
+                    (ionChange)="onQtyChangeEmpty(item, $event)"
+                    min="1"
+                    class="qty-input"
+                  >
+                  </ion-input>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="incrementQtyEmpty(item)"
+                    >+</ion-button
+                  >
+                </div>
+              </ion-label>
+            </ion-item>
+
+            <!-- Sliding options -->
+            <ion-item-options side="end">
+              <ion-item-option color="danger" (click)="removeEmptyItem(item)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+        </ion-list>
+
+        <!-- No items -->
+        <div *ngIf="emptyitems.length === 0" class="no-items">
+          {{ cart2 }} is empty
+        </div>
+      </ion-card-content>
+    </ion-card>
+    <div class="pos-footer">
+      <div class="footer-row">
+        <span>Total {{ cart1 }}:</span>
+        <span>{{ getFillTotalQty() }}</span>
+      </div>
+      <div class="footer-row">
+        <span>Total {{ cart2 }}:</span>
+        <span>{{ getEmptyTotalQty() }}</span>
+      </div>
+
+      <!-- Checkout Button -->
+      <ion-button
+        expand="block"
+        [disabled]="hasMismatchedQty || !hasRows"
+        (click)="saveTransfer()"
+      >
+        Confirm {{ title }}
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

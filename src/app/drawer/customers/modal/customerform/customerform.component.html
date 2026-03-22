@@ -1,0 +1,64 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{
+      mode === "edit" ? "Update Customer" : "Add Customer"
+    }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Customer Name</ion-label>
+      <ion-input
+        [(ngModel)]="custname"
+        name="custname"
+        placeholder="Enter Customer Name" 
+        (ionInput)="validateName()"
+        debounce="300"
+      ></ion-input>
+      <ion-text color="danger" *ngIf="custnameExists">
+        Customer Name already exists!
+      </ion-text>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Address</ion-label>
+      <ion-input
+        [(ngModel)]="custadd"
+        name="custadd"
+        placeholder="Enter Customer Address"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Contact Number</ion-label>
+      <ion-input
+        [(ngModel)]="custcontnum"
+        name="custcontnum"
+        placeholder="Enter Contact Number"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Gas</ion-label>
+      <ion-input
+        [(ngModel)]="custemail"
+        name="custemail"
+        placeholder="Enter Gas"
+      ></ion-input>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+    [disabled]="!custname || custnameExists"
+  >
+    {{ mode === "edit" ? "Update Customer" : "Add Customer" }}
+  </ion-button>
+</ion-content>

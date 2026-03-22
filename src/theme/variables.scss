@@ -1,0 +1,97 @@
+// For information on how to create your own theme, please see:
+// http://ionicframework.com/docs/theming/
+/* =========================
+   GOLD PALETTE VARIABLES
+========================= */
+
+/* LIGHT MODE */
+:root {
+  --ion-color-gold: #d1b351;
+  --ion-color-gold-rgb: 212, 175, 55;
+  --ion-color-gold-contrast: #000000;
+  --ion-color-gold-contrast-rgb: 0, 0, 0;
+  --ion-color-gold-shade: #b8922f;
+  --ion-color-gold-tint: #fff8e0;
+
+  /* Set as primary */
+  --ion-color-primary: var(--ion-color-gold);
+  --ion-color-primary-rgb: var(--ion-color-gold-rgb);
+  --ion-color-primary-contrast: var(--ion-color-gold-contrast);
+  --ion-color-primary-contrast-rgb: var(--ion-color-gold-contrast-rgb);
+  --ion-color-primary-shade: var(--ion-color-gold-shade);
+  --ion-color-primary-tint: var(--ion-color-gold-tint);
+
+  /* Backgrounds & surfaces */
+  --ion-background-color: #ffffff;
+  --ion-background-color-rgb: 255, 255, 255;
+  --ion-item-background: #fdf8f0;
+  --ion-text-color: #222222;
+  --ion-text-color-grey: rgb(83, 81, 81) 2;
+  --ion-text-color-rgb: 34, 34, 34;
+  --ion-color-medium: #cccccc;
+  --ion-color-light: #f8f8f8;
+  --ion-color-dark: #333333;
+}
+
+/* DARK MODE OVERRIDES */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-gold: #f1c84c;
+    --ion-color-gold-rgb: 255, 217, 102;
+    --ion-color-gold-contrast: #1c1c1c;
+    --ion-color-gold-contrast-rgb: 28, 28, 28;
+    --ion-color-gold-shade: #e6c158;
+    --ion-color-gold-tint: #fff3cc;
+
+    --ion-color-primary: var(--ion-color-gold);
+    --ion-color-primary-rgb: var(--ion-color-gold-rgb);
+    --ion-color-primary-contrast: var(--ion-color-gold-contrast);
+    --ion-color-primary-shade: var(--ion-color-gold-shade);
+    --ion-color-primary-tint: var(--ion-color-gold-tint);
+
+    --ion-background-color: #121212;
+    --ion-background-color-rgb: 18, 18, 18;
+    --ion-item-background: #1c1c1c;
+    --ion-text-color: #ffffff;
+    --ion-text-color-rgb: 255, 255, 255;
+    --ion-color-medium: #555555;
+    --ion-color-light: #333333;
+    --ion-color-dark: #000000;
+  }
+}
+
+.download-header {
+  position: fixed; /* Make the whole header fixed */
+  top: 0;
+  width: 100%;
+  background: var(--ion-background-color);
+  z-index: 1000;
+  padding-left: calc(
+    var(--inner-padding-start, 16px) + var(--icon-size, 24px) +
+      var(--icon-margin-end, 8px)
+  );
+  height: 94px;
+}
+
+.download-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.download-title {
+  font-size: 1.4rem;
+  color: var(--ion-text-color);
+  font-weight: 600;
+  margin: 0; /* Remove default h2 margin */
+}
+
+.download-action-btn,
+.download-header-content ion-button {
+  margin-right: 8px;
+}
+
+.transaction-modal {
+  --height: 85vh;
+}

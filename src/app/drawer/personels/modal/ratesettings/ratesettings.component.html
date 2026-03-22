@@ -1,0 +1,99 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Rate Settings</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Daily :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="saldaily"
+        name="saldaily"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item-divider *ngIf="selectedRole === 'Driver'"
+      ><ion-label>Incentives</ion-label></ion-item-divider
+    >
+    <ion-item class="stacked-item" *ngIf="selectedRole !== 'Rider'">
+      <ion-label position="stacked">
+        {{ selectedRole === "StoreKeeper" ? "Rate :" : "2.7 KG :" }}
+      </ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal2kg"
+        name="sal2kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
+      <ion-label position="stacked">5 KG :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal5kg"
+        name="sal5kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
+      <ion-label position="stacked">7 KG :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal7kg"
+        name="sal7kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
+      <ion-label position="stacked">11 KG :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal11kg"
+        name="sal11kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
+      <ion-label position="stacked">22 KG :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal22kg"
+        name="sal22kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
+      <ion-label position="stacked">50 KG :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="sal50kg"
+        name="sal50kg"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'StoreKeeper'">
+      <ion-label position="stacked">Dividend :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="saldiv"
+        name="saldiv"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+  >
+    Save Settings
+  </ion-button>
+</ion-content>

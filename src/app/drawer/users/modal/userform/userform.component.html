@@ -1,0 +1,110 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ mode === "edit" ? "Update User" : "Add User" }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Employee Name</ion-label>
+      <ion-input
+        [(ngModel)]="empname"
+        name="empname"
+        placeholder="Enter User Name"
+        (ionInput)="validateName()"
+        debounce="300"
+      ></ion-input>
+      <ion-text color="danger" *ngIf="empnameExists">
+        Employee Name already exists!
+      </ion-text>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Address</ion-label>
+      <ion-input
+        [(ngModel)]="empaddress"
+        name="empaddress"
+        placeholder="Enter User Address"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Contact Number</ion-label>
+      <ion-input
+        [(ngModel)]="empcontnum"
+        name="empcontnum"
+        placeholder="Enter Contact Number"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item class="stacked-item">
+      <ion-label>Account Type</ion-label>
+      <ion-select
+        [(ngModel)]="selectedtype"
+        name="selectedtype"
+        interface="popover"
+      >
+        <ion-select-option [value]="null" disabled selected hidden>
+          Select Account Type
+        </ion-select-option>
+        <ion-select-option *ngFor="let role of accnttype" [value]="role">{{
+          role
+        }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Username</ion-label>
+      <ion-input
+        [(ngModel)]="usern"
+        name="usern"
+        placeholder="Enter Username"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Password</ion-label>
+      <ion-input
+        [(ngModel)]="passw"
+        name="passw"
+        placeholder="Enter Password"
+        type="password"
+        (ionInput)="checkPasswordsMatch()"
+        ><ion-input-password-toggle slot="end"></ion-input-password-toggle
+      ></ion-input>
+    </ion-item>
+
+    <!-- Confirm Password -->
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Confirm Password</ion-label>
+      <ion-input
+        [(ngModel)]="confirmPassword"
+        name="confirmPassword"
+        placeholder="Confirm Password"
+        type="password"
+        (ionInput)="checkPasswordsMatch()"
+        ><ion-input-password-toggle slot="end"></ion-input-password-toggle
+      ></ion-input>
+      <ion-text
+        color="danger"
+        style="margin-bottom: 10px"
+        *ngIf="passwordMismatch"
+      >
+        Passwords do not match!
+      </ion-text>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+    [disabled]="!empname || !usern || empnameExists || usernameExists"
+  >
+    {{ mode === "edit" ? "Update User" : "Add User" }}
+  </ion-button>
+</ion-content>

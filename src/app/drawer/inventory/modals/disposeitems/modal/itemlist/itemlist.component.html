@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Select Item to Dispose</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="item-list-modal">
+  <div class="sticky-top">
+    <!-- Search Bar -->
+    <div class="search-bar-container">
+      <ion-searchbar
+        [(ngModel)]="searchText"
+        (ionInput)="filterItems()"
+        placeholder="Search item..."
+        showClearButton="always"
+      ></ion-searchbar>
+    </div>
+
+    <!-- Categories Horizontal Scroll -->
+    <div class="category-scroll">
+      <ion-chip
+        *ngFor="let c of categories"
+        [color]="selectedCategory === c.category ? 'primary' : 'medium'"
+        (click)="selectCategory(c.category)"
+      >
+        {{ c.category }}
+      </ion-chip>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton -->
+  <ion-skeleton-text
+    *ngIf="loading && items.length === 0"
+    animated
+    style="width: 100%; height: 40px; margin: 8px 0"
+  ></ion-skeleton-text>
+
+  <!-- Item List -->
+  <ion-list *ngIf="!loading && filteredItems.length > 0">
+    <ion-item
+      *ngFor="let item of filteredItems"
+      button
+      lines="full"
+      (click)="selectItem(item)"
+    >
+      <ion-label>
+        <h2 class="desc">{{ item.itemcode }} ({{ item.itemname }})</h2>
+        <div class="meta">
+          <span><strong>Size:</strong> {{ item.itemsize || "" }}</span>
+        </div>
+        <div class="meta">
+          <span><strong>Fill:</strong> {{ item.whfill }}</span>
+          <span><strong>Empty:</strong> {{ item.whempty }}</span>
+        </div>
+        <div class="meta">
+          <span><strong>Disposed:</strong> {{ item.whdispose }}</span>
+        </div>
+        <div class="meta">
+          <span>
+            <strong>Warehouse Stocks:</strong>
+            {{
+              (item.whfill || 0) + (item.whempty || 0) + (item.whdispose || 0)
+            }}
+          </span>
+          <span>
+            <strong>Overall Stocks:</strong>
+            {{
+              (item.whfill || 0) +
+                (item.whempty || 0) +
+                (item.whdispose || 0) +
+                (item.fillqty || 0) +
+                (item.emptyqty || 0)
+            }}
+          </span>
+        </div>
+      </ion-label>
+      <!-- Warning badge -->
+      <ion-badge
+        *ngIf="item.icount > 0 && item.whfill < item.icount"
+        color="danger"
+        slot="end"
+      >
+        Low Stock
+      </ion-badge>
+    </ion-item>
+  </ion-list>
+
+  <!-- No results -->
+  <div *ngIf="!loading && filteredItems.length === 0" class="no-results">
+    No items found.
+  </div>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll
+    threshold="100px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more items..."
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

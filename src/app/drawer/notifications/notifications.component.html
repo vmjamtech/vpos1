@@ -1,0 +1,22 @@
+<ion-content (ionScroll)="onScroll($event)" [scrollEvents]="true">
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">Notifications</h2>
+    </div>
+  </div>
+  <div style="height: 80px"></div>
+  <ion-list>
+    <ion-item
+      *ngFor="let notif of notifications; trackBy: trackByFn"
+      (click)="openNotification(notif)"
+      [class.unread]="!notif.read"
+      class="fade-in"
+    >
+      <ion-label>
+        <h2>{{ notif.title }}</h2>
+        <p>{{ notif.message }}</p>
+      </ion-label>
+      <ion-badge *ngIf="!notif.read" color="danger">NEW</ion-badge>
+    </ion-item>
+  </ion-list>
+</ion-content>

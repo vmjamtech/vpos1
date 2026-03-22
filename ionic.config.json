@@ -1,0 +1,7 @@
+{
+  "name": "V-POS",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

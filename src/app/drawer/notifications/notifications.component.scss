@@ -1,0 +1,22 @@
+ion-item.unread {
+  background-color: rgba(212, 175, 55, 0.1);
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+ion-badge {
+  font-size: 12px;
+}

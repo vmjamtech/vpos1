@@ -1,0 +1,69 @@
+<ion-content fullscreen>
+  <!-- Header -->
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">Business Settings</h2>
+    </div>
+  </div>
+
+  <div class="product-list-container">
+    <div class="logo-wrapper">
+      <div class="logo-circle" (click)="triggerLogoPicker()">
+        <img *ngIf="Blogo" [src]="Blogo" alt="Business Logo" loading="lazy" />
+        <div *ngIf="!Blogo" class="placeholder">
+          <ion-icon name="camera-outline"></ion-icon>
+        </div>
+      </div>
+
+      <p class="logo-text">Tap to update business logo</p>
+
+      <input
+        type="file"
+        accept="image/*"
+        hidden
+        #logoInput
+        (change)="onLogoSelected($event)"
+      />
+    </div>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Business Name</ion-label>
+      <ion-input [(ngModel)]="Bname" name="Bname"></ion-input>
+    </ion-item>
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Business Address</ion-label>
+      <ion-input [(ngModel)]="Baddress" name="Baddress"></ion-input>
+    </ion-item>
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Business Contact Number</ion-label>
+      <ion-input [(ngModel)]="ReceiptPosName" name="ReceiptPosName"></ion-input>
+    </ion-item>
+
+    <ion-button
+      expand="block"
+      color="secondary"
+      style="margin-top: 20px"
+      (click)="openBusinessInfoLayout()"
+    >
+      BUSINESS INFO SLIP LAYOUT
+    </ion-button>
+
+    <!-- <ion-button
+      expand="block"
+      color="tertiary"
+      style="margin-top: 12px"
+      (click)="openBusinessInfoLayout()"
+    >
+      RECEIPT SLIP LAYOUT
+    </ion-button> -->
+
+    <ion-button
+      expand="block"
+      color="primary"
+      style="margin-top: 20px"
+      (click)="saveSettings()"
+    >
+      Save / Update
+    </ion-button>
+  </div>
+</ion-content>

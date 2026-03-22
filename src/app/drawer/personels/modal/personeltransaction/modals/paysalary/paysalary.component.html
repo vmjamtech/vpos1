@@ -1,0 +1,159 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Pay Salary</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <!-- Personnel Info -->
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Personnel Name:</span>
+        <span class="value-text">{{ pname }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Date From:</span>
+        <span class="value-text">{{
+          currentDateFrom ?? "No Date Selected"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Date To:</span>
+        <span class="value-text">{{
+          currentDateTo ?? "No Date Selected"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Salary Details -->
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Daily Rate:</span>
+        <span class="value-text">{{
+          dailyrate || 0 | currency : "PHP" : "symbol" : "1.2-2"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Salary:</span>
+        <span class="value-text">{{
+          totalsalary || 0 | currency : "PHP" : "symbol" : "1.2-2"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Incentive:</span>
+        <span class="value-text">{{
+          incentive || 0 | currency : "PHP" : "symbol" : "1.2-2"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Editable Fields -->
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Additional:</span>
+        <ion-input
+          type="number"
+          [(ngModel)]="additional"
+          placeholder="0.00"
+          step="0.01"
+          class="input-right"
+        ></ion-input>
+      </ion-label>
+    </ion-item>
+
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Less:</span>
+        <ion-input
+          type="number"
+          [(ngModel)]="lesspay"
+          placeholder="0.00"
+          step="0.01"
+          class="input-right"
+        ></ion-input>
+      </ion-label>
+    </ion-item>
+
+    <!-- Total Pay -->
+    <ion-item lines="full" class="display-row total-pay">
+      <ion-label class="row-label">
+        <span class="label-text">Total Pay:</span>
+        <span class="value-text">{{
+          (totalsalary || 0) +
+            (incentive || 0) +
+            (additional || 0) -
+            (lesspay || 0) | currency : "PHP" : "symbol" : "1.2-2"
+        }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Payment Method Dropdown -->
+    <ion-item lines="full" class="display-row">
+      <ion-label class="label-left">Payment Method:</ion-label>
+      <ion-select
+        [(ngModel)]="paymentMethod"
+        placeholder="Select Method"
+        interface="popover"
+      >
+        <ion-select-option value="CASH">CASH</ion-select-option>
+        <ion-select-option value="GCASH">GCASH</ion-select-option>
+        <ion-select-option value="BANK TRANSFER"
+          >BANK TRANSFER</ion-select-option
+        >
+      </ion-select>
+    </ion-item>
+
+    <!-- Tendered Amount -->
+    <ion-item lines="full" class="display-row">
+      <ion-label class="row-label">
+        <span class="label-text">Tendered Amount:</span>
+        <ion-input
+          type="number"
+          [(ngModel)]="tenderedAmount"
+          placeholder="0.00"
+          step="0.01"
+          [max]="totalPay"
+          (ionChange)="checkTenderedAmount()"
+          class="input-right"
+        ></ion-input>
+      </ion-label>
+
+      <ion-button
+        fill="clear"
+        size="small"
+        slot="end"
+        (click)="setTenderedToTotal()"
+      >
+        <ion-icon name="bag-check-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </div>
+
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="paysalary()"
+    [disabled]="
+      !tenderedAmount || !currentDateFrom || !currentDateTo || !paymentMethod
+    "
+  >
+    Pay Salary
+  </ion-button>
+</ion-content>

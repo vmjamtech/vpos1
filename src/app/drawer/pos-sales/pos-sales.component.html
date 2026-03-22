@@ -1,0 +1,204 @@
+<ion-content class="pos-page">
+  <!-- Header -->
+  <div class="pos-header">
+    <div class="pos-header-header-content">
+      <!-- Home button -->
+      <!-- <ion-button class="home-button" fill="clear" (click)="goHome()">
+        <ion-icon name="home-outline"></ion-icon>
+      </ion-button> -->
+
+      <!-- Title -->
+      <h2 class="pos-header-title">Point of Sales</h2>
+
+      <!-- Clear / Reset button -->
+      <ion-button
+        class="clear-button"
+        fill="clear"
+        (click)="resetPOS()"
+        [disabled]="isResetDisabled"
+      >
+        <ion-icon name="arrow-undo-circle-outline"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
+
+  <div class="pos-container">
+    <!-- POS Options -->
+    <ion-card class="pos-card-option">
+      <ion-card-content>
+        <!-- Category -->
+        <ion-item>
+          <ion-label>Category</ion-label>
+          <ion-select
+            placeholder="Select Category"
+            [(ngModel)]="posData.category"
+          >
+            <ion-select-option value="1-PICK UP">1-PICK UP</ion-select-option>
+            <ion-select-option value="2-DELIVERY">2-DELIVERY</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Customer -->
+        <ion-item button (click)="openSelectModal('customer')">
+          <ion-label
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              width: 100%;
+            "
+          >
+            <span>Customer</span>
+            <div
+              style="display: flex; flex-direction: column; text-align: right"
+            >
+              <ion-text
+                [color]="posData.customerName ? 'text-color' : 'medium'"
+              >
+                {{ posData.customerName || "Select Customer" }}
+              </ion-text>
+              <ion-note *ngIf="posData.customeraddress">
+                {{ posData.customeraddress }}
+              </ion-note>
+            </div>
+          </ion-label>
+        </ion-item>
+
+        <!-- Personnel 1 -->
+        <ion-item button (click)="openSelectModal('personnel1')">
+          <ion-label>Personnel 1</ion-label>
+          <ion-text [color]="posData.personnel1Name ? 'text-color' : 'medium'">
+            {{ posData.personnel1Name || "Select Personnel" }}
+          </ion-text>
+        </ion-item>
+
+        <!-- Personnel 2 -->
+        <ion-item button (click)="openSelectModal('personnel2')">
+          <ion-label>Personnel 2</ion-label>
+          <ion-text [color]="posData.personnel2Name ? 'text-color' : 'medium'">
+            {{ posData.personnel2Name || "Select Personnel" }}
+          </ion-text>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Cart -->
+    <ion-card class="pos-card">
+      <ion-card-header>
+        <div class="header-content">
+          <div class="title-badge">
+            <ion-title>Cart</ion-title>
+            <ion-badge>{{ getTotalQty() }}</ion-badge>
+          </div>
+          <ion-button size="small" color="primary" (click)="openAddItemModal()">
+            <ion-icon slot="start" name="add-outline"></ion-icon>
+            Add Item
+          </ion-button>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Cart Items -->
+        <ion-list class="cart-list">
+          <ion-item-sliding *ngFor="let item of cart">
+            <ion-item>
+              <ion-label>
+                <h3>{{ item.itemcode }} ({{ item.itemname }})</h3>
+
+                <!-- Unit Selector -->
+                <div class="unit-row">
+                  <ion-label style="padding-right: 8px">Unit: </ion-label>
+                  <ion-select
+                    [(ngModel)]="item.unit"
+                    (ionChange)="onUnitChange(item)"
+                    interface="popover"
+                  >
+                    <ion-select-option value="NON-REFILL"
+                      >NON-REFILL</ion-select-option
+                    >
+                    <ion-select-option value="REFILL">REFILL</ion-select-option>
+                  </ion-select>
+
+                  <!-- Price at end -->
+                  <span style="margin-left: auto">
+                    <strong>Price:</strong> ₱{{
+                      getItemPrice(item) | number : "1.2-2"
+                    }}
+                  </span>
+                </div>
+
+                <!-- Qty Row -->
+                <div class="qty-row">
+                  <label>Qty:</label>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="decrementQty(item)"
+                    >-</ion-button
+                  >
+                  <ion-input
+                    type="number"
+                    [value]="item.qty"
+                    (ionChange)="onQtyChange(item, $event)"
+                    min="1"
+                    class="qty-input"
+                  >
+                  </ion-input>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    (click)="incrementQty(item)"
+                    >+</ion-button
+                  >
+                  <span class="amount" style="margin-left: auto">
+                    <strong>Amount:</strong> ₱{{
+                      item.qty * getItemPrice(item) | number : "1.2-2"
+                    }}
+                  </span>
+                </div>
+              </ion-label>
+            </ion-item>
+
+            <!-- Sliding options -->
+            <ion-item-options side="end">
+              <ion-item-option color="danger" (click)="removeItem(item)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+        </ion-list>
+
+        <!-- No items -->
+        <div *ngIf="cart.length === 0" class="no-items">Cart is empty</div>
+      </ion-card-content>
+    </ion-card>
+    <!-- POS Summary Footer -->
+    <div class="pos-footer">
+      <div class="footer-row">
+        <span>Discount:</span>
+        <span>₱{{ posData.discount | number : "1.2-2" }}</span>
+      </div>
+      <div class="footer-row">
+        <span>Sub Total:</span>
+        <span>₱{{ getSubTotal() | number : "1.2-2" }}</span>
+      </div>
+      <div class="footer-row">
+        <span>VAT:</span>
+        <span>₱{{ getVat() | number : "1.2-2" }}</span>
+      </div>
+      <div class="footer-row total-row">
+        <span>Total:</span>
+        <span>₱{{ getTotal() | number : "1.2-2" }}</span>
+      </div>
+
+      <!-- Checkout Button -->
+      <ion-button
+        expand="block"
+        [disabled]="isCheckoutDisabled"
+        (click)="openCheckoutModal()"
+      >
+        Pay Purchase
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

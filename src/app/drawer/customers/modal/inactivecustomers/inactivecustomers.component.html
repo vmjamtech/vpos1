@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Inactive Customers</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen [scrollEvents]="true" force-overscroll="false">
+  <!-- Pull-to-refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="search-container">
+    <div class="total-balance" *ngIf="!isLoading && items.length > 0">
+      <strong>Total Inactive Customers:</strong> {{ total }}
+    </div>
+    <ion-button fill="clear" class="filter-btn" (click)="openSortAlert()">
+      <ion-icon name="filter-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Product list -->
+
+    <!-- Skeleton loader -->
+    <ng-container *ngIf="isLoading">
+      <ion-item *ngFor="let s of skeletonArray">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 100%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ng-container>
+    <ion-list
+      *ngIf="!isLoading && items.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <!-- Real data -->
+      <ion-item-sliding *ngFor="let item of filteredItems">
+        <ion-item>
+          <ion-label>
+            <h2 class="desc">{{ item.custname }}</h2>
+            <div class="meta">
+              <strong>Address:</strong> {{ item.custadd || "N/A" }}
+            </div>
+            <div class="meta">
+              <strong>Contact No.:</strong> {{ item.custcontnum || "N/A" }}
+            </div>
+            <div class="meta">
+              <strong>Email:</strong> {{ item.custemail || "N/A" }}
+            </div>
+            <div class="meta">
+              <strong>Balance:</strong> ₱{{
+                item.custbalance | number : "1.2-2"
+              }}
+            </div>
+          </ion-label>
+
+          <!-- Warning badge -->
+          <ion-badge
+            *ngIf="item.custstatus === 'inactive'"
+            color="danger"
+            slot="end"
+          >
+            INACTIVE
+          </ion-badge>
+        </ion-item>
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deleteConfirm(item)">
+            <ion-icon name="trash-outline"></ion-icon> Delete
+          </ion-item-option>
+        </ion-item-options>
+
+        <ion-item-options side="start">
+          <ion-item-option color="primary" (click)="restoreConfirm(item)">
+            <ion-icon name="refresh-outline"></ion-icon> Restore
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding> </ion-list
+    ><!-- Empty state -->
+    <ion-item *ngIf="!isLoading && filteredItems.length === 0">
+      <ion-label class="ion-text-center">
+        <ion-icon name="cube-outline"></ion-icon>
+        <p>No data found.</p>
+      </ion-label>
+    </ion-item>
+  </div>
+  <!-- Infinite scroll -->
+  <ion-infinite-scroll
+    threshold="150px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more data..."
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

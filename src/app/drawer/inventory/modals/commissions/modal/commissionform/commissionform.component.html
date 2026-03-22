@@ -1,0 +1,43 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Update Item Commission</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item lines="none" class="stacked-item">
+    <ion-label position="stacked">Pick Up</ion-label>
+    <ion-input
+      type="number"
+      [value]="compickup"
+      (ionInput)="compickup = toNumber($event.detail.value) || 0"
+      (ionBlur)="compickup = formatTwoDecimalsNumber(compickup)"
+      placeholder="0.00"
+      inputmode="decimal"
+    ></ion-input>
+  </ion-item>
+
+  <ion-item lines="none" class="stacked-item">
+    <ion-label position="stacked">Deliver</ion-label>
+    <ion-input
+      type="number"
+      [value]="comdel"
+      (ionInput)="comdel = toNumber($event.detail.value) || 0"
+      (ionBlur)="comdel = formatTwoDecimalsNumber(comdel)"
+      placeholder="0.00"
+      inputmode="decimal"
+    ></ion-input>
+  </ion-item>
+
+  <ion-button
+    expand="block"
+    color="primary"
+    class="ion-margin-top"
+    (click)="save()"
+  >
+    Update Commission
+  </ion-button>
+</ion-content>

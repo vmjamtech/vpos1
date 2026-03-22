@@ -1,0 +1,43 @@
+<ion-content class="ion-padding">
+  <!-- DATE FROM -->
+  <ion-item>
+    <ion-label class="notify-label">Date From</ion-label>
+    <ion-datetime-button datetime="partialDate"></ion-datetime-button>
+
+    <ion-popover [keepContentsMounted]="true" [dismissOnSelect]="true">
+      <ng-template>
+        <ion-datetime
+          id="partialDate"
+          presentation="date"
+          [preferWheel]="true"
+          [(ngModel)]="dateFrom"
+        ></ion-datetime>
+      </ng-template>
+    </ion-popover>
+  </ion-item>
+
+  <!-- DATE TO -->
+  <ion-item>
+    <ion-label class="notify-label">Date To</ion-label>
+    <ion-datetime-button datetime="dateToDate"></ion-datetime-button>
+    <ion-popover [keepContentsMounted]="true" [dismissOnSelect]="true">
+      <ng-template>
+        <ion-datetime
+          id="dateToDate"
+          presentation="date"
+          [preferWheel]="true"
+          [(ngModel)]="dateTo"
+        ></ion-datetime>
+      </ng-template>
+    </ion-popover>
+  </ion-item>
+
+  <!-- SHOW ALL -->
+  <ion-button expand="block" color="success" fill="outline" (click)="showAll()">
+    Show All
+  </ion-button>
+  <!-- APPLY FILTER -->
+  <ion-button expand="block" color="primary" (click)="applyFilter()">
+    Apply Filter
+  </ion-button>
+</ion-content>

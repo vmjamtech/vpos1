@@ -1,0 +1,66 @@
+.form-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* space between inputs */
+  margin-bottom: 8px;
+}
+
+.sales-info-card {
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+  padding: 6px;
+  font-size: 14px;
+  background: var(--ion-background-color);
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 2px 0;
+
+    .label {
+      font-weight: 600;
+      color: var(--ion-text-medium);
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .value {
+      text-align: right;
+      word-break: break-word;
+      max-width: 65%; /* adjust based on screen size */
+      white-space: normal;
+    }
+
+    .tender {
+      font-weight: 900;
+      text-align: right;
+      word-break: break-word;
+      max-width: 65%; /* adjust based on screen size */
+      white-space: normal;
+    }
+  }
+}
+
+.stacked-item {
+  border-radius: 12px;
+  padding: 4px;
+
+  ion-label {
+    font-weight: 500;
+    font-size: 14px;
+  }
+}
+
+.sticky-btn {
+  position: sticky;
+  bottom: 16px; /* distance from bottom of modal */
+  z-index: 1000; /* on top of content */
+  margin: 0 16px; /* optional horizontal padding */
+  border-radius: 12px;
+  font-weight: 600;
+  height: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

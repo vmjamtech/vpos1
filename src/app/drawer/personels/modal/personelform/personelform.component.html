@@ -1,0 +1,72 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{
+      mode === "edit" ? "Update Personnel" : "Add Personnel"
+    }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Personnel Name</ion-label>
+      <ion-input
+        [(ngModel)]="pname"
+        name="pname"
+        placeholder="Enter Personnel Name"
+        (ionInput)="validateName()"
+        debounce="300"
+      ></ion-input>
+      <ion-text color="danger" *ngIf="nameExists">
+        Personnel Name already exists!
+      </ion-text>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Address</ion-label>
+      <ion-input
+        [(ngModel)]="paddress"
+        name="paddress"
+        placeholder="Enter Address"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Contact Number</ion-label>
+      <ion-input
+        [(ngModel)]="pcontactnum"
+        name="pcontactnum"
+        placeholder="Enter Contact Number"
+      ></ion-input>
+    </ion-item>
+
+    <!-- SIZE DROPDOWN -->
+    <ion-item class="stacked-item">
+      <ion-label>Role</ion-label>
+      <ion-select
+        [(ngModel)]="selectedRole"
+        name="selectedRole"
+        interface="popover"
+      >
+        <ion-select-option [value]="null" disabled selected hidden>
+          Select Role
+        </ion-select-option>
+        <ion-select-option *ngFor="let role of prole" [value]="role">{{
+          role
+        }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+    [disabled]="!pname || nameExists"
+  >
+    {{ mode === "edit" ? "Update Personnel" : "Add Personnel" }}
+  </ion-button>
+</ion-content>

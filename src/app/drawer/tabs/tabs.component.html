@@ -1,0 +1,32 @@
+<ion-tabs>
+  <ion-router-outlet></ion-router-outlet>
+
+  <ion-tab-bar slot="bottom">
+    <ion-tab-button tab="dashboard" [class.tab-active]="isTabActive('/menu/dashboard')" layout="icon-top" routerLink="/menu/dashboard" routerDirection="root">
+      <ion-icon [icon]="icons.home"></ion-icon>
+      <ion-label>Dashboard</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="pos-sales" [class.tab-active]="isTabActive('/menu/pos-sales')" layout="icon-top" routerLink="/menu/pos-sales" routerDirection="root">
+      <ion-icon [icon]="icons.cash"></ion-icon>
+      <ion-label>POS Sales</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="inventory" [class.tab-active]="isTabActive('/menu/inventory')" layout="icon-top" routerLink="/menu/inventory" routerDirection="root">
+      <ion-icon [icon]="icons.layers"></ion-icon>
+      <ion-label>Inventory</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="notifications" [class.tab-active]="isTabActive('/menu/notifications')" layout="icon-top" routerLink="/menu/notifications" routerDirection="root">
+      <ion-icon [icon]="icons.notifications"></ion-icon>
+      <ion-label>Notifications</ion-label>
+      <ion-badge
+        *ngIf="badgeCount$ | async as count"
+        color="danger"
+        [hidden]="count === 0"
+      >
+        {{ count }}
+      </ion-badge>
+    </ion-tab-button>
+  </ion-tab-bar>
+</ion-tabs>

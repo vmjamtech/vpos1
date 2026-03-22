@@ -1,0 +1,84 @@
+<!-- Full page container -->
+<div class="settings-container">
+  <ion-toolbar style="padding-top: 14px" color="primary">
+    <ion-title>Settings</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="onClose.emit()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <div class="settings-wrapper">
+    <!-- Connection Settings -->
+    <div class="form-card connection-settings">
+      <ion-item class="input-item">
+        <ion-icon name="globe-outline" slot="start"></ion-icon>
+        <ion-input
+          label="IP Address"
+          labelPlacement="fixed" 
+          placeholder="Enter IP Address"
+          [(ngModel)]="connection.ip"
+          name="ip"
+          type="text"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="input-item">
+        <ion-icon name="server-outline" slot="start"></ion-icon>
+        <ion-input
+          label="Port"
+          labelPlacement="fixed" 
+          placeholder="Enter Port"
+          [(ngModel)]="connection.port"
+          name="port"
+          type="number"
+        ></ion-input>
+      </ion-item>
+    </div>
+
+    <!-- Device Details (Read-only) -->
+    <div class="form-card">
+      <ion-item class="input-item">
+        <ion-icon name="phone-portrait-outline" slot="start"></ion-icon>
+        <ion-label>Device Name</ion-label>
+        <ion-text>{{ device.name || "N/A" }}</ion-text>
+      </ion-item>
+
+      <ion-item class="input-item">
+        <ion-icon name="construct-outline" slot="start"></ion-icon>
+        <ion-label>Model</ion-label>
+        <ion-text>{{ device.model || "N/A" }}</ion-text>
+      </ion-item>
+
+      <ion-item class="input-item">
+        <ion-icon name="finger-print-outline" slot="start"></ion-icon>
+        <ion-label>UUID</ion-label>
+        <ion-text>{{ device.uuid || "N/A" }}</ion-text>
+      </ion-item>
+
+      <ion-item class="input-item">
+        <ion-icon name="desktop-outline" slot="start"></ion-icon>
+        <ion-label>Platform-Version</ion-label>
+        <ion-text
+          >{{ device.platform || "N/A" }}-{{
+            device.version || "N/A"
+          }}</ion-text
+        >
+      </ion-item>
+
+      <ion-item class="input-item">
+        <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+        <ion-label>App Version</ion-label>
+        <ion-text>{{ appVersion }}</ion-text>
+      </ion-item>
+    </div>
+  </div>
+
+  <!-- Save button at bottom -->
+  <div class="bottom-button">
+    <ion-button expand="block" (click)="saveSettings()">
+      Save Settings
+    </ion-button>
+  </div>
+</div>

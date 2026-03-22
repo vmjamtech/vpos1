@@ -1,0 +1,63 @@
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-medium-shade);
+  margin-top: 18px;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+/* Scrollable area for existing notes */
+.existing-notes {
+  overflow-y: auto;
+  --background: var(--ion-color-light-tint);
+  border: 1px solid var(--ion-color-medium-shade);
+  border-radius: 10px;
+  padding: 10px;
+  max-height: 230px !important;
+}
+
+/* Scrollbar styling (Android/Chrome) */
+.existing-notes::-webkit-scrollbar {
+  width: 8px;
+}
+.existing-notes::-webkit-scrollbar-thumb {
+  background: var(--ion-color-medium);
+  border-radius: 4px;
+}
+
+.new-note {
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.form-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* space between inputs */
+  margin-bottom: 8px;
+}
+
+.stacked-item {
+  border-radius: 12px;
+  padding: 4px;
+
+  ion-label {
+    font-weight: 500;
+    font-size: 14px;
+  }
+}
+
+.sticky-btn {
+  position: sticky;
+  bottom: 16px; /* distance from bottom of modal */
+  z-index: 1000; /* on top of content */
+  margin: 0 16px; /* optional horizontal padding */
+  border-radius: 12px;
+  font-weight: 600;
+  height: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

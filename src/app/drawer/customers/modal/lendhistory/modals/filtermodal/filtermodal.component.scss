@@ -1,0 +1,56 @@
+ion-content {
+  --background: var(--ion-background-color);
+  padding: 16px;
+}
+
+/* ITEM WRAPPER */
+ion-item {
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+  --background: var(--ion-color-light);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(var(--ion-color-dark-rgb), 0.08);
+
+  ion-label.notify-label {
+    font-weight: 600;
+    color: var(--ion-text-color);
+    font-size: 0.95rem;
+  }
+}
+
+/* BUTTONS */
+ion-button {
+  margin-top: 10px;
+  height: 45px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* "Show All" outline button */
+ion-button[color="success"][fill="outline"] {
+  --border-color: var(--ion-color-success);
+  --border-radius: 10px;
+}
+
+/* Datetime popup styling */
+ion-popover {
+  --backdrop-opacity: 0.35;
+
+  ion-datetime {
+    border-radius: 12px;
+  }
+}
+
+/* Datetime button */
+ion-datetime-button {
+  --padding-start: 0;
+  --padding-end: 0;
+  --border-radius: 8px;
+}
+
+/* Layout container */
+:host {
+  display: block;
+  padding: 12px;
+}

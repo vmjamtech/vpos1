@@ -1,0 +1,100 @@
+<div class="gradient-border">
+  <div #container class="sign-in-container">
+    <ion-item
+      lines="none"
+      style="--background: transparent; --ion-item-background: transparent"
+    >
+      <img
+        src="assets/imgs/image2.png"
+        style="
+          width: 50vw; /* 30% of viewport width */
+          max-width: 250px; /* maximum width */
+          height: auto; /* automatic height to maintain aspect ratio */
+          max-height: 250px; /* maximum height */
+          object-fit: contain;
+          display: block;
+          margin: 0 auto; /* centers horizontally */
+        "
+      />
+    </ion-item>
+
+    <ion-text class="font-subheadline input-title">
+      <p>Username</p>
+    </ion-text>
+    <ion-item class="input-container" lines="none">
+      <ion-icon class="icon" name="person-circle-outline"></ion-icon>
+      <ion-input
+        type="email"
+        autocomplete="userid"
+        placeholder="Enter your username"
+        inputmode="userid"
+        enterkeyhint="next"
+        [(ngModel)]="userid"
+      ></ion-input>
+    </ion-item>
+
+    <ion-text class="font-subheadline input-title">
+      <p>Password</p>
+    </ion-text>
+    <ion-item class="input-container" lines="none">
+      <ion-icon class="icon" name="key-outline"></ion-icon>
+      <ion-input
+        type="password"
+        placeholder="Enter your password"
+        [(ngModel)]="password"
+        (keyup.enter)="
+          signIn(triggerSuccess, triggerError, triggerReset, triggerConfetti)
+        "
+      ></ion-input>
+    </ion-item>
+
+    <ion-button
+      class="sign-in-button font-headline"
+      expand="block"
+      type="submit"
+      (click)="
+        signIn(triggerSuccess, triggerError, triggerReset, triggerConfetti)
+      "
+    >
+      <ion-icon class="icon" name="arrow-forward-outline"></ion-icon>
+      Sign In
+    </ion-button>
+
+    <div class="rive-auth-indicator-container">
+      <canvas riv="check" width="100" height="100" [hidden]="!isLoading">
+        <riv-state-machine name="State Machine 1" play>
+          <riv-input #triggerSuccess="rivInput" name="Check"></riv-input>
+          <riv-input #triggerError="rivInput" name="Error"></riv-input>
+          <riv-input #triggerReset="rivInput" name="Reset"></riv-input>
+        </riv-state-machine>
+      </canvas>
+      <canvas class="rive-confetti" riv="confetti" width="1500" height="1500">
+        <riv-state-machine name="State Machine 1" play>
+          <riv-input
+            #triggerConfetti="rivInput"
+            name="Trigger explosion"
+          ></riv-input>
+        </riv-state-machine>
+      </canvas>
+    </div>
+    <!-- <ion-icon
+      class="floating-gear"
+      name="settings"
+      (click)="openSubsPage()"
+    ></ion-icon> -->
+  </div>
+</div>
+<div class="version-label">v{{ version }}</div>
+
+<ion-modal
+  #modal
+  backdropDismiss="false"
+  [enterAnimation]="enterAnimation"
+  [leaveAnimation]="leaveAnimation"
+>
+  <ng-template>
+    <div class="ion-page">
+      <app-settings (onClose)="onSettingsclose()"></app-settings>
+    </div>
+  </ng-template>
+</ion-modal>

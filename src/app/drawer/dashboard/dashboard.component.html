@@ -1,0 +1,290 @@
+<ion-content fullscreen>
+  <!-- Header -->
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">Dashboard</h2>
+    </div>
+  </div>
+
+  <div class="date-filter-container">
+    <ion-grid fixed class="date-filter">
+      <ion-row>
+        <ion-col size="6">
+          <ion-item lines="none" class="date-item">
+            <ion-label position="stacked">Date From</ion-label>
+            <input
+              type="date"
+              [(ngModel)]="dateFrom"
+              (input)="onDateChangeInput($event)"
+            />
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="6">
+          <ion-item lines="none" class="date-item">
+            <ion-label position="stacked">Date To</ion-label>
+            <input
+              type="date"
+              [(ngModel)]="dateTo"
+              (input)="onDateChangeInput($event)"
+            />
+          </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <!-- Main Dashboard Container -->
+  <div class="dashboard-container">
+    <ion-grid fixed>
+      <!-- Summary Cards Row -->
+      <ion-grid fixed class="summary-cards-grid">
+        <ion-row>
+          <!-- Sales Card -->
+          <ion-col size="12" size-md="4">
+            <ion-card class="summary-card sales-card">
+              <ion-card-content>
+                <div class="card-content">
+                  <div class="card-icon">
+                    <ion-icon name="cash-outline"></ion-icon>
+                  </div>
+                  <div class="card-text">
+                    <div class="card-title">Sales</div>
+                    <div class="card-value">{{ sales | currency : "PHP" }}</div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+
+          <!-- Profit Card -->
+          <ion-col size="12" size-md="4">
+            <ion-card class="summary-card profit-card">
+              <ion-card-content>
+                <div class="card-content">
+                  <div class="card-icon">
+                    <ion-icon name="trending-up-outline"></ion-icon>
+                  </div>
+                  <div class="card-text">
+                    <div class="card-title">Profit</div>
+                    <div class="card-value">
+                      {{ profit | currency : "PHP" }}
+                    </div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+
+          <!-- Expenses Card -->
+          <ion-col size="12" size-md="4">
+            <ion-card class="summary-card expenses-card">
+              <ion-card-content>
+                <div class="card-content">
+                  <div class="card-icon">
+                    <ion-icon name="wallet-outline"></ion-icon>
+                  </div>
+                  <div class="card-text">
+                    <div class="card-title">Expenses</div>
+                    <div class="card-value">
+                      {{ expenses | currency : "PHP" }}
+                    </div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <ion-row>
+        <ion-col>
+          <ion-card class="low-stock-list-card">
+            <ion-card-header>
+              <div class="header-row">
+                <ion-card-title>🚨 Low Stock Items</ion-card-title
+                ><ion-select
+                  interface="popover"
+                  placeholder="Select Location"
+                  [(ngModel)]="selectedLocation"
+                  (ionChange)="onLocationChange($event.detail.value)"
+                >
+                  <ion-select-option value="STORE">STORE</ion-select-option>
+                  <ion-select-option value="WAREHOUSE"
+                    >WAREHOUSE</ion-select-option
+                  >
+                </ion-select>
+
+                <ion-select
+                  interface="popover"
+                  placeholder="Sort"
+                  (ionChange)="sortLowStocks($event.detail.value)"
+                  value="stockAsc"
+                >
+                  <ion-select-option value="stockAsc"
+                    >Stock ↑</ion-select-option
+                  >
+                  <ion-select-option value="stockDesc"
+                    >Stock ↓</ion-select-option
+                  >
+                  <ion-select-option value="nameAsc"
+                    >Item Code A-Z</ion-select-option
+                  >
+                  <ion-select-option value="nameDesc"
+                    >Item Code Z-A</ion-select-option
+                  >
+                </ion-select>
+              </div>
+            </ion-card-header>
+
+            <ion-card-content>
+              <ion-list
+                *ngIf="lowStocksData && lowStocksData.length > 0; else noData"
+              >
+                <ion-item
+                  *ngFor="let item of lowStocksData"
+                  (click)="openAddModal(item)"
+                >
+                  <ion-label>
+                    <h3>{{ item.itemcode }} ({{ item.name }})</h3>
+                    <p>Stock: {{ item.stock }} / Min: {{ item.min }}</p>
+                  </ion-label>
+
+                  <ion-badge color="danger" *ngIf="item.stock <= item.min">
+                    LOW
+                  </ion-badge>
+                </ion-item>
+              </ion-list>
+              <ng-template #noData>
+                <div class="empty-state">
+                  <ion-icon name="cube-outline"></ion-icon>
+                  <p>
+                    No low stock items in
+                    <strong>{{ selectedLocation }}</strong>
+                  </p>
+                </div>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <!-- Items Sold Chart -->
+      <ion-row>
+        <ion-col>
+          <ion-card class="chart-card">
+            <ion-card-header>
+              <ion-card-title>Top Items Sold</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="chart-host" #itemsSoldHost>
+                <highcharts-chart
+                  [options]="itemsSoldChartOptions"
+                  [(update)]="itemsSoldUpdateFlag"
+                  (chartInstance)="onItemsSoldChartInstance($event)"
+                  style="width: 100%; height: 300px; display: block"
+                ></highcharts-chart>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <!-- Lend / Return Timeline -->
+      <ion-row>
+        <ion-col>
+          <ion-card class="chart-card expenses-card">
+            <ion-card-header>
+              <ion-card-title>Lend / Return Timeline</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ng-container *ngIf="lendData.length > 0; else noLendData">
+                <ul class="expenses-timeline">
+                  <li *ngFor="let lend of lendData">
+                    <h6 class="expense-title">
+                      {{ lend.customer }}
+                      <small class="expense-date">{{
+                        lend.cdate | date : "MM-dd-yyyy HH:mm"
+                      }}</small>
+
+                      <ion-badge
+                        [color]="
+                          lend.status === 'RETURN' ? 'success' : 'warning'
+                        "
+                        style="margin-left: 12px"
+                      >
+                        {{ lend.status }}
+                      </ion-badge>
+                    </h6>
+                    <p class="expense-amount">
+                      Quantity: {{ lend.qty }} - {{ lend.itemcode }} ({{
+                        lend.itemname
+                      }})
+                    </p>
+                  </li>
+                </ul>
+              </ng-container>
+              <ng-template #noLendData>
+                <p class="text-center text-muted">No Lend Data</p>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <!-- Expenses Timeline -->
+      <ion-row>
+        <ion-col>
+          <ion-card class="chart-card expenses-card">
+            <ion-card-header>
+              <ion-card-title>Expenses Timeline</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ng-container
+                *ngIf="expensesData.length > 0; else noExpensesData"
+              >
+                <ul class="expenses-timeline">
+                  <li *ngFor="let expense of expensesData">
+                    <h6 class="expense-title">
+                      {{ expense.rem }}
+                      <small class="expense-date">{{
+                        expense.cdate | date : "MM-dd-yyyy HH:mm"
+                      }}</small>
+                    </h6>
+                    <p class="expense-amount">
+                      Amount: {{ expense.amount | currency : "PHP" }}
+                    </p>
+                  </li>
+                </ul>
+              </ng-container>
+              <ng-template #noExpensesData>
+                <p class="text-center text-muted">No Expenses Data</p>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <!-- Personnel Transactions Chart -->
+      <ion-row>
+        <ion-col>
+          <ion-card class="chart-card">
+            <ion-card-header>
+              <ion-card-title>Personnel Transactions</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="chart-host" #personnelHost>
+                <highcharts-chart
+                  [options]="personnelChartOptions"
+                  [(update)]="personnelUpdateFlag"
+                  (chartInstance)="onPersonnelChartInstance($event)"
+                  style="width: 100%; height: 300px; display: block"
+                ></highcharts-chart>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

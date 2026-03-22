@@ -1,0 +1,152 @@
+<ion-content [scrollEvents]="true">
+  <!-- Header -->
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">Petty Cash Logs</h2>
+
+      <!-- <ion-button fill="clear" class="header-options">
+        <ion-icon name="apps-outline"></ion-icon>
+      </ion-button> -->
+    </div>
+  </div>
+
+  <ion-refresher
+    slot="fixed"
+    (ionRefresh)="doRefresh($event)"
+    [pullFactor]="0.5"
+    [pullMin]="100"
+    [pullMax]="200"
+  >
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="search-container">
+    <ion-searchbar
+      [debounce]="300"
+      [placeholder]="searchFieldLabels[searchField]"
+      [(ngModel)]="searchValue"
+      (ionInput)="onSearchChange()"
+    ></ion-searchbar>
+
+    <ion-button fill="clear" (click)="selectSearchField()" class="filter-btn">
+      <ion-icon name="funnel-outline"></ion-icon>
+    </ion-button>
+
+    <ion-button fill="clear" (click)="openFilter()" class="filter-btn">
+      <ion-icon name="filter-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Skeleton Loader -->
+    <ion-list
+      *ngIf="isLoading && filteredItems.length === 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item *ngFor="let skeleton of skeletonArray">
+        <ion-label>
+          <h2>
+            <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+          </h2>
+          <div class="meta">
+            <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
+          </div>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Real Data -->
+    <ion-list
+      *ngIf="!isLoading && filteredItems.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item *ngFor="let item of filteredItems">
+        <ion-label>
+          <div class="meta">
+            <strong>Date:</strong> {{ item.pettylogdate | date : "yyyy-MM-dd" }}
+          </div>
+          <div class="meta">
+            <strong>Input Amount:</strong> ₱{{
+              item.pettylogamount | number : "1.2-2"
+            }}
+          </div>
+          <div class="meta">
+            <strong>Petty Cash Amount:</strong> ₱{{
+              item.pettyorigamount | number : "1.2-2"
+            }}
+          </div>
+          <div class="meta">
+            <strong>Payment Method:</strong> {{ item.pettypaymenthod }}
+          </div>
+          <div class="meta">
+            <strong>Action:</strong> {{ item.pettylogtype }}
+          </div>
+          <div class="meta">
+            <strong>Cashier:</strong> {{ item.pettylogby }}
+          </div>
+          <div class="meta">
+            <strong>Remarks:</strong> {{ item.pettylogremarks }}
+          </div>
+
+          <!-- <ion-badge
+            class="status-badge"
+            [color]="
+              item.salestatus === 'CANCELLED'
+                ? 'danger'
+                : item.salestatus === 'PAID'
+                ? 'success'
+                : item.salestatus === 'UNPAID'
+                ? 'warning'
+                : 'medium'
+            "
+          >
+            {{ item.salestatus }}
+          </ion-badge> -->
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredItems.length === 0" class="empty-state">
+      <ion-icon name="cube-outline"></ion-icon>
+      <p>No data found.</p>
+    </div>
+  </div>
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll
+    threshold="150px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded || isSearching"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more data..."
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <ion-fab
+    vertical="bottom"
+    horizontal="end"
+    slot="fixed"
+    class="fab-custom"
+    (click)="openAddModal()"
+  >
+    <ion-fab-button color="primary">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
+
+<ion-footer class="total-footer">
+  <div class="total-container">
+    <strong>Total Amount:</strong>
+    <span>₱{{ total | number : "1.2-2" }}</span>
+  </div>
+</ion-footer>

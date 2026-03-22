@@ -1,0 +1,221 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Purchase Summary</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismissModal()">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="checkout-modal" fullscreen>
+  <!-- CUSTOMER & PERSONNEL -->
+  <!-- CUSTOMER & PERSONNEL -->
+  <ion-card class="compact-card">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="person-circle-outline"></ion-icon>
+        Customer & Personnel
+      </ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content class="compact-card-content">
+      <!-- Customer -->
+      <div class="row-div">
+        <span class="label">Customer</span>
+        <span class="value">{{ posData.customerName || "N/A" }}</span>
+      </div>
+      <div class="row-div">
+        <span class="label">Address</span>
+        <span class="value">{{ posData.customeraddress || "" }}</span>
+      </div>
+
+      <!-- Personnels -->
+      <div class="row-div">
+        <span class="label">Personnels</span>
+        <span class="value">
+          {{ posData.personnel1Name }}
+          <span *ngIf="posData.personnel1Name && posData.personnel2Name"
+            >,</span
+          >
+          {{ posData.personnel2Name }}
+        </span>
+      </div>
+
+      <!-- Cashier -->
+      <div class="row-div">
+        <span class="label">Cashier</span>
+        <span class="value">{{ cashierName }}</span>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="row-div">
+        <span class="label">Date & Time</span>
+        <span class="value">{{
+          currentDate | date : "MMM dd, yyyy hh:mm:ss a"
+        }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- PAYMENT -->
+  <ion-card class="compact-card">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="card-outline"></ion-icon>
+        Payment
+      </ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content class="compact-card-content">
+      <!-- Payment Type -->
+      <div class="payment-section">
+        <!-- Payment Type -->
+        <div class="row-div">
+          <span class="label">Payment Type</span>
+
+          <ion-select
+            [(ngModel)]="paymentType"
+            (ionChange)="onPaymentTypeChange()"
+            interface="popover"
+            class="select-input"
+          >
+            <ion-select-option value="FULL PAYMENT"
+              >FULL PAYMENT</ion-select-option
+            >
+            <ion-select-option value="PARTIAL PAYMENT"
+              >PARTIAL PAYMENT</ion-select-option
+            >
+          </ion-select>
+        </div>
+
+        <!-- Partial Payment Options -->
+        <div *ngIf="paymentType === 'PARTIAL PAYMENT'" class="partial-section">
+          <div class="partial-row">
+            <ion-checkbox [(ngModel)]="partialPaymentConfirmed"></ion-checkbox>
+            <ion-label class="notify-label">Notify Balance</ion-label>
+            <ion-datetime-button datetime="partialDate"></ion-datetime-button>
+          </div>
+
+          <!-- Date Modal -->
+          <ion-popover [keepContentsMounted]="true" [dismissOnSelect]="true">
+            <ng-template>
+              <ion-datetime
+                id="partialDate"
+                presentation="date"
+                [(ngModel)]="partialPaymentDueDate"
+                [min]="tomorrowDate"
+                [max]="'2050-12-31'"
+                name="partialPaymentDate"
+                (ionChange)="onPartialDateChanged($event)"
+              >
+              </ion-datetime>
+            </ng-template>
+          </ion-popover>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="payment-section">
+        <div class="row-div">
+          <span class="label">Payment Method</span>
+          <ion-select
+            [(ngModel)]="paymentMethod"
+            interface="popover"
+            class="select-input"
+          >
+            <ion-select-option value="CASH">CASH</ion-select-option>
+            <ion-select-option value="GCASH">GCASH</ion-select-option>
+            <ion-select-option value="BANK TRANSFER"
+              >BANK TRANSFER</ion-select-option
+            >
+          </ion-select>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- SUMMARY -->
+  <ion-card class="compact-card">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="receipt-outline"></ion-icon>
+        Purchase Summary
+      </ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content class="compact-card-content">
+      <div class="row-div">
+        <span class="label">Total Items</span>
+        <span class="value">{{ totalitems }}</span>
+      </div>
+
+      <div class="row-div">
+        <span class="label">Discount</span>
+        <span class="value">₱{{ posData.discount | number : "1.2-2" }}</span>
+      </div>
+
+      <div class="row-div total-row">
+        <span class="label">Total Amount</span>
+        <span class="value">₱{{ totalAmount | number : "1.2-2" }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- TENDERED AMOUNT -->
+  <ion-card class="compact-card">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="cash-outline"></ion-icon>
+        Tendered Amount
+      </ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-item class="tendered-row" lines="none">
+        <ion-label>₱</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="tenderedAmount"
+          placeholder="Enter amount"
+          (ionBlur)="formatTenderedAmount()"
+          inputmode="decimal"
+          style="text-align: center"
+        ></ion-input>
+
+        <ion-button fill="outline" size="small" (click)="exactAmount()">
+          Exact
+        </ion-button>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Change</ion-label>
+        <ion-text>₱{{ getChange() | number : "1.2-2" }}</ion-text>
+      </ion-item>
+
+      <ion-item lines="none">
+        <!-- <ion-label position="stacked">Notes</ion-label> -->
+
+        <ion-textarea
+          [(ngModel)]="notes"
+          placeholder="Add notes..."
+          class="notes-field"
+          autoGrow="true"
+        ></ion-textarea>
+      </ion-item>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-button
+      expand="block"
+      (click)="confirmPayment()"
+      [disabled]="!canConfirm()"
+    >
+      CONFIRM
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

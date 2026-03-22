@@ -1,0 +1,55 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>EDIT PAYMENT</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Payment Type</ion-label>
+      <ion-select
+        [(ngModel)]="localSales.salespaytype"
+        placeholder="Select"
+        interface="popover"
+      >
+        <ion-select-option value="FULL PAYMENT">FULL PAYMENT</ion-select-option>
+        <ion-select-option value="PARTIAL PAYMENT"
+          >PARTIAL PAYMENT</ion-select-option
+        >
+      </ion-select>
+    </ion-item>
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Payment Method</ion-label>
+      <ion-select
+        [(ngModel)]="localSales.salespaym"
+        placeholder="Select"
+        interface="popover"
+      >
+        <ion-select-option value="CASH">CASH</ion-select-option>
+        <ion-select-option value="GCASH">GCASH</ion-select-option>
+        <ion-select-option value="BANK TRANSFER"
+          >BANK TRANSFER</ion-select-option
+        >
+      </ion-select>
+    </ion-item>
+
+    <!-- Tendered Amount -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Tendered Amount</ion-label>
+
+      <ion-input
+        type="number"
+        [(ngModel)]="localSales.salestender"
+        placeholder="0.00"
+      ></ion-input>
+    </ion-item>
+  </div>
+
+  <ion-button expand="block" class="sticky-btn" (click)="confirmChanges()">
+    SAVE</ion-button
+  >
+</ion-content>

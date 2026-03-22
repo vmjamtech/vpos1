@@ -1,0 +1,177 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ mode === "edit" ? "Update Item" : "Add Item" }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <!-- ITEM CODE -->
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Item Code</ion-label>
+      <ion-input
+        [(ngModel)]="itemcode"
+        name="itemcode"
+        placeholder="Enter Item Code"
+        [disabled]="mode === 'edit'"
+        (ionInput)="validateItemCode()"
+        debounce="300"
+      ></ion-input>
+      <ion-text color="danger" *ngIf="itemcodeExists">
+        Item code already exists!
+      </ion-text>
+    </ion-item>
+
+    <!-- DESCRIPTION -->
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Description</ion-label>
+      <ion-input
+        [(ngModel)]="description"
+        name="description"
+        placeholder="Enter Item Description"
+      ></ion-input>
+    </ion-item>
+
+    <!-- SIZE DROPDOWN -->
+    <ion-item class="stacked-item">
+      <ion-label>Size</ion-label>
+      <ion-select
+        [(ngModel)]="selectedSize"
+        name="selectedSize"
+        interface="popover"
+      >
+        <ion-select-option [value]="null" disabled selected hidden>
+          Select Size
+        </ion-select-option>
+        <ion-select-option *ngFor="let size of sizes" [value]="size">{{
+          size
+        }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <!-- CATEGORY DROPDOWN -->
+    <ion-item class="stacked-item">
+      <ion-label>Category</ion-label>
+      <ion-select
+        [(ngModel)]="selectedCategory"
+        name="selectedCategory"
+        interface="popover"
+      >
+        <ion-select-option [value]="null" disabled selected hidden>
+          Select Category
+        </ion-select-option>
+        <ion-select-option *ngFor="let c of categories" [value]="c.category">{{
+          c.category
+        }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <!-- FILL QTY -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Fill Tank Qty</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="fillqty"
+        name="fillqty"
+        (ionChange)="computeTotal()"
+      ></ion-input>
+    </ion-item>
+
+    <!-- EMPTY QTY -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Empty Tank Qty</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="emptyqty"
+        name="emptyqty"
+        (ionChange)="computeTotal()"
+      ></ion-input>
+    </ion-item>
+
+    <!-- TOTAL -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Total Qty</ion-label>
+      <ion-input [value]="totalqty" readonly name="totalqty"></ion-input>
+    </ion-item>
+
+    <!-- PRICES -->
+    <ion-list>
+      <ion-item-divider><ion-label>Prices</ion-label></ion-item-divider>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Refill Price</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="refillPrice"
+          name="refillPrice"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Non-Refill Price</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="nonRefillPrice"
+          name="nonRefillPrice"
+        ></ion-input>
+      </ion-item>
+    </ion-list>
+
+    <!-- COMMISSIONS -->
+    <ion-list>
+      <ion-item-divider><ion-label>Commissions</ion-label></ion-item-divider>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Delivery Commission</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="deliveryCommission"
+          name="deliveryCommission"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Pickup Commission</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="pickupCommission"
+          name="pickupCommission"
+        ></ion-input>
+      </ion-item>
+    </ion-list>
+
+    <!-- ITEM COST -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Item Cost</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="itemCost"
+        name="itemCost"
+      ></ion-input>
+    </ion-item>
+
+    <!-- CRITICAL LEVEL -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Critical Level</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="criticalLevel"
+        name="criticalLevel"
+      ></ion-input>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+    [disabled]="
+      !itemcode || !description || !selectedCategory || itemcodeExists
+    "
+  >
+    {{ mode === "edit" ? "Update Item" : "Add Item" }}
+  </ion-button>
+</ion-content>

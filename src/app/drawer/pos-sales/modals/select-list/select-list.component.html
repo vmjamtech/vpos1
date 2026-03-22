@@ -1,0 +1,71 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="select-list-modal">
+  <!-- Search Bar -->
+  <ion-searchbar
+    [debounce]="500"
+    [(ngModel)]="searchText"
+    (ionInput)="filterList()"
+    placeholder="Search..."
+    showClearButton="always"
+  ></ion-searchbar>
+
+  <!-- Loading Skeleton -->
+  <ion-skeleton-text
+    *ngIf="loading && list.length === 0"
+    animated
+    style="width: 100%; height: 40px; margin: 8px 0"
+  ></ion-skeleton-text>
+
+  <!-- List of Items -->
+  <ion-list *ngIf="!loading || list.length > 0">
+    <ion-item
+      *ngFor="let item of filteredList"
+      button
+      lines="full"
+      (click)="selectItem(item)"
+    >
+      <ion-label>
+        <h2>
+          {{ type === "customer" ? item.custname : item.pname }}
+        </h2>
+        <p class="item-address">
+          {{ type === "customer" ? item.custadd : item.paddress }}
+        </p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll
+    threshold="100px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more..."
+    >
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <!-- No results -->
+  <div
+    *ngIf="!loading && list.length && filteredList.length === 0"
+    class="no-results"
+  >
+    No results found.
+  </div>
+
+  <!-- Empty data -->
+  <div *ngIf="!loading && list.length === 0" class="no-results">
+    No {{ type }} available.
+  </div>
+</ion-content>

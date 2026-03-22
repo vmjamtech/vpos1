@@ -1,0 +1,175 @@
+// set menu's background color, instead of setting it on all elements
+// ref:- 'https://stackoverflow.com/a/52377135'
+.trial-badge {
+  position: fixed;
+  top: 12px;
+  right: -28px;
+  transform: rotate(45deg);
+  width: 120px;
+  text-align: center;
+  z-index: 9999;
+}
+
+ion-menu {
+  --ion-background-color: var(--color-notWhite, white);
+
+  ion-toolbar {
+    --background: var(--color-notWhite, white);
+  }
+}
+
+ion-list,
+ion-item {
+  --ion-item-background: transparent;
+}
+
+.headerToolbar {
+  padding: 30px 16px 16px;
+  background-color: var(--color-notWhite, white);
+
+  .userContainer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  ion-avatar.userImage {
+    width: 100px;
+    height: 100px;
+    box-shadow: 2px 4px 8px 0px var(--shadow-color);
+  }
+
+  .userInfoContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .userId {
+      font-size: 18px;
+      font-family: WorkSans-SemiBold;
+      color: var(--ion-text-color);
+      margin-bottom: 4px;
+    }
+
+    .stcodeRow {
+      display: flex;
+      flex-direction: column;
+
+      .stcode {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ion-color-gold-shade);
+      }
+
+      .stname {
+        font-size: 14px;
+        color: var(--ion-text-color);
+      }
+    }
+  }
+}
+
+ion-item.drawerItem {
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --padding-start: 0px;
+  --padding-end: 0px;
+  overflow: hidden;
+  // Just to fix radius gets removed on iOS after translateX animation issue
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  -moz-transform: translate3d(0, 0, 0);
+
+  ion-item.drawerInnerItem {
+    --background: var(--background);
+    width: var(--width);
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    position: absolute;
+  }
+
+  .icon-margin {
+    margin-left: 14px;
+  }
+
+  // I couldn't found a way to tint an icon in css, this is a workaround
+  // get values from here "https://codepen.io/sosuke/pen/Pjoqqp"
+  $blueTint: invert(46%) sepia(90%) saturate(2764%) hue-rotate(189deg)
+    brightness(104%) contrast(91%);
+  $blackTint: brightness(0%);
+
+  .imgTintBlue {
+    filter: $blueTint;
+  }
+  .imgTintBlack {
+    filter: $blackTint;
+
+    @media (prefers-color-scheme: dark) {
+      filter: $blackTint invert(1);
+    }
+  }
+}
+
+.sign-out-text {
+  font-size: 16px;
+  font-family: WorkSans-SemiBold;
+  color: var(--color-darkText);
+}
+
+.material-icons.colorRed {
+  color: red;
+}
+
+$size: 40px;
+$height: 14px;
+$width: 20px;
+$line-size: 2px;
+$line-color: var(--color-darkgrey);
+$line-radius: $line-size;
+.menu {
+  position: relative;
+  height: $size;
+  width: $size;
+  cursor: pointer;
+  margin-left: 8px;
+  overflow: hidden;
+
+  margin-top: calc(var(--status-bar-height) + 4px);
+
+  &__icon {
+    position: absolute;
+    width: $width;
+    height: $height;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  &__line {
+    position: absolute;
+    left: 0;
+    // background-color: $line-color;
+    background-color: var(--ion-color-primary);
+    height: $line-size;
+    width: 100%;
+    border-radius: $line-radius;
+    pointer-events: none;
+    &--1 {
+      top: 0;
+    }
+    &--2 {
+      top: 0;
+      bottom: 0;
+      margin: auto;
+    }
+    &--3 {
+      bottom: 0;
+    }
+  }
+}
+
+.ios :host .menu {
+  margin-top: calc(var(--ion-safe-area-top) + 4px);
+}

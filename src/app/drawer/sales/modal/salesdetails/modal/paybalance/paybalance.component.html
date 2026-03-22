@@ -1,0 +1,89 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Pay Balance</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <div class="section-title">Details</div>
+    <!-- Sales Info Card (Sticky Header) -->
+    <ion-card class="sales-info-card">
+      <ion-card-content style="padding: 0px 8px">
+        <div class="row">
+          <span class="label">Reference Number:</span>
+          <span class="value">{{ sales?.salesrefnum }}</span>
+        </div>
+        <div class="row">
+          <span class="label">Customer:</span>
+          <span class="value">{{ sales?.salescust || "" }}</span>
+        </div>
+        <div class="row">
+          <span class="label">{{ sales?.salescat || "" }} </span>
+        </div>
+        <div class="row">
+          <span class="tender">Balance:</span>
+          <span class="tender">{{
+            sales?.tenderbalance | currency : "PHP"
+          }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+    <div class="section-title">Payment</div>
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Payment Method</ion-label>
+      <ion-select
+        [(ngModel)]="paymentMethod"
+        placeholder="Select"
+        interface="popover"
+      >
+        <ion-select-option value="CASH">CASH</ion-select-option>
+        <ion-select-option value="GCASH">GCASH</ion-select-option>
+        <ion-select-option value="BANK TRANSFER"
+          >BANK TRANSFER</ion-select-option
+        >
+      </ion-select>
+    </ion-item>
+
+    <!-- Tendered Amount -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Tendered Amount</ion-label>
+
+      <ion-input
+        type="number"
+        [(ngModel)]="tendered"
+        (ionInput)="computeBalance()"
+        placeholder="0.00"
+      ></ion-input>
+
+      <!-- Icon Button: Exact Amount -->
+      <ion-button fill="clear" slot="end" (click)="setExactAmount()">
+        <ion-icon name="bag-check-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+
+    <!-- Balance After Payment -->
+    <ion-item class="stacked-item">
+      <ion-label position="stacked">Balance After Payment</ion-label>
+
+      <ion-input [value]="balanceAfter | number : '1.2-2'" readonly></ion-input>
+
+      <!-- Icon Button: Print -->
+      <ion-button fill="clear" slot="end" (click)="printBalance()">
+        <ion-icon name="print-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </div>
+
+  <ion-button
+    expand="block"
+    (click)="payAndPrint()"
+    class="sticky-btn"
+    [disabled]="!isValidPayment()"
+  >
+    Pay & Print
+  </ion-button>
+</ion-content>

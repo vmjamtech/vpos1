@@ -1,0 +1,44 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{
+      mode === "edit" ? "Update Category" : "Add Category"
+    }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Category Name -->
+  <ion-item lines="none" class="stacked-item">
+    <ion-label position="stacked">Category Name</ion-label>
+    <ion-input
+      name="categoryName"
+      [value]="categoryName"
+      placeholder="Enter Category Name"
+      (ionInput)="categoryName = $any($event.target).value"
+    ></ion-input>
+  </ion-item>
+
+  <!-- CSV Monitor -->
+  <ion-item lines="none" class="stacked-item">
+    <ion-label>CSV Monitor</ion-label>
+    <ion-toggle
+      name="monitorFlag"
+      [checked]="monitorFlag"
+      (ionChange)="monitorFlag = $event.detail.checked"
+    ></ion-toggle>
+  </ion-item>
+
+  <!-- Save -->
+  <ion-button
+    expand="block"
+    color="primary"
+    class="ion-margin-top"
+    (click)="saveCategory()"
+    [disabled]="!categoryName"
+  >
+    {{ mode === "edit" ? "Update Category" : "Save Category" }}
+  </ion-button>
+</ion-content>

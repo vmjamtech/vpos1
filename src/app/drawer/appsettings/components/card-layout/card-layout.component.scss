@@ -1,0 +1,90 @@
+/* ====================== */
+/* Card style for groups  */
+/* ====================== */
+.group.card {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--ion-background-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+    
+/* Group titles */
+.group-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--ion-color-primary);
+  text-align: left;
+}
+
+/* Logo wrapper */
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.logo-wrapper img,
+.logo-wrapper .placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.placeholder ion-icon {
+  font-size: 30px;
+  color: var(--ion-text-medium);
+}
+
+.logo-text {
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 8px;
+  color: var(--ion-text-medium);
+}
+
+/* Inputs */
+ion-item {
+  --min-height: 50px;
+}
+
+ion-input {
+  font-size: 14px;
+}
+
+/* Preview */
+.preview-container {
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+}
+
+.receipt-slip {
+  width: 280px;
+  padding: 12px;
+  border: 1px dashed #ccc;
+  background: #fff;
+  font-family: monospace;
+  text-align: center;
+  border-radius: 6px;
+}
+
+.preview-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 8px;
+}
+
+.receipt-slip p {
+  margin: 2px 0;
+  font-size: 14px;
+}
+
+/* Buttons full width for mobile */
+ion-button {
+  margin: 6px 0;
+  width: 100%;
+}

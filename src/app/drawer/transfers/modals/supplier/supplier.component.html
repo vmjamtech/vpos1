@@ -1,0 +1,115 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">Supplier</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Pull-to-refresh -->
+  <ion-refresher
+    slot="fixed"
+    (ionRefresh)="doRefresh($event)"
+    [pullFactor]="0.5"
+    [pullMin]="100"
+    [pullMax]="200"
+  >
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Search Section -->
+  <div class="search-container">
+    <ion-searchbar
+      [debounce]="300"
+      placeholder="Search Supplier"
+      [(ngModel)]="searchValue"
+      (ionInput)="onSearchChange()"
+    ></ion-searchbar>
+  </div>
+
+  <div class="product-list-container">
+    <!-- Skeleton Loader -->
+    <ion-list
+      *ngIf="isLoading && filteredItems.length === 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item *ngFor="let skeleton of skeletonArray">
+        <ion-label>
+          <h2>
+            <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+          </h2>
+          <div class="meta">
+            <ion-skeleton-text animated style="width: 40%"></ion-skeleton-text>
+          </div>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Real Data -->
+    <ion-list
+      *ngIf="!isLoading && filteredItems.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <ion-item-sliding *ngFor="let item of filteredItems">
+        <!-- Main Item (click to edit) -->
+        <ion-item (click)="openEditCategoryModal(item)">
+          <ion-label>
+            <h2 class="desc">{{ item.suppname }}</h2>
+            <div class="meta">Business Title: {{ item.supptitle }}</div>
+            <div class="meta">Address: {{ item.suppaddress }}</div>
+            <div class="meta">Contact Number: {{ item.suppcont }}</div>
+            <div class="meta">Email Address: {{ item.suppemail }}</div>
+          </ion-label>
+        </ion-item>
+
+        <!-- Sliding Options -->
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deleteCategoryConfirm(item)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredItems.length === 0" class="empty-state">
+      <ion-icon name="cube-outline"></ion-icon>
+      <p>No suppliers found.</p>
+    </div>
+
+    <!-- Infinite Scroll -->
+    <ion-infinite-scroll
+      threshold="100px"
+      (ionInfinite)="loadMore($event)"
+      [disabled]="allLoaded"
+    >
+      <ion-infinite-scroll-content
+        loadingSpinner="bubbles"
+        loadingText="Loading more suppliers..."
+      >
+      </ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </div>
+
+  <!-- FAB -->
+  <ion-fab
+    vertical="bottom"
+    horizontal="end"
+    slot="fixed"
+    class="fab-custom"
+    (click)="openAddCategoryModal()"
+  >
+    <ion-fab-button color="primary">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

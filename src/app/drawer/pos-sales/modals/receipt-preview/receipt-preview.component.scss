@@ -1,0 +1,152 @@
+/* Container flex layout */
+.receipt-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+/* Scrollable receipt content */
+.receipt-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; // Qty | Item | Total
+  align-items: center;
+  font-family: monospace;
+  font-size: 13px;
+  margin: 2px 0;
+
+  &.header {
+    font-weight: 700;
+    border-bottom: 1px solid #bdbdbd;
+    padding-bottom: 2px;
+  }
+
+  .qty {
+    text-align: left;
+  }
+
+  .item {
+    text-align: left;
+    padding: 0 8px;
+    word-break: break-word;
+  }
+
+  .total {
+    text-align: right;
+  }
+}
+
+.totals-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr; // Label | Amount
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 2px 0;
+  align-items: center;
+
+  .label {
+    text-align: left;
+    padding-right: 8px;
+  }
+
+  .amount {
+    text-align: right;
+  }
+}
+
+/* Logo */
+.logo-image {
+  max-width: 300px;
+  height: auto;
+  margin: 0 auto 8px auto;
+}
+
+/* Receipt Paper */
+.receipt-paper {
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 0 auto;
+  max-width: 320px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre;
+}
+
+/* Header text */
+.header-text {
+  text-align: center;
+  white-space: normal;
+  word-wrap: break-word;
+  margin: 2px 0;
+}
+.header-text.wrap {
+  white-space: normal !important;
+}
+.bold {
+  font-weight: 700;
+}
+
+/* Items */
+.item-header,
+.item-line {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 0.9;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre;
+}
+
+/* Totals */
+.totals {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Customer info */
+.customer-info {
+  text-align: left;
+  white-space: normal;
+  word-wrap: break-word;
+  margin: 2px 0;
+}
+
+/* Separators */
+hr {
+  border: none;
+  border-top: 1px dashed #bdbdbd;
+  margin: 8px 0;
+}
+
+/* Center utility */
+.center {
+  text-align: center;
+}
+
+/* Sticky action buttons */
+.action-buttons {
+  flex-shrink: 0;
+  padding: 16px;
+  background: #fff;
+  border-top: 1px solid #dcdcdc;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}

@@ -1,0 +1,62 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>POS AI Assistant</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content #content class="ion-padding chat-content">
+  <div class="quick-prompts">
+    <ion-chip
+      *ngFor="let p of quickPrompts; trackBy: trackByIndex"
+      (click)="sendQuickPrompt(p.prompt)"
+      [class.is-disabled]="isLoading"
+      [attr.aria-disabled]="isLoading ? 'true' : null"
+    >
+      <ion-icon *ngIf="p.icon" [name]="p.icon"></ion-icon>
+      <span class="chip-label">{{ p.label }}</span>
+    </ion-chip>
+  </div>
+
+  <div class="chat-container">
+    <div
+      *ngFor="let chat of chatHistory; trackBy: trackByIndex"
+      class="message-row"
+      [class.user]="chat.role === 'user'"
+      [class.ai]="chat.role === 'ai'"
+    >
+      <div class="chat-bubble" [innerHTML]="chat.message"></div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="typing-row ai">
+    <div class="typing-indicator">
+      <ion-spinner name="dots"></ion-spinner>
+    </div>
+  </div>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar class="chat-footer-toolbar">
+    <ion-item lines="none" class="chat-input-item">
+      <ion-textarea
+        placeholder="Ask about sales, customers, stock, transfers..."
+        [(ngModel)]="userInput"
+        [autoGrow]="true"
+        [rows]="1"
+        maxlength="500"
+        (keydown.enter)="sendMessage(); $event.preventDefault()"
+      ></ion-textarea>
+      <ion-button
+        fill="solid"
+        size="small"
+        (click)="sendMessage()"
+        [disabled]="!userInput.trim() || isLoading"
+      >
+        <ion-icon name="send-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-toolbar>
+</ion-footer>

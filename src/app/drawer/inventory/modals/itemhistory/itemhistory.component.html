@@ -1,0 +1,75 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title style="margin-top: 20px">{{ itemcode }} Item History</ion-title>
+    <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen [scrollEvents]="true" force-overscroll="false">
+  <!-- Pull-to-refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-down-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="search-container">
+    <ion-button expand="block" color="primary" (click)="openFilter($event)">
+      FILTER DATA <ion-icon name="filter-outline"></ion-icon>
+    </ion-button>
+  </div>
+  <div class="product-list-container">
+    <!-- Product list -->
+
+    <!-- Skeleton loader -->
+    <ng-container *ngIf="isLoading">
+      <ion-item *ngFor="let s of skeletonArray">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 100%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ng-container>
+    <ion-list
+      *ngIf="!isLoading && items.length > 0"
+      lines="none"
+      class="product-list card-list"
+    >
+      <!-- Real data -->
+      <ion-item *ngFor="let h of filteredItems">
+        <ion-label>
+          <div class="meta"><strong>Date:</strong> {{ h.itemhdate | date:'yyyy-MM-dd hh:mm:ss a' }}</div>
+          <div class="meta">
+            <strong>Reference:</strong> {{ h.itemhrefnum }}
+          </div>
+          <div class="meta"><strong>Quantity:</strong> {{ h.itemhqty }}</div>
+          <div class="meta"><strong>Origin:</strong> {{ h.itemhorigin }}</div>
+          <div class="meta"><strong>Remarks:</strong> {{ h.itemhremarks }}</div>
+        </ion-label>
+      </ion-item>
+
+      <!-- Empty state -->
+      <ion-item *ngIf="!isLoading && filteredItems.length === 0">
+        <ion-label class="ion-text-center">
+          <ion-icon name="cube-outline"></ion-icon>
+          <p>No data found.</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+  <!-- Infinite scroll -->
+  <ion-infinite-scroll
+    threshold="100px"
+    (ionInfinite)="loadMore($event)"
+    [disabled]="allLoaded"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more data..."
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

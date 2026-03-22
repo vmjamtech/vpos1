@@ -1,0 +1,73 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{
+      mode === "edit" ? "Update Supplier" : "Add Supplier"
+    }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="form-container">
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Supplier Name</ion-label>
+      <ion-input
+        [(ngModel)]="suppname"
+        name="suppname"
+        placeholder="Enter Supplier Name"
+        (ionInput)="validateName()"
+        debounce="300"
+      ></ion-input>
+      <ion-text color="danger" *ngIf="nameExists">
+        Supplier Name already exists!
+      </ion-text>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Business Title</ion-label>
+      <ion-input
+        [(ngModel)]="supptitle"
+        name="supptitle"
+        placeholder="Enter Business Title"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Address</ion-label>
+      <ion-input
+        [(ngModel)]="suppaddress"
+        name="suppaddress"
+        placeholder="Enter Address"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Contact Number</ion-label>
+      <ion-input
+        [(ngModel)]="suppcont"
+        name="suppcont"
+        placeholder="Enter Contact Number"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item lines="none" class="stacked-item">
+      <ion-label position="stacked">Email Address</ion-label>
+      <ion-input
+        [(ngModel)]="suppemail"
+        name="suppemail"
+        placeholder="Enter Email Address"
+      ></ion-input>
+    </ion-item>
+  </div>
+  <ion-button
+    class="sticky-btn"
+    expand="block"
+    color="primary"
+    (click)="saveItem()"
+    [disabled]="!suppname || nameExists"
+  >
+    {{ mode === "edit" ? "Update Supplier" : "Add Supplier" }}
+  </ion-button>
+</ion-content>
