@@ -60,6 +60,9 @@ export class AppdateService {
     Bname: string;
     Baddress: string;
     ReceiptPosName: string;
+    ReceiptContactInfo?: string;
+    ReceiptContactInfo1?: string;
+    ReceiptContactInfo2?: string;
     Blogo?: string | null; // keep as base64 string
   }): Promise<number> {
     let blogoBlob: Uint8Array | null = null;
@@ -73,15 +76,19 @@ export class AppdateService {
       }
     }
 
+    const contactInfo = data.ReceiptContactInfo?.trim() || data.ReceiptPosName?.trim() || '';
     const sql = `
-    INSERT INTO appdate (Bname, Baddress, ReceiptPosName, Blogo)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO appdate (Bname, Baddress, ReceiptPosName, ReceiptContactInfo, ReceiptContactInfo1, ReceiptContactInfo2, Blogo)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
     const id = await this.db.insert(sql, [
       data.Bname,
       data.Baddress,
       data.ReceiptPosName,
+      contactInfo,
+      data.ReceiptContactInfo1 || '',
+      data.ReceiptContactInfo2 || '',
       blogoBlob,
     ]);
 
@@ -95,6 +102,9 @@ export class AppdateService {
       Baddress: string;
       RecieptVATreg: string;
       ReceiptPosName: string;
+      ReceiptContactInfo?: string;
+      ReceiptContactInfo1?: string;
+      ReceiptContactInfo2?: string;
       Blogo?: Blob | string | null; // Blob if picked from file, string if already base64
     }
   ) {
@@ -108,12 +118,15 @@ export class AppdateService {
 
     const Bname = data.Bname?.trim() || 'N/A';
     const Baddress = data.Baddress?.trim() || 'N/A';
-    const ReceiptPosName = data.ReceiptPosName?.trim() || null;
+    const ReceiptPosName = data.ReceiptPosName?.trim() || '';
+    const ReceiptContactInfo = data.ReceiptContactInfo?.trim() || ReceiptPosName;
+    const ReceiptContactInfo1 = data.ReceiptContactInfo1?.trim() || '';
+    const ReceiptContactInfo2 = data.ReceiptContactInfo2?.trim() || '';
     const RecieptVATreg = data.RecieptVATreg?.trim() || 'N/A';
 
     const sql = `
     UPDATE appdate
-    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, Blogo = ?, receiptlogo = ?, RecieptVATreg = ?
+    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, ReceiptContactInfo = ?, ReceiptContactInfo1 = ?, ReceiptContactInfo2 = ?, Blogo = ?, receiptlogo = ?, RecieptVATreg = ?
     WHERE appdateid = ?
   `;
 
@@ -122,6 +135,9 @@ export class AppdateService {
         Bname,
         Baddress,
         ReceiptPosName,
+        ReceiptContactInfo,
+        ReceiptContactInfo1,
+        ReceiptContactInfo2,
         blogoBlob,
         blogoBlob,
         RecieptVATreg,

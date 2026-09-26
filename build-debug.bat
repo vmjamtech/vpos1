@@ -1,60 +1,45 @@
-@echo "START: ANDROID BUILD DEBUG"
+@echo off
+setlocal
 
-:: Build the Ionic app
-call ionic build
-IF %ERRORLEVEL% NEQ 0 (
-    echo "Ionic build failed."
-    exit %ERRORLEVEL%
+if not defined JAVA_HOME (
+    for /d %%J in ("C:\Program Files\Microsoft\jdk-21*") do if exist "%%~J\bin\java.exe" set "JAVA_HOME=%%~J"
+)
+if not defined JAVA_HOME (
+    echo Java 21 was not found. Install JDK 21 or set JAVA_HOME.
+    exit /b 1
+)
+if not defined ANDROID_HOME set "ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk"
+set "ANDROID_SDK_ROOT=%ANDROID_HOME%"
+set "PATH=%JAVA_HOME%\bin;%ANDROID_HOME%\platform-tools;%PATH%"
+
+if not exist "%JAVA_HOME%\bin\java.exe" (
+    echo JAVA_HOME does not point to a JDK: %JAVA_HOME%
+    exit /b 1
 )
 
-:: Sync with Capacitor to update native Android project
-call npx cap sync android
-IF %ERRORLEVEL% NEQ 0 (
-    echo "Capacitor sync failed."
-    exit %ERRORLEVEL%
+call npm.cmd run build
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+call npm.cmd exec -- cap sync android
+if errorlevel 1 exit /b %ERRORLEVEL%
+
+pushd "%~dp0android"
+call gradlew.bat assembleDebug
+set "BUILD_EXIT=%ERRORLEVEL%"
+popd
+if not "%BUILD_EXIT%"=="0" exit /b %BUILD_EXIT%
+
+set "APK_PATH=%~dp0android\app\build\outputs\apk\debug\app-debug.apk"
+if not exist "%APK_PATH%" (
+    echo APK build completed but the expected file was not found: %APK_PATH%
+    exit /b 1
 )
+echo APK ready: %APK_PATH%
 
-:: Build the Android project in debug mode using Gradle
-cd android
-call ./gradlew clean
-IF %ERRORLEVEL% NEQ 0 (
-    echo "Gradle build failed."
-    exit %ERRORLEVEL%
+adb get-state >nul 2>&1
+if errorlevel 1 (
+    echo No Android device is connected. Connect one with USB debugging enabled to install it.
+) else (
+    adb install -r "%APK_PATH%"
+    if errorlevel 1 exit /b %ERRORLEVEL%
 )
-
-:: Build the Android project in debug mode using Gradle
-cd android
-call ./gradlew assembleDebug
-IF %ERRORLEVEL% NEQ 0 (
-    echo "Gradle build failed."
-    exit %ERRORLEVEL%
-)
-
-:: Set output APK path
-set DEBUG_OUTPUT=.\app\build\outputs\apk\debug
-
-@echo "START: CLEAN OLD FILES"
-IF EXIST "%DEBUG_OUTPUT%\vpos-debug.apk" (
-    del "%DEBUG_OUTPUT%\vpos-debug.apk"
-)
-
-cd %DEBUG_OUTPUT%
-
-@echo "RENAME APK TO STANDARD NAME"
-IF EXIST "app-debug.apk" (
-    ren "app-debug.apk" "vpos-debug.apk"
-)
-
-@echo "INSTALL APK ON CONNECTED DEVICE"
-IF EXIST "vpos-debug.apk" (
-    adb install -r "vpos-debug.apk"
-    IF %ERRORLEVEL% NEQ 0 (
-        echo "APK installation failed."
-        exit %ERRORLEVEL%
-    )
-) ELSE (
-    echo "APK not found for installation."
-)
-
-@echo "DONE"
-pause

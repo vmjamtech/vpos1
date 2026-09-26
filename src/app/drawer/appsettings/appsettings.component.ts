@@ -37,6 +37,14 @@ export class AppsettingsComponent implements OnInit {
   appdateid?: number;
   Blogo: string | null = null;
 
+  get businessContactNumber(): string {
+    return this.ReceiptPosName;
+  }
+
+  set businessContactNumber(value: string) {
+    this.ReceiptPosName = value || '';
+  }
+
   @ViewChild('logoInput') logoInput!: ElementRef<HTMLInputElement>;
 
   constructor(
@@ -58,7 +66,7 @@ export class AppsettingsComponent implements OnInit {
       this.appdateid = row.appdateid;
       this.Bname = row.Bname;
       this.Baddress = row.Baddress;
-      this.ReceiptPosName = row.ReceiptPosName;
+      this.ReceiptPosName = row.ReceiptContactInfo ?? row.ReceiptPosName ?? '';
 
       if (row.Blogo && Array.isArray(row.Blogo)) {
         console.log('Raw Blogo byte array length:', row.Blogo.length);
@@ -108,20 +116,25 @@ export class AppsettingsComponent implements OnInit {
   }
 
   async saveSettings() {
+    const contactNumber = (this.ReceiptPosName ?? '').trim();
+
     const data = {
       Bname: this.Bname,
       Baddress: this.Baddress,
-      ReceiptPosName: this.ReceiptPosName,
+      ReceiptPosName: contactNumber,
+      ReceiptContactInfo: contactNumber,
+      ReceiptContactInfo1: '',
+      ReceiptContactInfo2: '',
       RecieptVATreg: 'TEST',
       Blogo: this.Blogo,
     };
 
     if (this.appdateid) {
-      // Update existing row
+      // Update existing row and keep legacy + active fields in sync.
       await this.appdaterService.update(this.appdateid, data);
       console.log('Business settings updated');
     } else {
-      // Insert new row
+      // Insert new row with the active receipt field populated.
       const id = await this.appdaterService.insert(data);
       this.appdateid = id;
       console.log('Business settings inserted with ID:', id);

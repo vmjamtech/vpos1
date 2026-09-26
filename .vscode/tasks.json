@@ -1,0 +1,31 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build V-POS",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false
+		},
+		{
+			"label": "Sync V-POS Android",
+			"type": "shell",
+			"command": "npm.cmd exec -- cap sync android",
+			"isBackground": false
+		},
+		{
+			"label": "Build V-POS Debug APK",
+			"type": "shell",
+			"command": "gradlew.bat assembleDebug",
+			"options": {
+				"cwd": "${workspaceFolder}/android",
+				"env": {
+					"JAVA_HOME": "C:\\Program Files\\Microsoft\\jdk-21.0.12.101-hotspot",
+					"ANDROID_HOME": "${env:LOCALAPPDATA}/Android/Sdk",
+					"ANDROID_SDK_ROOT": "${env:LOCALAPPDATA}/Android/Sdk"
+				}
+			},
+			"isBackground": false
+		}
+	]
+}
