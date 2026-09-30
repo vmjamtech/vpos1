@@ -127,8 +127,6 @@ export class AppsettingsComponent implements OnInit {
       Baddress: this.Baddress,
       ReceiptPosName: contactNumber,
       ReceiptContactInfo: contactNumber,
-      ReceiptContactInfo1: '',
-      ReceiptContactInfo2: '',
       RecieptVATreg: 'TEST',
       Blogo: this.Blogo,
       withlogo: this.withlogo ? 'Y' : 'N',
@@ -136,7 +134,7 @@ export class AppsettingsComponent implements OnInit {
 
     if (this.appdateid) {
       // Update existing row and keep legacy + active fields in sync.
-      await this.appdaterService.update(this.appdateid, data);
+      await this.appdaterService.updateBusinessSettings(this.appdateid, data);
       console.log('Business settings updated');
     } else {
       // Insert new row with the active receipt field populated.

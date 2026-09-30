@@ -10,7 +10,7 @@ describe('AppsettingsComponent', () => {
     appdateService = jasmine.createSpyObj<AppdateService>('AppdateService', [
       'getAllAppdate',
       'insert',
-      'update',
+      'updateBusinessSettings',
     ]);
     component = new AppsettingsComponent(
       appdateService,
@@ -54,13 +54,16 @@ describe('AppsettingsComponent', () => {
   it('saves the disabled logo setting without changing its Y/N contract', async () => {
     component.appdateid = 1;
     component.withlogo = false;
-    appdateService.update.and.resolveTo();
+    appdateService.updateBusinessSettings.and.resolveTo();
 
     await component.saveSettings();
 
-    expect(appdateService.update).toHaveBeenCalledWith(
+    expect(appdateService.updateBusinessSettings).toHaveBeenCalledWith(
       1,
       jasmine.objectContaining({ withlogo: 'N' })
     );
+    const savedSettings = appdateService.updateBusinessSettings.calls.mostRecent().args[1];
+    expect('ReceiptContactInfo1' in savedSettings).toBeFalse();
+    expect('ReceiptContactInfo2' in savedSettings).toBeFalse();
   });
 });

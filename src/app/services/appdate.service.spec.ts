@@ -78,3 +78,58 @@ describe('AppdateService.getReceiptBusinessInfo', () => {
     expect(info.logoDataUrl).toBeNull();
   });
 });
+
+describe('AppdateService settings updates', () => {
+  it('does not write Slip Layout contact lines from Business Settings', async () => {
+    const execute = jasmine.createSpy('execute').and.resolveTo(undefined);
+    const service = Object.create(AppdateService.prototype) as AppdateService;
+    (service as any).db = { execute };
+
+    await service.updateBusinessSettings(1, {
+      Bname: 'Business',
+      Baddress: 'Address',
+      RecieptVATreg: 'TEST',
+      ReceiptPosName: 'Main contact',
+      Blogo: null,
+    });
+
+    const [sql, params] = execute.calls.mostRecent().args;
+    expect(sql).not.toContain('ReceiptContactInfo1');
+    expect(sql).not.toContain('ReceiptContactInfo2');
+    expect(params).toEqual([
+      'Business',
+      'Address',
+      'Main contact',
+      'Main contact',
+      null,
+      null,
+      null,
+      'TEST',
+      1,
+    ]);
+  });
+
+  it('writes receipt contact lines through the Slip Layout update only', async () => {
+    const execute = jasmine.createSpy('execute').and.resolveTo(undefined);
+    const service = Object.create(AppdateService.prototype) as AppdateService;
+    (service as any).db = { execute };
+
+    await service.updateReceiptLayout(1, {
+      ReceiptBname: 'Business',
+      ReceiptBname1: '',
+      ReceiptAddress: 'Address 1',
+      ReceiptAddress1: 'Address 2',
+      ReceiptContactInfo: 'Contact 1',
+      ReceiptContactInfo1: 'Contact 2',
+      ReceiptContactInfo2: 'Contact 3',
+      Blogo: null,
+    });
+
+    const [sql, params] = execute.calls.mostRecent().args;
+    expect(sql).toContain('ReceiptContactInfo1 = ?');
+    expect(sql).toContain('ReceiptContactInfo2 = ?');
+    expect(sql).not.toContain('withlogo');
+    expect(params[5]).toBe('Contact 2');
+    expect(params[6]).toBe('Contact 3');
+  });
+});

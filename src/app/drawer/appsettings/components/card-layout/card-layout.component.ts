@@ -234,7 +234,10 @@ export class CardLayoutComponent implements OnInit {
 
             try {
               if (this.appdateid) {
-                await this.appdaterService.updateLayout(this.appdateid, data);
+                await this.appdaterService.updateReceiptLayout(
+                  this.appdateid,
+                  data
+                );
                 console.log('Business settings updated');
 
                 const successAlert = await this.alertController.create({

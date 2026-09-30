@@ -171,7 +171,7 @@ export class AppdateService {
     return id;
   }
 
-  async update(
+  async updateBusinessSettings(
     id: number,
     data: {
       Bname: string;
@@ -179,8 +179,6 @@ export class AppdateService {
       RecieptVATreg: string;
       ReceiptPosName: string;
       ReceiptContactInfo?: string;
-      ReceiptContactInfo1?: string;
-      ReceiptContactInfo2?: string;
       withlogo?: string;
       Blogo?: Blob | string | null; // Blob if picked from file, string if already base64
     }
@@ -197,13 +195,11 @@ export class AppdateService {
     const Baddress = data.Baddress?.trim() || 'N/A';
     const ReceiptPosName = data.ReceiptPosName?.trim() || '';
     const ReceiptContactInfo = data.ReceiptContactInfo?.trim() || ReceiptPosName;
-    const ReceiptContactInfo1 = data.ReceiptContactInfo1?.trim() || '';
-    const ReceiptContactInfo2 = data.ReceiptContactInfo2?.trim() || '';
     const RecieptVATreg = data.RecieptVATreg?.trim() || 'N/A';
 
     const sql = `
     UPDATE appdate
-    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, ReceiptContactInfo = ?, ReceiptContactInfo1 = ?, ReceiptContactInfo2 = ?, Blogo = ?, receiptlogo = ?, withlogo = COALESCE(?, withlogo), RecieptVATreg = ?
+    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, ReceiptContactInfo = ?, Blogo = ?, receiptlogo = ?, withlogo = COALESCE(?, withlogo), RecieptVATreg = ?
     WHERE appdateid = ?
   `;
 
@@ -213,8 +209,6 @@ export class AppdateService {
         Baddress,
         ReceiptPosName,
         ReceiptContactInfo,
-        ReceiptContactInfo1,
-        ReceiptContactInfo2,
         blogoBlob,
         blogoBlob,
         data.withlogo ?? null,
@@ -226,7 +220,7 @@ export class AppdateService {
     }
   }
 
-  async updateLayout(
+  async updateReceiptLayout(
     id: number,
     data: {
       ReceiptBname: string;
