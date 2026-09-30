@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -22,7 +23,7 @@ export class ItemhistoryService {
     if (!connection?.ip || !connection?.port) {
       throw new Error('No connection settings found.');
     }
-    return `http://${connection.ip}:${connection.port}/itemhistory`;
+    return `${apiBaseUrl(connection.ip, connection.port)}/itemhistory`;
   }
 
   async getAll(): Promise<any> {

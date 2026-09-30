@@ -8,12 +8,68 @@ import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { App } from '@capacitor/app';
 import { LoadingController, ToastController } from '@ionic/angular/standalone';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 export interface AppVersionInfo {
   version: string;
   versionCode: number;
   releaseNotes: string;
   apkUrl: string;
+}
+
+export interface ReceiptBusinessInfo {
+  appdateid?: number;
+  compName: string;
+  compName1: string;
+  receiptAddress: string;
+  receiptAddress1: string;
+  compContact: string;
+  compContact1: string;
+  compContact2: string;
+  receiptEndGreet: string;
+  withLogo: boolean;
+  logoDataUrl: string | null;
+}
+
+export function normalizeReceiptLogo(value: unknown): string | null {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    return normalized.startsWith('data:image/')
+      ? normalized
+      : `data:image/png;base64,${normalized}`;
+  }
+
+  let bytes: unknown = value;
+  if (
+    typeof value === 'object' &&
+    !(value instanceof ArrayBuffer) &&
+    !ArrayBuffer.isView(value)
+  ) {
+    bytes = (value as { data?: unknown }).data ?? value;
+  }
+
+  let byteArray: Uint8Array;
+  if (bytes instanceof ArrayBuffer) {
+    byteArray = new Uint8Array(bytes);
+  } else if (ArrayBuffer.isView(bytes)) {
+    byteArray = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  } else if (
+    Array.isArray(bytes) &&
+    bytes.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)
+  ) {
+    byteArray = Uint8Array.from(bytes);
+  } else {
+    return null;
+  }
+
+  let binary = '';
+  for (let offset = 0; offset < byteArray.length; offset += 8192) {
+    binary += String.fromCharCode(...byteArray.subarray(offset, offset + 8192));
+  }
+  return `data:image/png;base64,${btoa(binary)}`;
 }
 
 @Injectable({
@@ -39,7 +95,7 @@ export class AppdateService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/appdate`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/appdate`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -56,6 +112,24 @@ export class AppdateService {
     }
   }
 
+  async getReceiptBusinessInfo(): Promise<ReceiptBusinessInfo> {
+    const row = (await this.getAllAppdate())[0] ?? {};
+
+    return {
+      appdateid: row.appdateid,
+      compName: row.ReceiptBname ?? row.Bname ?? '',
+      compName1: row.ReceiptBname1 ?? '',
+      receiptAddress: row.ReceiptAddress ?? row.Baddress ?? '',
+      receiptAddress1: row.ReceiptAddress1 ?? '',
+      compContact: row.ReceiptContactInfo ?? row.ReceiptPosName ?? '',
+      compContact1: row.ReceiptContactInfo1 ?? '',
+      compContact2: row.ReceiptContactInfo2 ?? '',
+      receiptEndGreet: row.receiptendgreet ?? '',
+      withLogo: row.withlogo === 'Y',
+      logoDataUrl: normalizeReceiptLogo(row.Blogo),
+    };
+  }
+
   async insert(data: {
     Bname: string;
     Baddress: string;
@@ -63,6 +137,7 @@ export class AppdateService {
     ReceiptContactInfo?: string;
     ReceiptContactInfo1?: string;
     ReceiptContactInfo2?: string;
+    withlogo?: string;
     Blogo?: string | null; // keep as base64 string
   }): Promise<number> {
     let blogoBlob: Uint8Array | null = null;
@@ -78,8 +153,8 @@ export class AppdateService {
 
     const contactInfo = data.ReceiptContactInfo?.trim() || data.ReceiptPosName?.trim() || '';
     const sql = `
-    INSERT INTO appdate (Bname, Baddress, ReceiptPosName, ReceiptContactInfo, ReceiptContactInfo1, ReceiptContactInfo2, Blogo)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO appdate (Bname, Baddress, ReceiptPosName, ReceiptContactInfo, ReceiptContactInfo1, ReceiptContactInfo2, Blogo, withlogo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const id = await this.db.insert(sql, [
@@ -90,6 +165,7 @@ export class AppdateService {
       data.ReceiptContactInfo1 || '',
       data.ReceiptContactInfo2 || '',
       blogoBlob,
+      data.withlogo ?? 'N',
     ]);
 
     return id;
@@ -105,6 +181,7 @@ export class AppdateService {
       ReceiptContactInfo?: string;
       ReceiptContactInfo1?: string;
       ReceiptContactInfo2?: string;
+      withlogo?: string;
       Blogo?: Blob | string | null; // Blob if picked from file, string if already base64
     }
   ) {
@@ -126,7 +203,7 @@ export class AppdateService {
 
     const sql = `
     UPDATE appdate
-    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, ReceiptContactInfo = ?, ReceiptContactInfo1 = ?, ReceiptContactInfo2 = ?, Blogo = ?, receiptlogo = ?, RecieptVATreg = ?
+    SET Bname = ?, Baddress = ?, ReceiptPosName = ?, ReceiptContactInfo = ?, ReceiptContactInfo1 = ?, ReceiptContactInfo2 = ?, Blogo = ?, receiptlogo = ?, withlogo = COALESCE(?, withlogo), RecieptVATreg = ?
     WHERE appdateid = ?
   `;
 
@@ -140,6 +217,7 @@ export class AppdateService {
         ReceiptContactInfo2,
         blogoBlob,
         blogoBlob,
+        data.withlogo ?? null,
         RecieptVATreg,
         id,
       ]);

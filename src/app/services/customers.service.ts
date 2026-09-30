@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +25,7 @@ export class CustomersService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/customers/filter/offset?limit=${limit}&offset=${offset}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/customers/filter/offset?limit=${limit}&offset=${offset}`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -40,9 +41,7 @@ export class CustomersService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${
-      connection.port
-    }/customers/search/q?q=${encodeURIComponent(query)}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/customers/search/q?q=${encodeURIComponent(query)}`;
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
   }
@@ -57,7 +56,7 @@ export class CustomersService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/customers/select/all`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/customers/select/all`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -73,7 +72,7 @@ export class CustomersService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/customers/${custid}/balance`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/customers/${custid}/balance`;
 
     // Send PATCH request with JSON body
     const response = await firstValueFrom(

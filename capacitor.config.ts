@@ -6,10 +6,8 @@ const config: CapacitorConfig = {
   appName: 'V-POS',
   webDir: 'www',
   android: {
+    // The iMin printer bridge uses ws://127.0.0.1; network policy restricts cleartext to loopback.
     allowMixedContent: true,
-  },
-  server: {
-    cleartext: true, // allow HTTP for dev
   },
   plugins: {
     Keyboard: {

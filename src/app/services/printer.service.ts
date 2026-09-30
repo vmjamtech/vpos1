@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { AlertController } from '@ionic/angular/standalone';
 import { IminPrinterService } from './imin-printer.service';
-import { AppdateService } from './appdate.service';
+import { AppdateService, ReceiptBusinessInfo } from './appdate.service';
 import moment from 'moment';
 import 'moment-timezone';
 import { StorageService } from './storage.service';
+import { loadImage } from '../utils/load-image';
 
 @Injectable({
   providedIn: 'root',
@@ -67,21 +68,12 @@ export class PrinterService {
       }
 
       // --- LOAD COMPANY SETTINGS ---
-      const appdate = await this.appdateService.getAllAppdate();
-      const compName = appdate[0].Bname;
-      const compName1 = appdate[0].ReceiptBname;
-      const compAddress = appdate[0].Baddress;
-      const compContact = appdate[0].ReceiptContactInfo;
-      const receiptEndGreet = appdate[0].receiptendgreet;
-      const withlogo = appdate[0].withlogo;
-      const logoBlob = appdate[0].Blogo;
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
+      const receiptEndGreet = businessInfo.receiptEndGreet;
 
       // Helper: print receipt body
       const printReceiptContent = async () => {
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${compAddress}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
+        await this.printBusinessHeader(businessInfo);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -210,22 +202,8 @@ export class PrinterService {
       };
 
       // --- LOGO PRINTING (IF AVAILABLE) ---
-      if (withlogo === 'Y' && logoBlob) {
-        const dataUrl = bufferToDataURL(logoBlob, 'image/png');
+      await this.printBusinessLogo(businessInfo);
 
-        const img = new Image();
-        img.src = dataUrl;
-
-        img.onload = async () => {
-          const resized = resizeImageStretch(img, 450, 250);
-          await this.iminPrinter.printImage(resized, 1);
-          await printReceiptContent();
-        };
-
-        return; // prevent 'no logo' section from printing
-      }
-
-      // --- NO LOGO ---
       await printReceiptContent();
     } catch (error: any) {
       console.error('Print error:', error);
@@ -263,19 +241,10 @@ export class PrinterService {
         // Show alert ONLY when there is a printer issue
       }
 
-      const appdate = await this.appdateService.getAllAppdate();
-      const compName = appdate[0].Bname;
-      const compName1 = appdate[0].ReceiptBname;
-      const compAddress = appdate[0].Baddress;
-      const compContact = appdate[0].ReceiptContactInfo;
-      const withlogo = appdate[0].withlogo;
-      const logoBlob = appdate[0].Blogo;
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
 
       const printReceiptContent = async () => {
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${compAddress}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
+        await this.printBusinessHeader(businessInfo);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -309,22 +278,8 @@ export class PrinterService {
         await this.iminPrinter.cutPaper();
       };
 
-      if (withlogo === 'Y' && logoBlob) {
-        const dataUrl = bufferToDataURL(logoBlob, 'image/png');
+      await this.printBusinessLogo(businessInfo);
 
-        const img = new Image();
-        img.src = dataUrl;
-
-        img.onload = async () => {
-          const resized = resizeImageStretch(img, 450, 250);
-          await this.iminPrinter.printImage(resized, 1);
-          await printReceiptContent();
-        };
-
-        return; // prevent 'no logo' section from printing
-      }
-
-      // --- NO LOGO ---
       await printReceiptContent();
     } catch (error: any) {
       console.error('Print error:', error);
@@ -361,20 +316,11 @@ export class PrinterService {
         // Show alert ONLY when there is a printer issue
       }
 
-      const appdate = await this.appdateService.getAllAppdate();
-      const compName = appdate[0].Bname;
-      const compName1 = appdate[0].ReceiptBname;
-      const compAddress = appdate[0].Baddress;
-      const compContact = appdate[0].ReceiptContactInfo;
-      const withlogo = appdate[0].withlogo;
-      const logoBlob = appdate[0].Blogo;
-      const receiptEndGreet = appdate[0].receiptendgreet;
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
+      const receiptEndGreet = businessInfo.receiptEndGreet;
 
       const printReceiptContent = async () => {
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${compAddress}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
+        await this.printBusinessHeader(businessInfo);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -430,22 +376,8 @@ export class PrinterService {
         await this.iminPrinter.cutPaper();
       };
 
-      if (withlogo === 'Y' && logoBlob) {
-        const dataUrl = bufferToDataURL(logoBlob, 'image/png');
+      await this.printBusinessLogo(businessInfo);
 
-        const img = new Image();
-        img.src = dataUrl;
-
-        img.onload = async () => {
-          const resized = resizeImageStretch(img, 450, 250);
-          await this.iminPrinter.printImage(resized, 1);
-          await printReceiptContent();
-        };
-
-        return; // prevent 'no logo' section from printing
-      }
-
-      // --- NO LOGO ---
       await printReceiptContent();
     } catch (error: any) {
       console.error('Print error:', error);
@@ -482,23 +414,14 @@ export class PrinterService {
         // Show alert ONLY when there is a printer issue
       }
 
-      const appdate = await this.appdateService.getAllAppdate();
-      const compName = appdate[0].Bname;
-      const compName1 = appdate[0].ReceiptBname;
-      const compAddress = appdate[0].Baddress;
-      const compContact = appdate[0].ReceiptContactInfo;
-      const withlogo = appdate[0].withlogo;
-      const logoBlob = appdate[0].Blogo;
-      const receiptEndGreet = appdate[0].receiptendgreet;
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
+      const receiptEndGreet = businessInfo.receiptEndGreet;
       const datestr = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
       const user = await this.storageService.get<any>('login-data');
       const cashierName = user?.empname || 'ADMINISTRATOR';
 
       const printReceiptContent = async () => {
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${compAddress}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
+        await this.printBusinessHeader(businessInfo);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -540,22 +463,8 @@ export class PrinterService {
         await this.iminPrinter.cutPaper();
       };
 
-      if (withlogo === 'Y' && logoBlob) {
-        const dataUrl = bufferToDataURL(logoBlob, 'image/png');
+      await this.printBusinessLogo(businessInfo);
 
-        const img = new Image();
-        img.src = dataUrl;
-
-        img.onload = async () => {
-          const resized = resizeImageStretch(img, 450, 250);
-          await this.iminPrinter.printImage(resized, 1);
-          await printReceiptContent();
-        };
-
-        return; // prevent 'no logo' section from printing
-      }
-
-      // --- NO LOGO ---
       await printReceiptContent();
     } catch (error: any) {
       console.error('Print error:', error);
@@ -592,24 +501,10 @@ export class PrinterService {
         // Show alert ONLY when there is a printer issue
       }
 
-      const appdate = await this.appdateService.getAllAppdate();
-      const compName = appdate[0].ReceiptBname;
-      const compName1 = appdate[0].ReceiptBname1;
-      const ReceiptAddress = appdate[0].ReceiptAddress;
-      const ReceiptAddress1 = appdate[0].ReceiptAddress1;
-      const compContact = appdate[0].ReceiptContactInfo;
-      const compContact1 = appdate[0].ReceiptContactInfo1;
-      const compContact2 = appdate[0].ReceiptContactInfo2;
-      const logoBlob = appdate[0].Blogo;
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
 
       const printReceiptContent = async () => {
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${ReceiptAddress}`, 1);
-        await this.iminPrinter.printText(`${ReceiptAddress1}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
-        await this.iminPrinter.printText(`${compContact1}`, 1);
-        await this.iminPrinter.printText(`${compContact2}`, 1);
+        await this.printBusinessHeader(businessInfo);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -621,18 +516,9 @@ export class PrinterService {
         await this.iminPrinter.cutPaper();
       };
 
-      const dataUrl = bufferToDataURL(logoBlob, 'image/png');
+      await this.printBusinessLogo(businessInfo);
 
-      const img = new Image();
-      img.src = dataUrl;
-
-      img.onload = async () => {
-        const resized = resizeImageStretch(img, 450, 250);
-        await this.iminPrinter.printImage(resized, 1);
-        await printReceiptContent();
-      };
-
-      return; // prevent 'no logo' section from printing
+      await printReceiptContent();
     } catch (error: any) {
       console.error('Print error:', error);
 
@@ -653,20 +539,15 @@ export class PrinterService {
       if (!connected) throw new Error('Cannot connect to printer');
 
       await this.iminPrinter.initPrinter();
+      const businessInfo = await this.appdateService.getReceiptBusinessInfo();
 
       for (const item of previewContent) {
         if (item.type === 'text') {
           await this.iminPrinter.printText(item.value, 1); // 1 = normal font
-        } else if (item.type === 'image' && item.value) {
-          const img = new Image();
-          img.src = item.value;
-          await new Promise<void>((resolve) => {
-            img.onload = async () => {
-              const resized = resizeImageStretch(img, 450, 250);
-              await this.iminPrinter.printImage(resized, 1);
-              resolve();
-            };
-          });
+        } else if (item.type === 'image' && item.value && businessInfo.withLogo) {
+          const image = await loadImage(item.value);
+          const resized = resizeImageStretch(image, 450, 250);
+          await this.iminPrinter.printImage(resized, 1);
         }
       }
 
@@ -687,6 +568,24 @@ export class PrinterService {
       });
       await alert.present();
     }
+  }
+
+  private async printBusinessHeader(info: ReceiptBusinessInfo): Promise<void> {
+    await this.iminPrinter.printText(info.compName, 1);
+    await this.iminPrinter.printText(info.compName1, 1);
+    await this.iminPrinter.printText(info.receiptAddress, 1);
+    await this.iminPrinter.printText(info.receiptAddress1, 1);
+    await this.iminPrinter.printText(info.compContact, 1);
+    await this.iminPrinter.printText(info.compContact1, 1);
+    await this.iminPrinter.printText(info.compContact2, 1);
+  }
+
+  private async printBusinessLogo(info: ReceiptBusinessInfo): Promise<void> {
+    if (!info.withLogo || !info.logoDataUrl) return;
+
+    const image = await loadImage(info.logoDataUrl);
+    const resized = resizeImageStretch(image, 450, 250);
+    await this.iminPrinter.printImage(resized, 1);
   }
 
   // Helper function to format columns
@@ -745,17 +644,6 @@ export class PrinterService {
       : value + ' '.repeat(length - value.length);
   }
 }
-// Convert Node.js Buffer (or Blob with .data) to Data URL
-function bufferToDataURL(buffer: any, mimeType: string = 'image/png'): string {
-  // If you have a Buffer-like object {type: 'Buffer', data: [...]}
-  const bytes = buffer.data || buffer;
-  const binary = bytes.reduce(
-    (acc: string, byte: number) => acc + String.fromCharCode(byte),
-    ''
-  );
-  return `data:${mimeType};base64,${btoa(binary)}`;
-}
-
 function resizeImageStretch(
   image: HTMLImageElement,
   targetWidth: number,
@@ -773,11 +661,3 @@ function resizeImageStretch(
   return canvas.toDataURL('image/png'); // returns base64 DataURL
 }
 
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(blob);
-  });
-}

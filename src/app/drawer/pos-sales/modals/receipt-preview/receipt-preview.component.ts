@@ -17,8 +17,11 @@ import {
 export class ReceiptPreviewComponent {
   @Input() compName!: string;
   @Input() compName1!: string;
-  @Input() compAddress!: string;
+  @Input() receiptAddress!: string;
+  @Input() receiptAddress1!: string;
   @Input() compContact!: string;
+  @Input() compContact1!: string;
+  @Input() compContact2!: string;
   @Input() receiptEndGreet!: string;
   @Input() withlogo!: string;
   @Input() logo?: string;

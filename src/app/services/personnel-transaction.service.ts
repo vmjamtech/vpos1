@@ -4,6 +4,7 @@ import { StorageService } from './storage.service';
 import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +24,7 @@ export class PersonnelTransactionService {
     if (!connection?.ip || !connection?.port) {
       throw new Error('No connection settings found.');
     }
-    return `http://${connection.ip}:${connection.port}/deltransact`;
+    return `${apiBaseUrl(connection.ip, connection.port)}/deltransact`;
   }
 
   async getAll(): Promise<any[]> {

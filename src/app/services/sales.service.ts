@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +27,7 @@ export class SalesService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/sales`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/sales`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -43,7 +44,7 @@ export class SalesService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/sales/${salesid}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/sales/${salesid}`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -60,7 +61,7 @@ export class SalesService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/sales/ref/${salesrefnum}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/sales/ref/${salesrefnum}`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;
@@ -77,7 +78,7 @@ export class SalesService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/sales`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/sales`;
 
     const response = await firstValueFrom(this.http.post<any>(url, sale));
     return response;
@@ -94,7 +95,7 @@ export class SalesService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/sales/${salesid}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/sales/${salesid}`;
 
     const response = await firstValueFrom(this.http.patch<any>(url, sale));
     return response;

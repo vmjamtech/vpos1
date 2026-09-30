@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
-import { environment } from 'src/environments/environment';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +26,7 @@ export class UserService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/useraccounts/login`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/useraccounts/login`;
     const body = { username, password };
 
     try {

@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +26,7 @@ export class SalescartService {
       throw new Error('No connection settings found.');
     }
 
-    return `http://${connection.ip}:${connection.port}/salescart`;
+    return `${apiBaseUrl(connection.ip, connection.port)}/salescart`;
   }
 
   async getAllCartItems(): Promise<any> {

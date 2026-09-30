@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
 import { StorageService } from './storage.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +25,7 @@ export class LenditemsService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/categories/all`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/categories/all`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from 'src/environments/environment';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +13,7 @@ export class ServerService {
     ip: string,
     port: string
   ): Observable<{ status: string; message: string }> {
-    const url = `http://${ip}:${port}/api/ping`;
+    const url = `${apiBaseUrl(ip, port)}/api/ping`;
     return this.http.get<{ status: string; message: string }>(url);
   }
 }

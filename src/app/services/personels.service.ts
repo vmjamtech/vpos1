@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
 import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +25,7 @@ export class PersonelsService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/personels/filter/offset?limit=${limit}&offset=${offset}`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/personels/filter/offset?limit=${limit}&offset=${offset}`;
 
     const response = await firstValueFrom(this.http.get<any>(url));
     return response;

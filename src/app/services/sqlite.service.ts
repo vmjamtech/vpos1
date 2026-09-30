@@ -7,6 +7,7 @@ import {
   SQLiteDBConnection,
 } from '@capacitor-community/sqlite';
 import { Capacitor } from '@capacitor/core';
+import { runDatabaseMigrations } from './database-migrations';
 
 @Injectable({
   providedIn: 'root',
@@ -48,6 +49,7 @@ export class SqliteService {
         }
 
         await this.dbConn.open();
+  await runDatabaseMigrations(this.dbConn);
         await this.initializeAiSchema();
         console.log('Database connection established');
       }

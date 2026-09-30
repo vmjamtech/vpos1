@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
+import { apiBaseUrl } from './api-url';
 
 @Injectable({
   providedIn: 'root',
@@ -28,9 +29,7 @@ export class InventoryService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${
-      connection.port
-    }/inventory/category/${encodeURIComponent(
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/inventory/category/${encodeURIComponent(
       itemcategory
     )}?limit=${limit}&offset=${offset}`;
 
@@ -50,7 +49,7 @@ export class InventoryService {
       throw new Error('No connection settings found.');
     }
 
-    const url = `http://${connection.ip}:${connection.port}/inventory/update-qty`;
+    const url = `${apiBaseUrl(connection.ip, connection.port)}/inventory/update-qty`;
 
     return await firstValueFrom(this.http.post<any>(url, cartItems));
   }

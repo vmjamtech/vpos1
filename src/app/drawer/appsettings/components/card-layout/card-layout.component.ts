@@ -137,56 +137,39 @@ export class CardLayoutComponent implements OnInit {
   }
 
   async loadSettings() {
-    const settings = await this.appdaterService.getAllAppdate();
-    if (!settings || settings.length === 0) return;
-
-    const row = settings[0];
-
-    this.appdateid = row.appdateid;
+    const info = await this.appdaterService.getReceiptBusinessInfo();
+    this.appdateid = info.appdateid;
 
     this.fields.forEach((field) => {
       if (!field.style) field.style = {}; // ensure style object exists
 
       switch (field.id) {
         case 'logo':
-          if (row.Blogo && Array.isArray(row.Blogo)) {
-            field.value = this.byteArrayToBase64(row.Blogo);
-          } else if (typeof row.Blogo === 'string') {
-            field.value = row.Blogo;
-          }
+          field.value = info.logoDataUrl;
           break;
         case 'compName':
-          field.value = row.ReceiptBname || '';
+          field.value = info.compName;
           break;
         case 'compName1':
-          field.value = row.ReceiptBname1 || '';
+          field.value = info.compName1;
           break;
         case 'receiptAddress':
-          field.value = row.ReceiptAddress || '';
+          field.value = info.receiptAddress;
           break;
         case 'receiptAddress1':
-          field.value = row.ReceiptAddress1 || '';
+          field.value = info.receiptAddress1;
           break;
         case 'compContact':
-          field.value = row.ReceiptContactInfo || '';
+          field.value = info.compContact;
           break;
         case 'compContact1':
-          field.value = row.ReceiptContactInfo1 || '';
+          field.value = info.compContact1;
           break;
         case 'compContact2':
-          field.value = row.ReceiptContactInfo2 || '';
+          field.value = info.compContact2;
           break;
       }
     });
-  }
-
-  byteArrayToBase64(bytes: number[]): string {
-    let binary = '';
-    const len = bytes.length;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return 'data:image/jpeg;base64,' + btoa(binary);
   }
 
   // Reorder fields

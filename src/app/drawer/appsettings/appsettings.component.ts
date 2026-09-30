@@ -9,6 +9,7 @@ import {
   IonItem,
   IonLabel,
   ModalController,
+  IonToggle,
 } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { CardLayoutComponent } from './components/card-layout/card-layout.component';
@@ -28,6 +29,7 @@ import { CardLayoutComponent } from './components/card-layout/card-layout.compon
     IonIcon,
     IonButton,
     IonInput,
+    IonToggle,
   ],
 })
 export class AppsettingsComponent implements OnInit {
@@ -36,6 +38,7 @@ export class AppsettingsComponent implements OnInit {
   ReceiptPosName = '';
   appdateid?: number;
   Blogo: string | null = null;
+  withlogo = false;
 
   get businessContactNumber(): string {
     return this.ReceiptPosName;
@@ -67,6 +70,7 @@ export class AppsettingsComponent implements OnInit {
       this.Bname = row.Bname;
       this.Baddress = row.Baddress;
       this.ReceiptPosName = row.ReceiptContactInfo ?? row.ReceiptPosName ?? '';
+      this.withlogo = row.withlogo === 'Y';
 
       if (row.Blogo && Array.isArray(row.Blogo)) {
         console.log('Raw Blogo byte array length:', row.Blogo.length);
@@ -127,6 +131,7 @@ export class AppsettingsComponent implements OnInit {
       ReceiptContactInfo2: '',
       RecieptVATreg: 'TEST',
       Blogo: this.Blogo,
+      withlogo: this.withlogo ? 'Y' : 'N',
     };
 
     if (this.appdateid) {

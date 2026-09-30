@@ -31,7 +31,10 @@ import {
   ModalController,
 } from '@ionic/angular/standalone';
 import { IminPrinterService } from 'src/app/services/imin-printer.service';
-import { AppdateService } from 'src/app/services/appdate.service';
+import {
+  AppdateService,
+  ReceiptBusinessInfo,
+} from 'src/app/services/appdate.service';
 import { ReceiptPreviewComponent } from '../receipt-preview/receipt-preview.component';
 import { SalesService } from 'src/app/services/sales.service';
 import moment from 'moment';
@@ -40,6 +43,7 @@ import { InventoryService } from 'src/app/services/inventory.service';
 import { ItemhistoryService } from 'src/app/services/itemhistory.service';
 import { PersonnelTransactionService } from 'src/app/services/personnel-transaction.service';
 import { CustomersService } from 'src/app/services/customers.service';
+import { loadImage } from 'src/app/utils/load-image';
 
 @Component({
   selector: 'app-purchase-summary',
@@ -229,22 +233,26 @@ export class PurchaseSummaryComponent implements OnInit {
 
     // === FETCH APPDATE ===
     let salesreference: string = '';
-    let appdate;
+    let businessInfo: ReceiptBusinessInfo;
     try {
-      appdate = await this.appdateService.getAllAppdate();
+      businessInfo = await this.appdateService.getReceiptBusinessInfo();
     } catch (err) {
       console.error('Failed to fetch appdate:', err);
       return;
     }
 
-    const compName = appdate[0].Bname;
-    const compName1 = appdate[0].ReceiptBname;
-    const compAddress = appdate[0].Baddress;
-    const compContact = appdate[0].ReceiptContactInfo;
-    const receiptEndGreet = appdate[0].receiptendgreet;
-    const withlogo = appdate[0].withlogo;
-    const logoBlob = appdate[0].Blogo;
-    console.log('blob', logoBlob);
+    const {
+      compName,
+      compName1,
+      receiptAddress,
+      receiptAddress1,
+      compContact,
+      compContact1,
+      compContact2,
+      receiptEndGreet,
+      logoDataUrl,
+    } = businessInfo;
+    const withlogo = businessInfo.withLogo ? 'Y' : 'N';
     const { cart } = this;
 
     // === CONFIRM PAYMENT ALERT ===
@@ -280,10 +288,13 @@ export class PurchaseSummaryComponent implements OnInit {
       company: {
         compName,
         compName1,
-        compAddress,
+        receiptAddress,
+        receiptAddress1,
         compContact,
+        compContact1,
+        compContact2,
         receiptEndGreet,
-        logo: logoBlob,
+        logo: logoDataUrl,
       },
       transaction: {
         cart,
@@ -460,21 +471,20 @@ export class PurchaseSummaryComponent implements OnInit {
       );
       return;
     }
-    const logoBlob1 = new Blob([new Uint8Array(appdate[0].Blogo.data)], {
-      type: 'image/png',
-    });
-    const logoDataURL = await blobToDataURL(logoBlob1);
     // === OPEN PREVIEW MODAL ===
     const preview = await this.modalCtrl.create({
       component: ReceiptPreviewComponent,
       componentProps: {
         salesreference: salesreference,
         withlogo,
-        logo: logoDataURL,
+        logo: logoDataUrl,
         compName,
         compName1,
-        compAddress,
+        receiptAddress,
+        receiptAddress1,
         compContact,
+        compContact1,
+        compContact2,
         receiptEndGreet,
         cart,
         datestr,
@@ -507,13 +517,7 @@ export class PurchaseSummaryComponent implements OnInit {
 
       try {
         await this.printReceipt(
-          withlogo,
-          logoBlob,
-          compName,
-          compName1,
-          compAddress,
-          compContact,
-          receiptEndGreet,
+          businessInfo,
           datestr,
           salesreference
         );
@@ -526,7 +530,7 @@ export class PurchaseSummaryComponent implements OnInit {
         loading.dismiss();
         const alert = await this.alertController.create({
           header: 'Print Error',
-          message: 'Unable to print receipt.',
+          message: `Unable to print receipt. ${(err as Error)?.message || err}`,
           buttons: ['OK'],
         });
         await alert.present();
@@ -539,13 +543,7 @@ export class PurchaseSummaryComponent implements OnInit {
   }
 
   private async printReceipt(
-    withlogo: any,
-    logo: any,
-    compName: any,
-    compName1: any,
-    compAddress: any,
-    compContact: any,
-    receiptEndGreet: any,
+    businessInfo: ReceiptBusinessInfo,
     datestr: any,
     salesreference: any
   ) {
@@ -572,20 +570,23 @@ export class PurchaseSummaryComponent implements OnInit {
       }
 
       const { posData, cart, tenderedAmount } = this;
-      if (withlogo === 'Y') {
-        const logoDataURL = bufferToDataURL(logo, 'image/png');
+      const shouldPrintLogo = businessInfo.withLogo && !!businessInfo.logoDataUrl;
+      if (shouldPrintLogo) {
+        const image = await loadImage(businessInfo.logoDataUrl!);
+        const resizedDataURL = resizeImageStretch(image, 384, 250);
+        await this.iminPrinter.printImage(resizedDataURL, 1);
+      }
 
-        const image = new Image();
-        image.src = logoDataURL;
-        image.onload = async () => {
-          const resizedDataURL = resizeImageStretch(image, 384, 250);
-          await this.iminPrinter.printImage(resizedDataURL, 1);
-
-          // === HEADER ===
-          await this.iminPrinter.printText(`${compName}`, 1);
-          await this.iminPrinter.printText(`${compName1}`, 1);
-          await this.iminPrinter.printText(`${compAddress}`, 1);
-          await this.iminPrinter.printText(`${compContact}`, 1);
+          if (shouldPrintLogo) {
+            // === HEADER ===
+          
+          await this.iminPrinter.printText(`${businessInfo.compName}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.compName1}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.receiptAddress}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.receiptAddress1}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
           await this.iminPrinter.printText(
             '-----------------------------------------------',
             0
@@ -715,7 +716,7 @@ export class PurchaseSummaryComponent implements OnInit {
             '-----------------------------------------------',
             0
           );
-          await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
+          await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
           await this.iminPrinter.printText(
             '-----------------------------------------------',
             0
@@ -724,13 +725,15 @@ export class PurchaseSummaryComponent implements OnInit {
           await this.iminPrinter.printText('', 0);
 
           await this.iminPrinter.cutPaper();
-        };
       } else {
         // === HEADER ===
-        await this.iminPrinter.printText(`${compName}`, 1);
-        await this.iminPrinter.printText(`${compName1}`, 1);
-        await this.iminPrinter.printText(`${compAddress}`, 1);
-        await this.iminPrinter.printText(`${compContact}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.compName}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.compName1}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.receiptAddress}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.receiptAddress1}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -861,7 +864,7 @@ export class PurchaseSummaryComponent implements OnInit {
           '-----------------------------------------------',
           0
         );
-        await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
+        await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -950,17 +953,6 @@ export class PurchaseSummaryComponent implements OnInit {
   }
 }
 
-// Convert Node.js Buffer (or Blob with .data) to Data URL
-function bufferToDataURL(buffer: any, mimeType: string = 'image/png'): string {
-  // If you have a Buffer-like object {type: 'Buffer', data: [...]}
-  const bytes = buffer.data || buffer;
-  const binary = bytes.reduce(
-    (acc: string, byte: number) => acc + String.fromCharCode(byte),
-    ''
-  );
-  return `data:${mimeType};base64,${btoa(binary)}`;
-}
-
 function resizeImageStretch(
   image: HTMLImageElement,
   targetWidth: number,
@@ -978,11 +970,3 @@ function resizeImageStretch(
   return canvas.toDataURL('image/png'); // returns base64 DataURL
 }
 
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(blob);
-  });
-}
