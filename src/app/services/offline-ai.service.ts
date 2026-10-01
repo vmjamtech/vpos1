@@ -635,7 +635,9 @@ export class PosAiRestService {
       }
 
       const sql =
-        `SELECT COUNT(*) AS entries_count, IFNULL(SUM(pettylogamount), 0) AS total_amount
+        `SELECT COUNT(*) AS entries_count,
+                IFNULL(SUM(CASE WHEN pettylogtype = 'CASH IN' THEN pettylogamount ELSE 0 END), 0) AS cash_in_total,
+                IFNULL(SUM(CASE WHEN pettylogtype = 'CASH OUT' THEN pettylogamount ELSE 0 END), 0) AS cash_out_total
          FROM pettylogstbl
          WHERE DATE(pettylogdate) >= DATE(?)
            AND DATE(pettylogdate) <= DATE(?)`;
@@ -980,14 +982,16 @@ export class PosAiRestService {
     if (intentKey === 'petty_cash_period_total') {
       const row = rows[0] ?? {};
       const entriesCount = Number(row['entries_count'] ?? 0);
-      const totalAmount = Number(row['total_amount'] ?? 0);
+      const cashInTotal = Number(row['cash_in_total'] ?? 0);
+      const cashOutTotal = Number(row['cash_out_total'] ?? 0);
 
       return this.withSuggestion(
         `
           ${headerHtml}
           <div>
             Entries: ${entriesCount}<br/>
-            Total Amount: ${this.formatCurrency(totalAmount)}
+            Total Amount for Cash In: ${this.formatCurrency(cashInTotal)}<br/>
+            Total Amount for Cash Out: ${this.formatCurrency(cashOutTotal)}
           </div>
         `,
         'Try: "list petty cash entries this month".'
@@ -1483,13 +1487,15 @@ export class PosAiRestService {
   private renderPettyCashToday(rows: Record<string, unknown>[]): string {
     const row = rows[0] ?? {};
     const entriesCount = Number(row['entries_count'] ?? 0);
-    const totalAmount = Number(row['total_amount'] ?? 0);
+    const cashInTotal = Number(row['cash_in_total'] ?? 0);
+    const cashOutTotal = Number(row['cash_out_total'] ?? 0);
 
     return `
       <div>
         <strong>Petty Cash Today</strong><br/>
         Entries: ${entriesCount}<br/>
-        Total Amount: ${this.formatCurrency(totalAmount)}
+        Total Amount for Cash In: ${this.formatCurrency(cashInTotal)}<br/>
+        Total Amount for Cash Out: ${this.formatCurrency(cashOutTotal)}
       </div>
     `;
   }

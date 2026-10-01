@@ -91,7 +91,7 @@ Keep answers concise and actionable.`;
         intentKey: 'petty_cash_total_today',
         description: 'Total petty cash logs for current day.',
         sqlTemplate:
-          "SELECT COUNT(*) AS entries_count, IFNULL(SUM(pettylogamount), 0) AS total_amount FROM pettylogstbl WHERE DATE(pettylogdate) = DATE(?)",
+          "SELECT COUNT(*) AS entries_count, IFNULL(SUM(CASE WHEN pettylogtype = 'CASH IN' THEN pettylogamount ELSE 0 END), 0) AS cash_in_total, IFNULL(SUM(CASE WHEN pettylogtype = 'CASH OUT' THEN pettylogamount ELSE 0 END), 0) AS cash_out_total FROM pettylogstbl WHERE DATE(pettylogdate) = DATE(?)",
       },
       {
         intentKey: 'transfers_today',

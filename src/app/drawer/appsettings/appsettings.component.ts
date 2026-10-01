@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+  AlertController,
   IonButton,
   IonContent,
   IonIcon,
@@ -52,7 +53,8 @@ export class AppsettingsComponent implements OnInit {
 
   constructor(
     private appdaterService: AppdateService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private alertController: AlertController
   ) {}
 
   async ngOnInit() {
@@ -120,6 +122,19 @@ export class AppsettingsComponent implements OnInit {
   }
 
   async saveSettings() {
+    const confirmation = await this.alertController.create({
+      header: 'Confirm Save',
+      message: 'Are you sure you want to save the Business Settings?',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Save', role: 'confirm' },
+      ],
+    });
+    await confirmation.present();
+
+    const { role } = await confirmation.onDidDismiss();
+    if (role !== 'confirm') return;
+
     const contactNumber = (this.ReceiptPosName ?? '').trim();
 
     const data = {

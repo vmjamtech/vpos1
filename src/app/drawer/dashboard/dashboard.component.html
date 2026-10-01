@@ -1,4 +1,12 @@
 <ion-content fullscreen>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingText="Pull to refresh"
+      refreshingSpinner="crescent"
+      refreshingText="Refreshing..."
+    ></ion-refresher-content>
+  </ion-refresher>
+
   <!-- Header -->
   <div class="download-header">
     <div class="download-header-content">
@@ -78,7 +86,11 @@
 
           <!-- Expenses Card -->
           <ion-col size="12" size-md="4">
-            <ion-card class="summary-card expenses-card">
+            <ion-card
+              class="summary-card expenses-card"
+              button
+              (click)="scrollToExpensesTimeline()"
+            >
               <ion-card-content>
                 <div class="card-content">
                   <div class="card-icon">
@@ -235,7 +247,7 @@
       <!-- Expenses Timeline -->
       <ion-row>
         <ion-col>
-          <ion-card class="chart-card expenses-card">
+          <ion-card #expensesTimeline class="chart-card expenses-card">
             <ion-card-header>
               <ion-card-title>Expenses Timeline</ion-card-title>
             </ion-card-header>

@@ -21,4 +21,18 @@ describe('DashboardComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('scrolls to the Expenses Timeline when requested', () => {
+    const scrollIntoView = jasmine.createSpy('scrollIntoView');
+    (component as any).expensesTimelineHost = {
+      nativeElement: { scrollIntoView },
+    };
+
+    component.scrollToExpensesTimeline();
+
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  });
 });

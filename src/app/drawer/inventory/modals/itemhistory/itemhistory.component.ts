@@ -26,6 +26,10 @@ import {
 } from '@ionic/angular/standalone';
 import { ItemhistoryService } from 'src/app/services/itemhistory.service';
 import { FiltermodalComponent } from './modal/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+} from 'src/app/utils/date-range';
 
 @Component({
   selector: 'app-itemhistory',
@@ -75,8 +79,11 @@ export class ItemhistoryComponent implements OnInit {
     private popoverCtrl: PopoverController
   ) {}
 
-  ngOnInit() {
-    this.loadInitialData();
+  async ngOnInit() {
+    const { dateFrom, dateTo } = getTodayDateRange();
+    this.currentDateFrom = dateFrom;
+    this.currentDateTo = dateTo;
+    await this.applyFilter(dateFrom, dateTo, this.filtertype);
   }
 
   async openFilter(ev: Event) {
@@ -96,11 +103,11 @@ export class ItemhistoryComponent implements OnInit {
         const f = result.data;
 
         // Today's date in YYYY-MM-DD
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDateRange().dateFrom;
 
         // Handle null/empty
-        this.currentDateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-        this.currentDateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+        this.currentDateFrom = normalizeDatePickerValue(f.dateFrom, today);
+        this.currentDateTo = normalizeDatePickerValue(f.dateTo, today);
 
         // Filter type
         let type = f.filter;
@@ -117,6 +124,9 @@ export class ItemhistoryComponent implements OnInit {
   }
 
   async applyFilter(dateFrom: string, dateTo: string, filter: string) {
+    this.currentDateFrom = dateFrom || null;
+    this.currentDateTo = dateTo || null;
+    this.filtertype = filter || 'ALL';
     this.isLoading = true;
     this.offset = 0;
     this.allLoaded = false;
@@ -126,9 +136,9 @@ export class ItemhistoryComponent implements OnInit {
     try {
       const data = await this.itemHistoryService.getItemHistoryByfilter(
         this.itemcode ?? '',
-        dateFrom,
-        dateTo,
-        filter,
+        this.currentDateFrom ?? '',
+        this.currentDateTo ?? '',
+        this.filtertype,
         this.limit,
         this.offset
       );
@@ -157,6 +167,25 @@ export class ItemhistoryComponent implements OnInit {
     this.isLoading = false;
   }
 
+  private fetchCurrentPage(): Promise<any[]> {
+    if (this.currentDateFrom && this.currentDateTo) {
+      return this.itemHistoryService.getItemHistoryByfilter(
+        this.itemcode ?? '',
+        this.currentDateFrom,
+        this.currentDateTo,
+        this.filtertype,
+        this.limit,
+        this.offset
+      );
+    }
+
+    return this.itemHistoryService.getItemHistory(
+      this.itemcode ?? '',
+      this.limit,
+      this.offset
+    );
+  }
+
   /** Pull-to-refresh */
   async doRefresh(event: any) {
     if (this.isFetching) {
@@ -171,11 +200,7 @@ export class ItemhistoryComponent implements OnInit {
     this.filteredItems = [];
 
     try {
-      const newItems = await this.itemHistoryService.getItemHistory(
-        this.itemcode ?? '',
-        this.limit,
-        this.offset
-      );
+      const newItems = await this.fetchCurrentPage();
 
       this.items = [...newItems];
       this.filteredItems = [...this.items];
@@ -199,11 +224,7 @@ export class ItemhistoryComponent implements OnInit {
     this.isFetching = true;
 
     try {
-      const newItems = await this.itemHistoryService.getItemHistory(
-        this.itemcode ?? '',
-        this.limit,
-        this.offset
-      );
+      const newItems = await this.fetchCurrentPage();
 
       this.items.push(...newItems);
       this.filteredItems = [...this.items];

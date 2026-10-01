@@ -80,30 +80,30 @@ export class ItemhistoryService {
     limit: number = 30,
     offset: number = 0
   ): Promise<any[]> {
-    const sql = `
+    let sql = `
     SELECT itemhdate, itemhrefnum, itemhqty, itemhorigin, itemhremarks
     FROM itemhistorytbl 
     WHERE itemhitemc = ?
-      AND (itemhremarks LIKE ? OR itemhorigin LIKE ?)
       AND date(itemhdate) >= date(?)
       AND date(itemhdate) <= date(?)
+  `;
+
+    const params: any[] = [itemcode, datefrom, dateto];
+    if (type && type !== 'ALL') {
+      sql += ` AND (itemhremarks LIKE ? OR itemhorigin LIKE ?)`;
+      const likeType = `%${type}%`;
+      params.push(likeType, likeType);
+    }
+
+    sql += `
     ORDER BY itemhid DESC
     LIMIT ?
     OFFSET ?
   `;
 
     try {
-      const likeType = `%${type}%`;
-
-      return await this.db.query(sql, [
-        itemcode,
-        likeType,
-        likeType,
-        datefrom,
-        dateto,
-        limit,
-        offset,
-      ]);
+      params.push(limit, offset);
+      return await this.db.query(sql, params);
     } catch (error) {
       console.error('Error fetching ItemHistory filter:', error);
       throw new Error('Failed to load ItemHistory filter.');

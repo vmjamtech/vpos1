@@ -29,6 +29,11 @@ import {
 import { AppdateService } from 'src/app/services/appdate.service';
 import { TransferService } from 'src/app/services/transfer.service';
 import { FiltermodalComponent } from '../customers/modal/customertransactions/modals/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+  toLocalDateString,
+} from 'src/app/utils/date-range';
 import { SupplierComponent } from './modals/supplier/supplier.component';
 import { ItemconvertformComponent } from './modals/itemconvertform/itemconvertform.component';
 import { StorageService } from 'src/app/services/storage.service';
@@ -86,6 +91,7 @@ export class TransfersComponent implements OnInit {
     pouttype: 'Category',
     pullsupplier: 'Transfer To',
   };
+  private hasEnteredView = false;
 
   @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
 
@@ -101,20 +107,28 @@ export class TransfersComponent implements OnInit {
   ) {}
 
   private getToday(): string {
-    return new Date().toISOString().split('T')[0];
+    return toLocalDateString();
   }
 
   async ngOnInit() {
-    this.loadData();
+    const { dateFrom, dateTo } = getTodayDateRange();
+    this.currentDateFrom = dateFrom;
+    this.currentDateTo = dateTo;
+    await this.loadData();
+  }
+
+  async ionViewDidEnter() {
+    if (this.hasEnteredView) {
+      await this.loadData();
+    }
+    this.hasEnteredView = true;
   }
 
   async loadData() {
-    const today = this.getToday();
-
-    this.currentDateFrom = today;
-    this.currentDateTo = today;
-
-    await this.applyFilter(today, today);
+    await this.applyFilter(
+      this.currentDateFrom ?? '',
+      this.currentDateTo ?? ''
+    );
   }
 
   async openFilter() {
@@ -144,11 +158,10 @@ export class TransfersComponent implements OnInit {
         }
 
         if (f.mode === 'filter') {
-          const today = new Date().toISOString().split('T')[0];
-
           // Handle null / empty
-          const dateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-          const dateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+          const today = this.getToday();
+          const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
+          const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;
@@ -228,12 +241,7 @@ export class TransfersComponent implements OnInit {
 
   async doRefresh(event: any) {
     try {
-      const today = this.getToday();
-
-      this.currentDateFrom = today;
-      this.currentDateTo = today;
-
-      await this.applyFilter(today, today);
+      await this.loadData();
     } catch (err) {
       console.error(err);
     } finally {
@@ -298,10 +306,15 @@ export class TransfersComponent implements OnInit {
     this.isFetching = true;
 
     try {
-      const newItems = await this.transferService.getTransfers(
-        this.limit,
-        this.offset
-      );
+      const newItems =
+        this.currentDateFrom && this.currentDateTo
+          ? await this.transferService.getSalesFilterdb(
+              this.limit,
+              this.offset,
+              this.currentDateFrom,
+              this.currentDateTo
+            )
+          : await this.transferService.getTransfers(this.limit, this.offset);
 
       // Append new items
       this.items.push(...newItems);

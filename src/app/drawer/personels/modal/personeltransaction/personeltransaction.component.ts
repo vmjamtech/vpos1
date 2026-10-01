@@ -26,6 +26,10 @@ import {
 import { FiltermodalComponent } from 'src/app/drawer/customers/modal/customertransactions/modals/filtermodal/filtermodal.component';
 import { PersonnelTransactionService } from 'src/app/services/personnel-transaction.service';
 import { PaysalaryComponent } from './modals/paysalary/paysalary.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+} from 'src/app/utils/date-range';
 
 @Component({
   selector: 'app-personeltransaction',
@@ -80,13 +84,18 @@ export class PersoneltransactionComponent implements OnInit {
     private personelTransactionService: PersonnelTransactionService
   ) {}
 
-  ngOnInit() {
-    this.loadInitialData();
+  async ngOnInit() {
+    const { dateFrom, dateTo } = getTodayDateRange();
+    await this.applyFilter(dateFrom, dateTo);
   }
 
   async openFilter() {
     const filtermodal = await this.modalCtrl.create({
       component: FiltermodalComponent,
+      componentProps: {
+        dateFrom: this.currentDateFrom,
+        dateTo: this.currentDateTo,
+      },
       initialBreakpoint: 0.4,
       breakpoints: [0.4],
     });
@@ -103,11 +112,11 @@ export class PersoneltransactionComponent implements OnInit {
         }
 
         if (f.mode === 'filter') {
-          const today = new Date().toISOString().split('T')[0];
+          const today = getTodayDateRange().dateFrom;
 
           // Handle null/empty
-          const dateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-          const dateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+          const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
+          const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
           this.applyFilter(dateFrom, dateTo);
         }
@@ -275,6 +284,7 @@ export class PersoneltransactionComponent implements OnInit {
       this.items = [...newItems];
       this.filteredItems = [...this.items];
       this.offset += this.limit;
+      await this.loadtotals();
       if (newItems.length < this.limit) this.allLoaded = true;
     } catch (err) {
       console.error('Error refreshing:', err);

@@ -29,6 +29,8 @@ import {
   IonSelect,
   IonSelectOption,
   ActionSheetController,
+  IonRefresher,
+  IonRefresherContent,
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from 'src/app/services/dashboard.service';
@@ -38,6 +40,7 @@ import { ItemconvertformComponent } from '../transfers/modals/itemconvertform/it
 import { TransferService } from 'src/app/services/transfer.service';
 import { InventoryService } from 'src/app/services/inventory.service';
 import { ItemrestockformComponent } from '../transfers/modals/itemrestockform/itemrestockform.component';
+import { toLocalDateString } from 'src/app/utils/date-range';
 
 @Component({
   selector: 'app-dashboard',
@@ -63,6 +66,8 @@ import { ItemrestockformComponent } from '../transfers/modals/itemrestockform/it
     IonList,
     IonSelect,
     IonSelectOption,
+    IonRefresher,
+    IonRefresherContent,
   ],
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -72,8 +77,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   expenses = 0;
 
   // Date filters
-  dateFrom: string = new Date().toISOString().split('T')[0];
-  dateTo: string = new Date().toISOString().split('T')[0];
+  dateFrom: string = toLocalDateString();
+  dateTo: string = toLocalDateString();
   itemsSoldUpdateFlag = false;
   personnelUpdateFlag = false;
   expenseUpdateFlag = false;
@@ -128,12 +133,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private itemsSoldChart?: Highcharts.Chart;
   private personnelChart?: Highcharts.Chart;
   private resizeObserver?: ResizeObserver;
+  private hasEnteredDashboard = false;
 
   @ViewChild('itemsSoldHost', { read: ElementRef })
   itemsSoldHost?: ElementRef<HTMLElement>;
 
   @ViewChild('personnelHost', { read: ElementRef })
   personnelHost?: ElementRef<HTMLElement>;
+
+  @ViewChild('expensesTimeline', { read: ElementRef })
+  expensesTimelineHost?: ElementRef<HTMLElement>;
 
   constructor(
     private dashboardService: DashboardService,
@@ -154,10 +163,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngOnInit() {
-    await this.initializeDashboardDate();
-    await this.loadDashboardData();
-    await this.loadLowStocks(this.selectedLocation);
-    this.refreshChartLayout();
+    await this.refreshDashboardData();
   }
 
   ngAfterViewInit() {
@@ -174,7 +180,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ionViewDidEnter() {
+  async ionViewDidEnter() {
+    if (this.hasEnteredDashboard) {
+      await this.refreshDashboardData();
+    }
+    this.hasEnteredDashboard = true;
     this.refreshChartLayout();
   }
 
@@ -183,7 +193,22 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getToday(): string {
-    return new Date().toISOString().split('T')[0];
+    return toLocalDateString();
+  }
+
+  async doRefresh(event: any) {
+    try {
+      await this.refreshDashboardData();
+    } finally {
+      event.target.complete();
+    }
+  }
+
+  scrollToExpensesTimeline() {
+    this.expensesTimelineHost?.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   }
 
   async onDateChangeInput(event: any) {
@@ -193,12 +218,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.refreshChartLayout();
   }
 
-  private async initializeDashboardDate() {
-    const latestDate = await this.dashboardService.getLatestSalesDate();
-    if (latestDate) {
-      this.dateFrom = latestDate;
-      this.dateTo = latestDate;
-    }
+  private async refreshDashboardData() {
+    await this.loadDashboardData();
+    await this.loadLowStocks(this.selectedLocation);
+    this.refreshChartLayout();
   }
 
   private async loadDashboardData() {

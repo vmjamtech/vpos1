@@ -187,12 +187,24 @@
 
 .total-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  font-size: 1.1rem;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--ion-text-color);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.total-row span {
+  white-space: nowrap;
+  text-align: right;
 }
 
 /* =========================

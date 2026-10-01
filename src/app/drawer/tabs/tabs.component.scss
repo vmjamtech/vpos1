@@ -25,6 +25,7 @@ ion-router-outlet > .ion-page.ion-page-hidden {
 ion-tab-bar {
   --background: #ffffff;
   --border: 1px solid #e5e7eb;
+  --ion-safe-area-bottom: 16px;
   flex: 0 0 auto;
   position: relative;
   z-index: 5;

@@ -1,9 +1,10 @@
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { AppsettingsComponent } from './appsettings.component';
 
 describe('AppsettingsComponent', () => {
   let appdateService: jasmine.SpyObj<AppdateService>;
+  let alertController: jasmine.SpyObj<AlertController>;
   let component: AppsettingsComponent;
 
   beforeEach(() => {
@@ -12,9 +13,18 @@ describe('AppsettingsComponent', () => {
       'insert',
       'updateBusinessSettings',
     ]);
+    alertController = jasmine.createSpyObj<AlertController>(
+      'AlertController',
+      ['create']
+    );
+    alertController.create.and.resolveTo({
+      present: async () => undefined,
+      onDidDismiss: async () => ({ role: 'confirm' }),
+    } as any);
     component = new AppsettingsComponent(
       appdateService,
-      {} as ModalController
+      {} as ModalController,
+      alertController
     );
   });
 
@@ -65,5 +75,33 @@ describe('AppsettingsComponent', () => {
     const savedSettings = appdateService.updateBusinessSettings.calls.mostRecent().args[1];
     expect('ReceiptContactInfo1' in savedSettings).toBeFalse();
     expect('ReceiptContactInfo2' in savedSettings).toBeFalse();
+  });
+
+  it('asks for confirmation before saving Business Settings', async () => {
+    component.appdateid = 1;
+    appdateService.updateBusinessSettings.and.resolveTo();
+
+    await component.saveSettings();
+
+    expect(alertController.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        header: 'Confirm Save',
+        message: 'Are you sure you want to save the Business Settings?',
+      })
+    );
+    expect(appdateService.updateBusinessSettings).toHaveBeenCalled();
+  });
+
+  it('does not save Business Settings when confirmation is canceled', async () => {
+    alertController.create.and.resolveTo({
+      present: async () => undefined,
+      onDidDismiss: async () => ({ role: 'cancel' }),
+    } as any);
+    component.appdateid = 1;
+
+    await component.saveSettings();
+
+    expect(appdateService.updateBusinessSettings).not.toHaveBeenCalled();
+    expect(appdateService.insert).not.toHaveBeenCalled();
   });
 });

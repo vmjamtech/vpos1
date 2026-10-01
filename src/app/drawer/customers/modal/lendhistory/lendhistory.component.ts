@@ -25,6 +25,10 @@ import {
 } from '@ionic/angular/standalone';
 import { LenditemsService } from 'src/app/services/lenditems.service';
 import { FiltermodalComponent } from './modals/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+} from 'src/app/utils/date-range';
 
 @Component({
   selector: 'app-lendhistory',
@@ -84,6 +88,9 @@ export class LendhistoryComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    const { dateFrom, dateTo } = getTodayDateRange();
+    this.currentDateFrom = dateFrom;
+    this.currentDateTo = dateTo;
     await this.resetAndLoad();
   }
 
@@ -105,10 +112,19 @@ export class LendhistoryComponent implements OnInit {
 
     let items: any[] = [];
 
-    items = await this.lendHistoryService.getLendHistory(
-      this.limit,
-      this.offset
-    );
+    items =
+      this.currentDateFrom && this.currentDateTo
+        ? await this.lendHistoryService.getLendHistoryByFilter(
+            this.currentDateFrom,
+            this.currentDateTo,
+            this.filtertype,
+            this.limit,
+            this.offset
+          )
+        : await this.lendHistoryService.getLendHistory(
+            this.limit,
+            this.offset
+          );
 
     console.log(items);
 
@@ -202,14 +218,14 @@ export class LendhistoryComponent implements OnInit {
         const f = result.data;
 
         // Today's date in YYYY-MM-DD
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDateRange().dateFrom;
 
         // Handle null/empty
-        this.currentDateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-        this.currentDateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+        this.currentDateFrom = normalizeDatePickerValue(f.dateFrom, today);
+        this.currentDateTo = normalizeDatePickerValue(f.dateTo, today);
 
         // Filter type
-        let type = f.filter;
+        const type = f.filter;
 
         this.applyFilter(
           this.currentDateFrom ?? '',
@@ -223,6 +239,9 @@ export class LendhistoryComponent implements OnInit {
   }
 
   async applyFilter(dateFrom: string, dateTo: string, filter: string) {
+    this.currentDateFrom = dateFrom || null;
+    this.currentDateTo = dateTo || null;
+    this.filtertype = filter || 'ALL';
     this.isLoading = true;
     this.offset = 0;
     this.allLoaded = false;
@@ -231,9 +250,9 @@ export class LendhistoryComponent implements OnInit {
 
     try {
       const data = await this.lendHistoryService.getLendHistoryByFilter(
-        dateFrom,
-        dateTo,
-        filter,
+        this.currentDateFrom ?? '',
+        this.currentDateTo ?? '',
+        this.filtertype,
         this.limit,
         this.offset
       );

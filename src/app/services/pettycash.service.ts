@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
+import { sqliteInclusiveDateRange } from '../utils/date-range';
 
 @Injectable({
   providedIn: 'root',
@@ -127,13 +128,13 @@ export class PettyCashService {
 
     // Add optional filters
     if (datefrom && dateto) {
-      sql += ` AND pettylogdate >= ? AND pettylogdate <= ?`;
+      sql += ` AND ${sqliteInclusiveDateRange('pettylogdate')}`;
       params.push(datefrom, dateto);
     } else if (datefrom) {
-      sql += ` AND pettylogdate >= ?`;
+      sql += ` AND DATE(pettylogdate) >= DATE(?)`;
       params.push(datefrom);
     } else if (dateto) {
-      sql += ` AND pettylogdate <= ?`;
+      sql += ` AND DATE(pettylogdate) <= DATE(?)`;
       params.push(dateto);
     }
 
@@ -143,6 +144,42 @@ export class PettyCashService {
     } catch (error) {
       console.error('Error fetching total:', error);
       throw new Error('Failed to load total.');
+    }
+  }
+
+  async getTotalsByType(
+    datefrom?: string | null,
+    dateto?: string | null
+  ): Promise<{ cashInTotal: number; cashOutTotal: number }> {
+    let sql = `
+      SELECT
+        IFNULL(SUM(CASE WHEN pettylogtype = 'CASH IN' THEN pettylogamount ELSE 0 END), 0) AS cashInTotal,
+        IFNULL(SUM(CASE WHEN pettylogtype = 'CASH OUT' THEN pettylogamount ELSE 0 END), 0) AS cashOutTotal
+      FROM pettylogstbl
+      WHERE 1=1
+    `;
+    const params: string[] = [];
+
+    if (datefrom && dateto) {
+      sql += ` AND ${sqliteInclusiveDateRange('pettylogdate')}`;
+      params.push(datefrom, dateto);
+    } else if (datefrom) {
+      sql += ` AND DATE(pettylogdate) >= DATE(?)`;
+      params.push(datefrom);
+    } else if (dateto) {
+      sql += ` AND DATE(pettylogdate) <= DATE(?)`;
+      params.push(dateto);
+    }
+
+    try {
+      const result = await this.db.query(sql, params);
+      return {
+        cashInTotal: Number(result[0]?.cashInTotal ?? 0),
+        cashOutTotal: Number(result[0]?.cashOutTotal ?? 0),
+      };
+    } catch (error) {
+      console.error('Error fetching petty cash totals:', error);
+      throw new Error('Failed to load petty cash totals.');
     }
   }
 

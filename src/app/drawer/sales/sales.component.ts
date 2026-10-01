@@ -22,6 +22,11 @@ import {
 } from '@ionic/angular/standalone';
 import { SalesService } from 'src/app/services/sales.service';
 import { FiltermodalComponent } from '../customers/modal/customertransactions/modals/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+  toLocalDateString,
+} from 'src/app/utils/date-range';
 import { SalesdetailsComponent } from './modal/salesdetails/salesdetails.component';
 
 @Component({
@@ -64,6 +69,7 @@ export class SalesComponent implements OnInit {
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
   total: number = 0;
+  private hasEnteredView = false;
 
   searchField: 'salesrefnum' | 'salescust' = 'salesrefnum';
   searchFieldLabels: any = {
@@ -78,27 +84,31 @@ export class SalesComponent implements OnInit {
   ) {}
 
   private getToday(): string {
-    return new Date().toISOString().split('T')[0];
+    return toLocalDateString();
   }
 
   async ngOnInit() {
-    const today = this.getToday();
+    const { dateFrom, dateTo } = getTodayDateRange();
+    await this.applyFilter(dateFrom, dateTo);
+  }
 
-    this.currentDateFrom = today;
-    this.currentDateTo = today;
-
-    await this.applyFilter(today, today);
+  async ionViewDidEnter() {
+    if (this.hasEnteredView) {
+      await this.applyFilter(
+        this.currentDateFrom ?? '',
+        this.currentDateTo ?? ''
+      );
+    }
+    this.hasEnteredView = true;
   }
 
   /** 🔄 Pull-to-refresh */
   async doRefresh(event: any) {
     try {
-      const today = this.getToday();
-
-      this.currentDateFrom = today;
-      this.currentDateTo = today;
-
-      await this.applyFilter(today, today);
+      await this.applyFilter(
+        this.currentDateFrom ?? '',
+        this.currentDateTo ?? ''
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -113,7 +123,15 @@ export class SalesComponent implements OnInit {
 
     let items: any[] = [];
 
-    items = await this.salesService.getSalesdb(this.limit, this.offset);
+    items =
+      this.currentDateFrom && this.currentDateTo
+        ? await this.salesService.getSalesFilterdb(
+            this.limit,
+            this.offset,
+            this.currentDateFrom,
+            this.currentDateTo
+          )
+        : await this.salesService.getSalesdb(this.limit, this.offset);
 
     console.log(items);
     await this.loadtotals();
@@ -248,11 +266,10 @@ export class SalesComponent implements OnInit {
         }
 
         if (f.mode === 'filter') {
-          const today = new Date().toISOString().split('T')[0];
-
           // Handle null / empty
-          const dateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-          const dateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+          const today = this.getToday();
+          const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
+          const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;

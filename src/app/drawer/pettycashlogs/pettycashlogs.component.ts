@@ -24,6 +24,11 @@ import {
 } from '@ionic/angular/standalone';
 import { PettyCashService } from 'src/app/services/pettycash.service';
 import { FiltermodalComponent } from '../customers/modal/customertransactions/modals/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+  toLocalDateString,
+} from 'src/app/utils/date-range';
 import { PettycashformComponent } from './modal/pettycashform/pettycashform.component';
 
 @Component({
@@ -66,7 +71,9 @@ export class PettycashlogsComponent implements OnInit {
   skeletonArray = Array(10);
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
-  total: number = 0;
+  cashInTotal = 0;
+  cashOutTotal = 0;
+  private hasEnteredView = false;
 
   searchField: 'pettylogremarks' = 'pettylogremarks';
   searchFieldLabels: any = {
@@ -80,7 +87,24 @@ export class PettycashlogsComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    const { dateFrom, dateTo } = getTodayDateRange();
+    this.currentDateFrom = dateFrom;
+    this.currentDateTo = dateTo;
     await this.resetAndLoad();
+  }
+
+  async ionViewDidEnter() {
+    if (this.hasEnteredView) {
+      await this.applyFilter(
+        this.currentDateFrom ?? '',
+        this.currentDateTo ?? ''
+      );
+    }
+    this.hasEnteredView = true;
+  }
+
+  private getToday(): string {
+    return toLocalDateString();
   }
 
   /** 🔄 Pull-to-refresh */
@@ -101,7 +125,15 @@ export class PettycashlogsComponent implements OnInit {
 
     let items: any[] = [];
 
-    items = await this.pettyCashService.getPettyCash(this.limit, this.offset);
+    items =
+      this.currentDateFrom && this.currentDateTo
+        ? await this.pettyCashService.getFilterdb(
+            this.limit,
+            this.offset,
+            this.currentDateFrom,
+            this.currentDateTo
+          )
+        : await this.pettyCashService.getPettyCash(this.limit, this.offset);
 
     console.log(items);
     await this.loadtotals();
@@ -234,11 +266,10 @@ export class PettycashlogsComponent implements OnInit {
         }
 
         if (f.mode === 'filter') {
-          const today = new Date().toISOString().split('T')[0];
-
           // Handle null / empty
-          const dateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-          const dateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+          const today = this.getToday();
+          const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
+          const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;
@@ -290,11 +321,12 @@ export class PettycashlogsComponent implements OnInit {
     const dateFrom = this.currentDateFrom ?? '';
     const dateTo = this.currentDateTo ?? '';
 
-    // Select function based on role
-    let fetchFn;
-    fetchFn = this.pettyCashService.getTotal;
-
-    this.total = await fetchFn.call(this.pettyCashService, dateFrom, dateTo);
+    const totals = await this.pettyCashService.getTotalsByType(
+      dateFrom,
+      dateTo
+    );
+    this.cashInTotal = totals.cashInTotal;
+    this.cashOutTotal = totals.cashOutTotal;
   }
 
   /** 🔹 Search field selection */

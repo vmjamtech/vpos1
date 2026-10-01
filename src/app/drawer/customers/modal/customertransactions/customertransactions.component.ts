@@ -23,6 +23,10 @@ import {
 } from '@ionic/angular/standalone';
 import { CustomersService } from 'src/app/services/customers.service';
 import { FiltermodalComponent } from './modals/filtermodal/filtermodal.component';
+import {
+  getTodayDateRange,
+  normalizeDatePickerValue,
+} from 'src/app/utils/date-range';
 
 @Component({
   selector: 'app-customertransactions',
@@ -73,8 +77,9 @@ export class CustomertransactionsComponent implements OnInit {
     private customerService: CustomersService
   ) {}
 
-  ngOnInit() {
-    this.loadInitialData();
+  async ngOnInit() {
+    const { dateFrom, dateTo } = getTodayDateRange();
+    await this.applyFilter(dateFrom, dateTo);
   }
 
   async openFilter() {
@@ -100,11 +105,11 @@ export class CustomertransactionsComponent implements OnInit {
         }
 
         if (f.mode === 'filter') {
-          const today = new Date().toISOString().split('T')[0];
+          const today = getTodayDateRange().dateFrom;
 
           // Handle null/empty
-          const dateFrom = f.dateFrom ? f.dateFrom.split('T')[0] : today;
-          const dateTo = f.dateTo ? f.dateTo.split('T')[0] : today;
+          const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
+          const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
           this.applyFilter(dateFrom, dateTo);
         }
@@ -185,15 +190,25 @@ export class CustomertransactionsComponent implements OnInit {
     this.filteredItems = [];
 
     try {
-      const newItems = await this.customerService.getCustomerTransactionById(
-        this.custid,
-        this.limit,
-        this.offset
-      );
+      const newItems =
+        this.currentDateFrom && this.currentDateTo
+          ? await this.customerService.getCustomerTransactionByIdAndDate(
+              this.currentDateFrom,
+              this.currentDateTo,
+              this.limit,
+              this.offset,
+              this.custid
+            )
+          : await this.customerService.getCustomerTransactionById(
+              this.custid,
+              this.limit,
+              this.offset
+            );
 
       this.items = [...newItems];
       this.filteredItems = [...this.items];
       this.offset += this.limit;
+      await this.loadtotalBalance();
       if (newItems.length < this.limit) this.allLoaded = true;
     } catch (err) {
       console.error('Error refreshing:', err);

@@ -5,6 +5,7 @@ import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
 import { apiBaseUrl } from './api-url';
+import { sqliteInclusiveDateRange } from '../utils/date-range';
 
 @Injectable({
   providedIn: 'root',
@@ -168,13 +169,13 @@ export class SalesService {
 
     // Add optional filters
     if (datefrom && dateto) {
-      sql += ` AND salesdate >= ? AND salesdate <= ?`;
+      sql += ` AND ${sqliteInclusiveDateRange('salesdate')}`;
       params.push(datefrom, dateto);
     } else if (datefrom) {
-      sql += ` AND salesdate >= ?`;
+      sql += ` AND DATE(salesdate) >= DATE(?)`;
       params.push(datefrom);
     } else if (dateto) {
-      sql += ` AND salesdate <= ?`;
+      sql += ` AND DATE(salesdate) <= DATE(?)`;
       params.push(dateto);
     }
 

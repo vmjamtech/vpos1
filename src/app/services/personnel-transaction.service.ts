@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment';
 import { apiBaseUrl } from './api-url';
+import { sqliteInclusiveDateRange } from '../utils/date-range';
 
 @Injectable({
   providedIn: 'root',
@@ -176,7 +177,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid, pname];
 
     if (!loadingAll) {
-      sql += ` AND t2.salesdate >= ? AND t2.salesdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('t2.salesdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -200,7 +201,7 @@ export class PersonnelTransactionService {
     params.push(pid, pid);
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -238,7 +239,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid, pid];
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -284,7 +285,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid];
 
     if (!loadingAll) {
-      sql += ` AND pulldate >= ? AND pulldate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('pulldate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -298,7 +299,7 @@ export class PersonnelTransactionService {
     params.push(pid, pid);
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -340,7 +341,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid, pname];
 
     if (!loadingAll) {
-      sql += ` AND t2.salesdate >= ? AND t2.salesdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('t2.salesdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -358,7 +359,7 @@ export class PersonnelTransactionService {
     params.push(pid, pid);
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -392,7 +393,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid, pid];
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -433,7 +434,7 @@ export class PersonnelTransactionService {
     const params: any[] = [pid];
 
     if (!loadingAll) {
-      sql += ` AND pulldate >= ? AND pulldate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('pulldate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -448,7 +449,7 @@ export class PersonnelTransactionService {
     params.push(pid, pid);
 
     if (!loadingAll) {
-      sql += ` AND dtdate >= ? AND dtdate <= ? `;
+      sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
 
@@ -476,14 +477,6 @@ export class PersonnelTransactionService {
     let sql = '';
     const params: any[] = [];
 
-    const dateFilter = loadingAll
-      ? ''
-      : ' AND datefield >= ? AND datefield <= ?';
-
-    if (!loadingAll) {
-      params.push(datefrom, dateto);
-    }
-
     // DRIVER
     if (role === 'Driver') {
       sql = `
@@ -491,19 +484,21 @@ export class PersonnelTransactionService {
         SELECT DATE(pulldate) AS sales_date 
         FROM pouttbl 
         WHERE poutpid = ? AND pulldate IS NOT NULL 
-        ${loadingAll ? '' : 'AND pulldate >= ? AND pulldate <= ?'}
+        ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('pulldate')}`}
 
         UNION
 
         SELECT DATE(dtdate) AS sales_date 
         FROM deltransacttbl 
         WHERE (dtdelbyid = ? OR dtdelbyid2 = ?)
-        ${loadingAll ? '' : 'AND dtdate >= ? AND dtdate <= ?'}
+        ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('dtdate')}`}
       )
     `;
 
-      params.unshift(pid); // first param
-      if (!loadingAll) params.push(pid, pid); // for delivery filter
+      params.push(pid);
+      if (!loadingAll) params.push(datefrom, dateto);
+      params.push(pid, pid);
+      if (!loadingAll) params.push(datefrom, dateto);
     }
     // RIDER
     else if (role === 'Rider') {
@@ -511,9 +506,10 @@ export class PersonnelTransactionService {
       SELECT COUNT(DISTINCT DATE(dtdate)) AS total_days
       FROM deltransacttbl
       WHERE (dtdelbyid = ? OR dtdelbyid2 = ?)
-      ${loadingAll ? '' : 'AND dtdate >= ? AND dtdate <= ?'}
+      ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('dtdate')}`}
     `;
-      params.unshift(pid, pid);
+      params.push(pid, pid);
+      if (!loadingAll) params.push(datefrom, dateto);
     }
     // CASHIER / STOREKEEPER
     else {
@@ -522,18 +518,20 @@ export class PersonnelTransactionService {
         SELECT DATE(salesdate) AS sales_date 
         FROM salestbl 
         WHERE salescashier = ? 
-        ${loadingAll ? '' : 'AND salesdate >= ? AND salesdate <= ?'}
+        ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('salesdate')}`}
 
         UNION
 
         SELECT DATE(dtdate) AS sales_date 
         FROM deltransacttbl 
         WHERE (dtdelbyid = ? OR dtdelbyid2 = ?)
-        ${loadingAll ? '' : 'AND dtdate >= ? AND dtdate <= ?'}
+        ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('dtdate')}`}
       )
     `;
-      params.unshift(pname);
-      if (!loadingAll) params.push(pid, pid);
+      params.push(pname);
+      if (!loadingAll) params.push(datefrom, dateto);
+      params.push(pid, pid);
+      if (!loadingAll) params.push(datefrom, dateto);
     }
 
     const result = await this.db.query(sql, params);
@@ -657,7 +655,7 @@ export class PersonnelTransactionService {
       WHERE salpersonelid = ?
       ${
         !loadingAll && datefrom && dateto
-          ? 'AND DATE(salrefdate) >= ? AND DATE(salrefdate) <= ?'
+          ? `AND ${sqliteInclusiveDateRange('salrefdate')}`
           : ''
       }
       GROUP BY salremarks
@@ -692,7 +690,7 @@ export class PersonnelTransactionService {
       SELECT salremarks, salpaid
       FROM salhistory
       WHERE salpersonelid = ?
-      ${!loadingAll ? 'AND salrefdate >= ? AND salrefdate <= ?' : ''}
+      ${!loadingAll ? `AND ${sqliteInclusiveDateRange('salrefdate')}` : ''}
       GROUP BY salremarks
     ) AS grouped
   `;

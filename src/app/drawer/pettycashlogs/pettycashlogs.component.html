@@ -146,7 +146,13 @@
 
 <ion-footer class="total-footer">
   <div class="total-container">
-    <strong>Total Amount:</strong>
-    <span>₱{{ total | number : "1.2-2" }}</span>
+    <div class="total-row">
+      <strong>Total Amount for Cash In:</strong>
+      <span>₱{{ cashInTotal | number : "1.2-2" }}</span>
+    </div>
+    <div class="total-row">
+      <strong>Total Amount for Cash Out:</strong>
+      <span>₱{{ cashOutTotal | number : "1.2-2" }}</span>
+    </div>
   </div>
 </ion-footer>
