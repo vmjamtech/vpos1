@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
@@ -30,6 +30,7 @@ import {
   toLocalDateString,
 } from 'src/app/utils/date-range';
 import { PettycashformComponent } from './modal/pettycashform/pettycashform.component';
+import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 
 @Component({
   selector: 'app-pettycashlogs',
@@ -54,6 +55,7 @@ import { PettycashformComponent } from './modal/pettycashform/pettycashform.comp
     IonFooter,
     IonFab,
     IonFabButton,
+    DateRangeDisplayComponent,
   ],
 })
 export class PettycashlogsComponent implements OnInit {
@@ -83,7 +85,8 @@ export class PettycashlogsComponent implements OnInit {
   constructor(
     private pettyCashService: PettyCashService,
     private alertCtrl: AlertController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -94,11 +97,9 @@ export class PettycashlogsComponent implements OnInit {
   }
 
   async ionViewDidEnter() {
-    if (this.hasEnteredView) {
-      await this.applyFilter(
-        this.currentDateFrom ?? '',
-        this.currentDateTo ?? ''
-      );
+    if (this.hasEnteredView && !this.isLoading) {
+      const { dateFrom, dateTo } = getTodayDateRange();
+      await this.applyFilter(dateFrom, dateTo);
     }
     this.hasEnteredView = true;
   }
@@ -258,6 +259,7 @@ export class PettycashlogsComponent implements OnInit {
         if (f.mode === 'showAll') {
           this.currentDateFrom = null;
           this.currentDateTo = null;
+          this.cdr.detectChanges();
           this.applyFilter(
             this.currentDateFrom ?? '',
             this.currentDateTo ?? ''
@@ -273,6 +275,7 @@ export class PettycashlogsComponent implements OnInit {
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;
+          this.cdr.detectChanges();
           this.applyFilter(dateFrom, dateTo);
         }
       }

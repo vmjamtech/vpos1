@@ -22,6 +22,11 @@
     ></ion-refresher-content>
   </ion-refresher>
 
+  <app-date-range-display
+    [dateFrom]="currentDateFrom"
+    [dateTo]="currentDateTo"
+  ></app-date-range-display>
+
   <div class="search-container">
     <ion-searchbar
       [debounce]="300"

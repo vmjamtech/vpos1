@@ -1,3 +1,10 @@
+.sticky-filters {
+  position: sticky;
+  top: 81px; /* below fixed header */
+  z-index: 999;
+  background: var(--ion-background-color);
+}
+
 /* =========================
    SEARCH BAR
 ========================= */
@@ -80,7 +87,7 @@
 .product-list-container {
   height: 100vh;
   overflow-y: auto;
-  padding-top: 65px;
+  padding-top: 85px;
 }
 
 .product-list {

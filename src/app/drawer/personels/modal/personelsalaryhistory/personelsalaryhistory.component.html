@@ -18,6 +18,11 @@
     ></ion-refresher-content>
   </ion-refresher>
 
+  <app-date-range-display
+    [dateFrom]="currentDateFrom"
+    [dateTo]="currentDateTo"
+  ></app-date-range-display>
+
   <div class="search-container">
     <div class="total-balance" *ngIf="!isLoading">
       <strong>Total Salary Paid:</strong> ₱{{ totalsalary | number : "1.2-2" }}

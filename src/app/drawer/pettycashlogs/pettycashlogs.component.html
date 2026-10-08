@@ -25,6 +25,12 @@
     ></ion-refresher-content>
   </ion-refresher>
 
+  <div class="sticky-filters">
+  <app-date-range-display
+    [dateFrom]="currentDateFrom"
+    [dateTo]="currentDateTo"
+  ></app-date-range-display>
+
   <div class="search-container">
     <ion-searchbar
       [debounce]="300"
@@ -40,6 +46,7 @@
     <ion-button fill="clear" (click)="openFilter()" class="filter-btn">
       <ion-icon name="filter-outline"></ion-icon>
     </ion-button>
+  </div>
   </div>
 
   <div class="product-list-container">

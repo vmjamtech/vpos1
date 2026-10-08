@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
@@ -14,10 +14,9 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonRefresher,
-  IonRefresherContent,
   IonSearchbar,
   IonSkeletonText,
+  IonSpinner,
   ModalController,
 } from '@ionic/angular/standalone';
 import { SalesService } from 'src/app/services/sales.service';
@@ -28,6 +27,7 @@ import {
   toLocalDateString,
 } from 'src/app/utils/date-range';
 import { SalesdetailsComponent } from './modal/salesdetails/salesdetails.component';
+import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 
 @Component({
   selector: 'app-sales',
@@ -47,10 +47,10 @@ import { SalesdetailsComponent } from './modal/salesdetails/salesdetails.compone
     IonInfiniteScroll,
     IonButton,
     IonSkeletonText,
-    IonRefresher,
-    IonRefresherContent,
+    IonSpinner,
     IonBadge,
     IonFooter,
+    DateRangeDisplayComponent,
   ],
 })
 export class SalesComponent implements OnInit {
@@ -65,6 +65,7 @@ export class SalesComponent implements OnInit {
 
   isLoading = false;
   isFetching = false; // <-- prevents double triggers
+  isRefreshing = false;
   skeletonArray = Array(10);
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
@@ -80,7 +81,8 @@ export class SalesComponent implements OnInit {
   constructor(
     private salesService: SalesService,
     private alertCtrl: AlertController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   private getToday(): string {
@@ -93,26 +95,24 @@ export class SalesComponent implements OnInit {
   }
 
   async ionViewDidEnter() {
-    if (this.hasEnteredView) {
-      await this.applyFilter(
-        this.currentDateFrom ?? '',
-        this.currentDateTo ?? ''
-      );
+    if (this.hasEnteredView && !this.isLoading) {
+      const { dateFrom, dateTo } = getTodayDateRange();
+      await this.applyFilter(dateFrom, dateTo);
     }
     this.hasEnteredView = true;
   }
 
-  /** 🔄 Pull-to-refresh */
-  async doRefresh(event: any) {
+  /** Reloads with the active filter unchanged. */
+  async onRefreshClick() {
+    if (this.isRefreshing || this.isLoading) return;
+    this.isRefreshing = true;
     try {
       await this.applyFilter(
         this.currentDateFrom ?? '',
         this.currentDateTo ?? ''
       );
-    } catch (err) {
-      console.error(err);
     } finally {
-      event.target.complete();
+      this.isRefreshing = false;
     }
   }
 
@@ -258,6 +258,7 @@ export class SalesComponent implements OnInit {
         if (f.mode === 'showAll') {
           this.currentDateFrom = null;
           this.currentDateTo = null;
+          this.cdr.detectChanges();
           this.applyFilter(
             this.currentDateFrom ?? '',
             this.currentDateTo ?? ''
@@ -273,6 +274,7 @@ export class SalesComponent implements OnInit {
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;
+          this.cdr.detectChanges();
           this.applyFilter(dateFrom, dateTo);
         }
       }

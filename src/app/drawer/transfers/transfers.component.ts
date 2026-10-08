@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
+import { Component, NgZone, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ActionSheetController,
@@ -40,6 +40,7 @@ import { StorageService } from 'src/app/services/storage.service';
 import { ItemconvertdetailsComponent } from './modals/itemconvertdetails/itemconvertdetails.component';
 import { ItemrestockformComponent } from './modals/itemrestockform/itemrestockform.component';
 import { RestockdetailsComponent } from './modals/restockdetails/restockdetails.component';
+import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 
 @Component({
   selector: 'app-transfers',
@@ -67,6 +68,7 @@ import { RestockdetailsComponent } from './modals/restockdetails/restockdetails.
     IonRefresher,
     IonRefresherContent,
     IonBadge,
+    DateRangeDisplayComponent,
   ],
 })
 export class TransfersComponent implements OnInit {
@@ -103,7 +105,8 @@ export class TransfersComponent implements OnInit {
     private appdateService: AppdateService,
     private actionSheetController: ActionSheetController,
     private storageService: StorageService,
-    private zone: NgZone
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   private getToday(): string {
@@ -118,7 +121,10 @@ export class TransfersComponent implements OnInit {
   }
 
   async ionViewDidEnter() {
-    if (this.hasEnteredView) {
+    if (this.hasEnteredView && !this.isLoading) {
+      const { dateFrom, dateTo } = getTodayDateRange();
+      this.currentDateFrom = dateFrom;
+      this.currentDateTo = dateTo;
       await this.loadData();
     }
     this.hasEnteredView = true;
@@ -150,6 +156,7 @@ export class TransfersComponent implements OnInit {
         if (f.mode === 'showAll') {
           this.currentDateFrom = null;
           this.currentDateTo = null;
+          this.cdr.detectChanges();
           this.applyFilter(
             this.currentDateFrom ?? '',
             this.currentDateTo ?? ''
@@ -165,6 +172,7 @@ export class TransfersComponent implements OnInit {
 
           this.currentDateFrom = dateFrom;
           this.currentDateTo = dateTo;
+          this.cdr.detectChanges();
           this.applyFilter(dateFrom, dateTo);
         }
       }

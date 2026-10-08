@@ -25,7 +25,7 @@ export class DashboardService {
     let sql = '';
     const params: any[] = [fromDate, toDate];
 
-    if (role !== 'ADMINISTRATOR') {
+    if (role?.toUpperCase() !== 'ADMINISTRATOR') {
       sql = `
         SELECT 
           IFNULL(SUM(salestotalamount), 0) 
@@ -436,13 +436,12 @@ export class DashboardService {
     empName?: string
   ): Promise<{ pname: string; transcount: number; salary: number }[]> {
     let sql = '';
-    const params: any[] =
-      role !== 'ADMINISTRATOR'
+    const isAdmin = role?.toUpperCase() === 'ADMINISTRATOR';
+    const params: any[] = !isAdmin
         ? [fromDate, toDate, empName] // include empName if not admin
         : [fromDate, toDate]; // admin only needs dates
 
-    sql =
-      role !== 'ADMINISTRATOR'
+    sql = !isAdmin
         ? `
       SELECT e.pname, COUNT(DISTINCT et.dtrefnum) AS transcount, SUM(et.dsalary) AS salary
       FROM personeltbl e
@@ -544,7 +543,7 @@ export class DashboardService {
           t1.lenditemname, t1.lendqty as qty, t1.returnqty, t1.lendstatus, t2.salesdelby || ' | ' || t2.salesdelby2 AS sales_delivery 
           FROM lendhistory t1 INNER JOIN salestbl t2 ON t1.lendrefnum = t2.salesrefnum 
           WHERE t1.lendstatus <> 'R-DELETED' 
-          and t1.lenddate BETWEEN DATE(?) AND DATE(?)
+          and DATE(t1.lenddate) BETWEEN DATE(?) AND DATE(?)
           ORDER BY t1.lenddate DESC 
       `;
     params = [fromDate, toDate];

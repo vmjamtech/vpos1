@@ -192,6 +192,7 @@
               <div class="chart-host" #itemsSoldHost>
                 <highcharts-chart
                   [options]="itemsSoldChartOptions"
+                  [oneToOne]="true"
                   [(update)]="itemsSoldUpdateFlag"
                   (chartInstance)="onItemsSoldChartInstance($event)"
                   style="width: 100%; height: 300px; display: block"
@@ -288,6 +289,7 @@
               <div class="chart-host" #personnelHost>
                 <highcharts-chart
                   [options]="personnelChartOptions"
+                  [oneToOne]="true"
                   [(update)]="personnelUpdateFlag"
                   (chartInstance)="onPersonnelChartInstance($event)"
                   style="width: 100%; height: 300px; display: block"

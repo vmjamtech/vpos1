@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
@@ -29,6 +29,7 @@ import {
   getTodayDateRange,
   normalizeDatePickerValue,
 } from 'src/app/utils/date-range';
+import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 
 @Component({
   selector: 'app-lendhistory',
@@ -55,6 +56,7 @@ import {
     IonRefresher,
     IonRefresherContent,
     IonBadge,
+    DateRangeDisplayComponent,
   ],
 })
 export class LendhistoryComponent implements OnInit {
@@ -84,7 +86,8 @@ export class LendhistoryComponent implements OnInit {
   constructor(
     private lendHistoryService: LenditemsService,
     private alertCtrl: AlertController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -223,6 +226,7 @@ export class LendhistoryComponent implements OnInit {
         // Handle null/empty
         this.currentDateFrom = normalizeDatePickerValue(f.dateFrom, today);
         this.currentDateTo = normalizeDatePickerValue(f.dateTo, today);
+        this.cdr.detectChanges();
 
         // Filter type
         const type = f.filter;

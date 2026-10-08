@@ -108,7 +108,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     chart: { type: 'bar' },
     title: { text: 'Personnel Transactions' },
     xAxis: { categories: [] },
-    yAxis: { title: { text: 'Transactions / Salary' }, min: 0 },
+    yAxis: {
+      title: { text: 'Transactions' },
+      min: 0,
+      softMax: 30,
+      allowDecimals: false,
+    },
     series: [],
     credits: { enabled: false },
   };
@@ -182,6 +187,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async ionViewDidEnter() {
     if (this.hasEnteredDashboard) {
+      this.dateFrom = this.getToday();
+      this.dateTo = this.getToday();
       await this.refreshDashboardData();
     }
     this.hasEnteredDashboard = true;
@@ -234,7 +241,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.sales = await this.dashboardService.getSales(
         this.dateFrom,
         this.dateTo,
-        role
+        role,
+        empname
       );
       this.profit = await this.dashboardService.getProfit(
         this.dateFrom,
@@ -322,7 +330,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.personnelChartOptions = {
       ...this.personnelChartOptions,
       xAxis: {
-        categories: hasData ? personnel.map((p) => p.pname) : ['No data'],
+        categories: hasData
+          ? personnel.map((p) => `${p.pname} (${p.transcount})`)
+          : ['No data'],
       },
       series: [
         {
@@ -330,12 +340,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           name: 'Total Transactions',
           data: hasData ? personnel.map((p) => p.transcount) : [0],
           color: hasData ? '#10b981' : '#94a3b8',
-        },
-        {
-          type: 'bar',
-          name: 'Salary',
-          data: hasData ? personnel.map((p) => p.salary) : [0],
-          color: hasData ? '#f59e0b' : '#cbd5e1',
         },
       ],
     };

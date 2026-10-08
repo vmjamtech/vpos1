@@ -1,0 +1,861 @@
+# VPOS1 Project History
+
+> **Purpose:** Transferable project memory for resuming the VPOS1 project in a fresh AI/coding-assistant session on another machine.
+>
+> **Last consolidated:** 2026-10-06  
+> **Project:** `vpos1`  
+> **Primary workflow:** VS Code + GitHub Copilot / Vibe Coding  
+> **Important:** Preserve existing functionality and user data. Do not make destructive or broad refactors without first auditing, explaining the root cause/impact, and getting approval.
+
+---
+
+## 1. Project Context & Goals
+
+### Core objective
+
+`VPOS1` is an Android-capable POS application being developed as a practical, offline-first business POS system. The current work is primarily bug fixing, stabilization, printing reliability, date filtering, database safety, and incremental feature improvement rather than a rewrite.
+
+The project is being developed by the user in **VS Code using GitHub Copilot**, with the user learning the implementation while using AI as a coding assistant.
+
+The app already has established screens, business logic, SQLite/local data, printing behavior, and Android packaging. The goal is to improve it **without breaking existing behavior or losing existing database data**.
+
+### Target use case
+
+The application is a business POS system with functionality including, at minimum:
+
+- Sales
+- Purchases / stock
+- Petty Cash
+- Personnel transactions
+- Transfers / transfer items
+- Dashboard
+- Customer-related balances/history
+- Receipt printing and reprinting
+- Business settings
+- Local/offline database operation
+- Android deployment
+
+The project is associated with the user's broader LPG POS work, but the current coding task is specifically the `vpos1` application.
+
+### Technology / tooling currently known
+
+- **Editor:** VS Code
+- **AI coding assistant:** GitHub Copilot
+- **Development approach:** Vibe Coding, with explicit audit → explanation → approval → implementation → test workflow
+- **Frontend/framework:** Ionic + Angular
+- **Mobile target:** Android
+- **Database:** SQLite / local database
+- **Android/JVM:** JDK 21
+- **Android SDK:** configured through `ANDROID_HOME`
+- **Build:** Android/Gradle tooling, with a `build-debug.bat` workflow
+- **Browser compatibility:** `.browserslistrc` includes Safari/iOS 15+ compatibility
+- **Printer integration:** includes iMin printer behavior/output
+- **Current debug APK size previously observed:** approximately 63 MB
+- At the time of the earlier build check, no physical Android phone/emulator was connected.
+
+---
+
+## 2. Progress & Accomplishments
+
+### 2.1 Initial Android build environment
+
+The project successfully reached a debug Android build state.
+
+Known environment/configuration:
+
+- Project directory: `vpos1`
+- `JAVA_HOME`: JDK 21
+- `ANDROID_HOME`: Android SDK
+- Debug build script: `build-debug.bat`
+- Debug APK: `app-debug.apk`
+- Previously observed APK size: approximately 63 MB
+- Build was successful.
+- A connected phone/emulator was not yet available at that point.
+
+A future goal is to improve the development/testing workflow so the user does not repeatedly need to build/install an APK just to test small changes. Emulator/live-reload style testing is preferred where it can be introduced without changing the application's architecture or behavior.
+
+### 2.2 Git / source-control learning
+
+The user is new to the distinction between Git and VS Code and is learning Git as part of the Vibe Coding workflow.
+
+Earlier Git setup issues included:
+
+- Git installation/PATH problems.
+- Git identity configuration.
+- Intended Git identity was:
+  - name: `vmjamtech`
+  - email: `vmjamtech@gmail.com`
+
+Git should be treated as source control; VS Code is the development environment/editor. They are separate tools.
+
+### 2.3 Database investigation
+
+A previous Copilot review identified an important database concern:
+
+- `sqlite.service.ts` uses `copyFromAssets(false)`.
+- This means the existing database is **not automatically replaced** when the application starts/builds.
+- This is important because preserving existing on-device SQLite data is a hard requirement.
+- A `database.sql` file was observed during review, but the review indicated it appeared unrelated/unused for the current database initialization path. Do not assume it is the active schema source without verifying actual runtime references.
+
+The project must avoid any change that:
+
+- overwrites the user's existing SQLite database,
+- resets data during an app update,
+- changes schema destructively without migration,
+- silently replaces the active database,
+- or changes shared database behavior without an audit.
+
+### 2.4 Date-filter work identified
+
+A recurring bug/UX requirement was identified:
+
+> Default date filters should automatically use **today's date**.
+
+The user wants date ranges to remain selectable manually, but the initial/default state should be:
+
+- `dateFrom = today`
+- `dateTo = today`
+
+The affected areas discussed include:
+
+- Dashboard
+- Sales
+- Petty Cash Logs
+- Personnel Transactions
+- Transfer Items
+
+A particularly important Personnel Transactions issue was observed:
+
+- Same-day filter:
+  - From: September 25
+  - To: September 25
+  - expected September 25 records
+  - records were missing
+- Changing To date to September 26 caused September 25 records to appear.
+
+This strongly suggests an inclusive/exclusive date-boundary issue, timestamp parsing issue, or end-of-day handling issue. The exact root cause must be traced in the actual query/filter implementation before changing it.
+
+The desired behavior is that a same-day range includes the entire selected day.
+
+### 2.5 Refresh behavior requirement
+
+The user also wants relevant screens to refresh their data when returning to them or manually pulling down, while preserving the current date filter.
+
+Important screens specifically discussed:
+
+- Dashboard
+- Sales
+- Petty Cash Logs
+- Personnel Transactions
+- Transfer Items
+
+Desired behavior:
+
+- Switching back to a tab/screen should refresh current data where appropriate.
+- Pull-to-refresh should refresh current data.
+- Refresh should **not unexpectedly reset the user's selected date range**.
+- The implementation should avoid creating duplicate subscriptions, repeated database calls, or lifecycle regressions.
+
+### 2.6 Printing investigation
+
+Printing is a major current priority.
+
+#### Business Contact Number
+
+Issue:
+
+- `Business Settings → Business Contact Number` can be changed/saved.
+- The updated value is not appearing on the printed receipt.
+
+The preferred debugging trace is:
+
+`Business Contact Number saved value`
+→ `receipt data/source`
+→ `print template`
+→ `actual printer output`
+
+Copilot should specifically inspect:
+
+- stale/cached state,
+- duplicate sources of business contact data,
+- hardcoded values,
+- wrong field names,
+- data not being passed into the receipt object,
+- print template using a different property than the settings page.
+
+Do not simply patch the visible print template without finding the actual data-flow root cause.
+
+#### Receipt logo
+
+Issue:
+
+- Receipt logo toggle is ON.
+- Purchase printing still does not print the logo.
+
+Need to verify:
+
+- settings value,
+- receipt data,
+- purchase-printing path,
+- logo loading/encoding,
+- whether Sales and Purchase use different print templates,
+- whether a common print helper is bypassed.
+
+#### Sales Reprint
+
+Issue observed:
+
+`Printer Error: Unable to print (g.data || g).reduce is not a function`
+
+This indicates a data-shape/type mismatch somewhere in the Sales Reprint printing pipeline.
+
+Do not blindly wrap values in arrays or use `.reduce()` workarounds. Trace what `g.data || g` actually contains at runtime and identify why the code expects an array while receiving another type.
+
+#### iMin receipt output
+
+The user wants the physical iMin printer output to match the application's print preview more closely.
+
+Important receipt address fields mentioned:
+
+- `ReceiptAddress`
+- `ReceiptAddress1`
+
+The existing printing path appears to use company-address fields such as `compAddress`. The preferred direction is to make the printer output use the same receipt-specific fields as the preview rather than unrelated company-address properties.
+
+Printing changes must be tested across relevant paths, especially:
+
+- Sales print
+- Sales reprint
+- Purchase print
+- Receipt logo
+- Business contact number
+- Receipt address
+
+Printing is shared/high-risk code: a fix for one screen must not silently break another.
+
+### 2.7 Petty Cash issue identified
+
+The user found a logic issue in **Petty Cash Action totals**.
+
+Current behavior:
+
+- Cash In: `1000`
+- Cash Out: `500`
+- Total: `1500`
+
+Desired behavior:
+
+- Cash In and Cash Out should be separated.
+- They should not simply be added together as a single positive total.
+- The UI/report should distinguish the two transaction directions.
+
+The exact desired presentation/calculation should follow the existing Petty Cash Action design, but the key requirement is:
+
+**Cash In and Cash Out must be filtered/calculated separately rather than combined into one total.**
+
+---
+
+## 3. Architectural & Technical Decisions
+
+### 3.1 Non-destructive development is the top constraint
+
+The application already contains working functionality and existing user data.
+
+Therefore:
+
+1. **Do not rewrite working modules unnecessarily.**
+2. Prefer the smallest safe/additive change.
+3. Do not remove existing behavior just to make code cleaner.
+4. Do not replace database files casually.
+5. Do not perform broad refactors while fixing a localized bug.
+6. Shared services/components require extra caution because one change can affect multiple screens.
+
+The user's priority is **data safety and preservation of existing functionality**, even if the resulting code is not maximally minimal or "clean."
+
+### 3.2 Required AI coding workflow
+
+The preferred workflow is:
+
+**Investigate → explain → ask/receive approval → implement → test/report**
+
+When the user asks to fix something, the coding assistant must not assume the user understands the implementation.
+
+Before making a meaningful change, briefly explain:
+
+- the root cause,
+- what is causing the observed behavior,
+- which file/function is involved,
+- what will be changed,
+- and any meaningful risk/impact.
+
+Then get approval before applying the actual fix when the task is not an explicitly authorized immediate edit.
+
+The user explicitly added this rule:
+
+> When I ask you to fix something, don't assume I understand the implementation. Briefly explain the root cause before making the change.
+
+### 3.3 Copilot prompt style
+
+Copilot prompts should be:
+
+- minimal-token,
+- precise,
+- scoped to one issue,
+- explicit about preserving existing behavior,
+- explicit about auditing before modifying,
+- explicit about reporting files changed.
+
+Avoid unnecessarily long prompts.
+
+A useful pattern is:
+
+1. Audit only.
+2. List unfinished/broken functions and root causes.
+3. Explain action plan.
+4. Wait for approval.
+5. Implement the smallest safe fix.
+6. Test/build.
+7. Report:
+   - files changed,
+   - what changed,
+   - why,
+   - test result,
+   - any remaining risk.
+
+### 3.4 Purely additive changes preferred
+
+Changes should be purely additive where reasonably possible.
+
+If an existing implementation must be changed/replaced:
+
+- explain why,
+- identify the behavior being preserved,
+- identify the potential regression risk,
+- make the smallest necessary modification.
+
+### 3.5 Database preservation / migrations
+
+Any database change must assume there may already be real data on the device.
+
+Required principles:
+
+- Never overwrite an existing database just to apply a schema update.
+- Verify the actual initialization path.
+- Use migrations for schema changes where required.
+- Preserve existing records.
+- Confirm whether a table/column already exists before creating/altering it.
+- Test update behavior against an existing database, not only a clean installation.
+
+The previous `copyFromAssets(false)` finding is especially important and should not be casually changed.
+
+### 3.6 Printing architecture protection
+
+Printing is considered high-risk shared functionality.
+
+Before changing printing:
+
+- identify the actual print path,
+- identify the data object passed into the print function,
+- identify whether Sales/Purchase/Reprint use separate or shared code,
+- identify preview vs printer data sources,
+- confirm field names and types,
+- then modify only the required path.
+
+Do not "fix" a printing error by hiding the exception.
+
+### 3.7 Android/build protection
+
+Avoid unnecessary changes to:
+
+- JDK version,
+- Android SDK configuration,
+- Gradle configuration,
+- Capacitor/Ionic Android configuration,
+- dependencies,
+- native plugins.
+
+A build-system change can create unrelated regressions.
+
+Current known working baseline includes JDK 21 and the existing Android SDK/build configuration.
+
+### 3.8 App versioning
+
+The user wants APK/application improvements to have explicit version progression, e.g.:
+
+`1.0.1 → 1.0.2`
+
+When an APK improvement is released, the previous installed database/data should remain intact.
+
+Versioning must therefore be treated separately from database reset/initialization.
+
+### 3.9 Rule-file organization
+
+The user prefers separate editable rule files rather than one giant rule file.
+
+Preferred structure:
+
+```text
+.github/
+├── copilot-instructions.md
+└── instructions/
+    ├── vpos-rules.instructions.md
+    ├── token-rules.instructions.md
+    └── safety-rules.instructions.md
+```
+
+The instruction files use:
+
+```yaml
+applyTo: "**"
+```
+
+The purpose of the separation is to make VPOS-specific behavior, token-efficiency behavior, and safety/data-protection behavior easy to find and edit independently.
+
+The rules are customized Ponytail-style rules, not a requirement to adopt the full Ponytail system.
+
+### 3.10 High-level Copilot rule content
+
+The VPOS rules should protect:
+
+- existing functionality,
+- SQLite/database data,
+- database migrations,
+- printing,
+- Android build configuration,
+- shared services,
+- existing UI/behavior,
+- minimal scoped fixes,
+- root-cause-first debugging.
+
+The token rules should enforce:
+
+- concise output,
+- minimal-token prompts,
+- no unnecessary repetition,
+- focused reports,
+- enough explanation to understand the change.
+
+The safety rules should enforce:
+
+- no destructive database actions,
+- no broad refactors without approval,
+- no dependency/config changes without justification,
+- no overwriting working logic blindly,
+- approval before risky fixes,
+- verification/testing after changes.
+
+---
+
+## 4. Current State / Key Snippets
+
+### 4.1 Known project baseline
+
+```text
+Project folder: vpos1
+
+Editor:
+  VS Code
+
+AI:
+  GitHub Copilot
+
+Framework:
+  Ionic + Angular
+
+Mobile:
+  Android
+
+Database:
+  SQLite / local database
+
+Java:
+  JDK 21
+
+Android SDK:
+  ANDROID_HOME configured
+
+Build:
+  build-debug.bat
+
+Output:
+  app-debug.apk (~63 MB previously observed)
+
+Browser compatibility:
+  Safari / iOS 15+
+```
+
+### 4.2 Database initialization finding
+
+Previously reviewed code included:
+
+```ts
+copyFromAssets(false)
+```
+
+in `sqlite.service.ts`.
+
+Important interpretation:
+
+- `false` means existing database content is not simply replaced by the asset copy.
+- Do not change this behavior without a specific migration/data-preservation reason.
+
+A file named `database.sql` was also observed, but it was not established as the active runtime schema source. Verify references before treating it as authoritative.
+
+### 4.3 Date filter implementation area
+
+A relevant UI pattern previously shown by the user was:
+
+```html
+<div class="date-filter-container">
+  <ion-grid fixed class="date-filter">
+    <ion-row>
+      <ion-col size="6">
+        <ion-item lines="none" class="date-item">
+          <ion-label position="stacked">Date From</ion-label>
+          <input
+            type="date"
+            [(ngModel)]="dateFrom"
+            (input)="onDateChangeInput($event)"
+          />
+        </ion-item>
+      </ion-col>
+```
+
+The corresponding date-filter logic needs to be traced in the relevant component/service/query.
+
+Important expected behavior:
+
+```text
+Default:
+dateFrom = today
+dateTo   = today
+
+Same-day range:
+2026-09-25 → 2026-09-25
+must include all records occurring on 2026-09-25,
+including records with timestamps later in that day.
+```
+
+Do not assume the UI is the only source of the bug; inspect the query and timestamp boundary logic.
+
+### 4.4 Personnel Transactions boundary symptom
+
+Observed:
+
+```text
+From: 2026-09-25
+To:   2026-09-25
+=> September 25 records missing
+
+From: 2026-09-25
+To:   2026-09-26
+=> September 25 records appear
+```
+
+Likely areas to audit:
+
+- conversion of `<input type="date">` values,
+- timezone handling,
+- SQL date comparison,
+- `00:00:00` vs `23:59:59.999`,
+- inclusive/exclusive upper bounds,
+- string vs Date comparisons,
+- UTC/local timezone conversion.
+
+Do not apply a timezone workaround until the actual storage format and query are confirmed.
+
+### 4.5 Petty Cash expected calculation
+
+Current problematic behavior:
+
+```text
+Cash In  = 1000
+Cash Out = 500
+Total    = 1500   <-- incorrect for the requested separation
+```
+
+Required conceptual model:
+
+```text
+Cash In  = 1000
+Cash Out = 500
+
+Do not combine them into one gross-positive total.
+Expose/calculcate the two directions separately.
+```
+
+The exact UI labels/calculation should be based on the existing Petty Cash Action implementation after audit.
+
+### 4.6 Printing requirements
+
+Business contact flow to audit:
+
+```text
+Business Settings
+    ↓
+Business Contact Number saved value
+    ↓
+stored/current business data
+    ↓
+receipt data object
+    ↓
+print template/helper
+    ↓
+iMin printer output
+```
+
+Required result:
+
+- saved Business Contact Number must appear on printed receipt.
+
+Receipt logo:
+
+```text
+Business Settings
+  Logo toggle = ON
+        ↓
+Receipt/Purchase print path
+        ↓
+Logo should actually print
+```
+
+Sales Reprint error:
+
+```text
+Printer Error:
+Unable to print (g.data || g).reduce is not a function
+```
+
+Required debugging approach:
+
+- determine runtime type/value of `g.data`,
+- determine runtime type/value of `g`,
+- determine what code expects an array,
+- trace why a non-array reaches `.reduce()`,
+- fix the source/data-shape mismatch.
+
+Receipt address:
+
+Preferred fields:
+
+```text
+ReceiptAddress
+ReceiptAddress1
+```
+
+Avoid using unrelated `compAddress` values if those are not the source used by the print preview.
+
+Goal:
+
+```text
+Print Preview
+      ≈
+iMin physical receipt
+```
+
+### 4.7 Desired date-refresh behavior
+
+When a screen/tab is revisited:
+
+```text
+Current dateFrom/dateTo
+        ↓
+refresh/requery data
+        ↓
+display latest records
+        ↓
+retain date selection
+```
+
+Pull-to-refresh should follow the same principle.
+
+Do not reset filters merely because the screen lifecycle fires.
+
+### 4.8 Git identity
+
+Previously intended Git configuration:
+
+```text
+user.name  = vmjamtech
+user.email = vmjamtech@gmail.com
+```
+
+The exact local Git state should be verified on the new machine rather than assumed.
+
+---
+
+## 5. Next Steps & Open Action Items
+
+### Priority 1 — Audit before fixing
+
+The next coding session should begin by auditing the actual current codebase, not by blindly applying remembered fixes.
+
+For each issue:
+
+1. Locate the relevant component/service/query.
+2. Trace data flow.
+3. Identify root cause.
+4. Explain root cause briefly.
+5. Present exact files/functions to change.
+6. Wait for approval where required.
+7. Apply smallest safe fix.
+8. Build/test.
+9. Report changed files and result.
+
+### Priority 2 — Printing
+
+Printing is the most important functional area currently identified.
+
+Resolve in this order:
+
+1. **Business Contact Number not appearing on receipt**
+   - Trace settings → stored value → receipt data → template → printer.
+2. **Purchase receipt logo not printing**
+   - Trace logo toggle and Purchase-specific print path.
+3. **Sales Reprint `.reduce is not a function`**
+   - Find actual runtime data shape.
+4. **iMin receipt address mismatch**
+   - Align printer output with preview and use `ReceiptAddress` / `ReceiptAddress1`.
+5. Regression-test Sales, Purchase, and Reprint after each change.
+
+### Priority 3 — Date filters
+
+Implement/verify:
+
+- default From = today,
+- default To = today,
+- same-day date ranges are inclusive,
+- records throughout the selected day appear,
+- date range selection remains manual,
+- Dashboard/Sales/Petty Cash Logs/Personnel Transactions/Transfer Items all behave consistently.
+
+### Priority 4 — Refresh behavior
+
+Add/verify safe refresh behavior for:
+
+- Dashboard
+- Sales
+- Petty Cash Logs
+- Personnel Transactions
+- Transfer Items
+
+Requirements:
+
+- refresh on tab/screen return where appropriate,
+- pull-to-refresh,
+- preserve current date filters,
+- avoid duplicate subscriptions/calls.
+
+### Priority 5 — Petty Cash totals
+
+Audit Petty Cash Action calculation and separate:
+
+- Cash In
+- Cash Out
+
+Do not combine them into one gross total.
+
+### Priority 6 — Testing workflow
+
+Improve the development loop so the user can test changes without repeatedly creating/installing a full APK when unnecessary.
+
+Preferred direction:
+
+- Android emulator or connected device,
+- Ionic/Capacitor development/live reload where compatible,
+- preserve current architecture,
+- do not change production behavior merely to improve development convenience.
+
+### Priority 7 — Versioning and database preservation
+
+For each stable APK improvement:
+
+```text
+Example:
+1.0.1 → 1.0.2
+```
+
+Verify:
+
+- application version increments correctly,
+- existing SQLite database remains intact,
+- existing data remains available after update,
+- no accidental database asset replacement occurs.
+
+### Priority 8 — Git/source control
+
+On the new machine:
+
+1. Verify Git is installed and available in PATH.
+2. Configure the intended identity if needed.
+3. Confirm repository state.
+4. Make commits at logical stable points.
+5. Avoid committing generated/debug artifacts unless intentionally tracked.
+
+### Priority 9 — Preserve Copilot rules
+
+Keep the separate instruction files:
+
+```text
+.github/copilot-instructions.md
+.github/instructions/vpos-rules.instructions.md
+.github/instructions/token-rules.instructions.md
+.github/instructions/safety-rules.instructions.md
+```
+
+These rules are part of the project's development workflow and should travel with the project.
+
+---
+
+## Transfer / Resume Instructions for a Fresh AI
+
+When resuming this project, assume:
+
+1. This is an existing application, **not a greenfield project**.
+2. Existing functionality is valuable and should be preserved.
+3. Existing SQLite data is valuable and must not be reset.
+4. The user is learning the implementation, so explain the root cause before fixing meaningful bugs.
+5. Audit first; do not guess at architecture from filenames alone.
+6. Prefer the smallest safe/additive change.
+7. Printing and database code are high-risk/shared areas.
+8. Date filters must be treated carefully because timestamp boundaries have already produced a real bug.
+9. Do not blindly trust `database.sql` as the active schema source; verify runtime references.
+10. Do not change Android/JDK/Gradle/dependencies unless the issue actually requires it.
+11. Keep Copilot prompts concise and token-efficient.
+12. After implementation, report:
+    - root cause,
+    - files changed,
+    - what changed,
+    - why,
+    - test/build result,
+    - remaining concerns.
+
+### Current known issue queue
+
+```text
+[ ] Printing: Business Contact Number not reflected on printed receipt
+[ ] Printing: Purchase logo enabled but logo not printed
+[ ] Printing: Sales Reprint .reduce() data-shape error
+[ ] Printing: iMin output should use receipt address fields / match preview
+[ ] Date filters: default From/To should be today
+[ ] Date filters: same-day ranges must include the entire day
+[ ] Refresh: refresh relevant tabs/screens without resetting filters
+[ ] Petty Cash: separate Cash In and Cash Out totals
+[ ] Development: improve Android testing/live-reload workflow
+[ ] Versioning: increment app version while preserving SQLite data
+[ ] Git: verify/configure source control on new machine
+[ ] Copilot rules: keep VPOS/token/safety instructions in separate files
+```
+
+---
+
+## Source / Context Note
+
+Two prior ChatGPT conversation URLs were supplied as source context for this history:
+
+- `https://chatgpt.com/c/6ac37814-fa00-83ec-b77a-8b77c4708c25`
+- `https://chatgpt.com/c/6ab7edf0-f2f8-83ec-ae83-c8e36410c9a3`
+
+Those links currently require ChatGPT authentication when accessed externally, so their private message contents were not directly readable from the public web page. This document therefore consolidates the project facts, decisions, requirements, code snippets, and issue history available from the existing project context and prior VPOS1 work rather than pretending that inaccessible conversation text was retrieved.
+
+**Important:** Treat the actual current repository/code as authoritative for implementation details. This document is a continuity/context layer, not a substitute for auditing the current source.

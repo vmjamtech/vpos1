@@ -1,0 +1,44 @@
+.date-filter-container {
+  background: var(--ion-background-color);
+  padding: 6px 10px;
+}
+
+.date-filter {
+  background: var(--ion-background-color, #f8fafc);
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.date-item {
+  --min-height: 40px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --background: transparent;
+}
+
+.date-item ion-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--ion-text-color, black);
+}
+
+.date-item input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--ion-background-color, #f8fafc);
+  border-radius: 6px;
+  background: var(--ion-background-color, #f8fafc);
+  color: var(--ion-text-color, black);
+  height: 32px;
+  box-sizing: border-box;
+  pointer-events: none;
+  outline: none;
+}
+
+ion-col[size="6"] {
+  padding-left: 4px;
+  padding-right: 4px;
+}

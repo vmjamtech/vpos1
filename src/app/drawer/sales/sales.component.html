@@ -4,26 +4,33 @@
     <div class="download-header-content">
       <h2 class="download-title">Sales List</h2>
 
-      <!-- <ion-button fill="clear" class="header-options">
-        <ion-icon name="apps-outline"></ion-icon>
-      </ion-button> -->
+      <ion-button
+        fill="clear"
+        class="header-options"
+        aria-label="Refresh sales"
+        title="Refresh"
+        [disabled]="isRefreshing || isLoading"
+        (click)="onRefreshClick()"
+      >
+        <ion-spinner
+          *ngIf="isRefreshing"
+          name="crescent"
+          slot="icon-only"
+        ></ion-spinner>
+        <ion-icon
+          *ngIf="!isRefreshing"
+          slot="icon-only"
+          name="refresh-outline"
+        ></ion-icon>
+      </ion-button>
     </div>
   </div>
 
-  <ion-refresher
-    slot="fixed"
-    (ionRefresh)="doRefresh($event)"
-    [pullFactor]="0.5"
-    [pullMin]="100"
-    [pullMax]="200"
-  >
-    <ion-refresher-content
-      pullingIcon="arrow-down-outline"
-      pullingText="Pull to refresh"
-      refreshingSpinner="crescent"
-      refreshingText="Refreshing..."
-    ></ion-refresher-content>
-  </ion-refresher>
+  <div class="sticky-filters">
+  <app-date-range-display
+    [dateFrom]="currentDateFrom"
+    [dateTo]="currentDateTo"
+  ></app-date-range-display>
 
   <div class="search-container">
     <ion-searchbar
@@ -40,6 +47,7 @@
     <ion-button fill="clear" (click)="openFilter()" class="filter-btn">
       <ion-icon name="filter-outline"></ion-icon>
     </ion-button>
+  </div>
   </div>
 
   <div class="product-list-container">

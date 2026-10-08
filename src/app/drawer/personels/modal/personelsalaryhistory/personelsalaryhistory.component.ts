@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
@@ -27,6 +27,7 @@ import {
   getTodayDateRange,
   normalizeDatePickerValue,
 } from 'src/app/utils/date-range';
+import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 
 @Component({
   selector: 'app-personelsalaryhistory',
@@ -51,6 +52,7 @@ import {
     IonSkeletonText,
     IonRefresher,
     IonRefresherContent,
+    DateRangeDisplayComponent,
   ],
 })
 export class PersonelsalaryhistoryComponent implements OnInit {
@@ -75,7 +77,8 @@ export class PersonelsalaryhistoryComponent implements OnInit {
   constructor(
     private modalCtrl: ModalController,
     private alertController: AlertController,
-    private personelTransactionService: PersonnelTransactionService
+    private personelTransactionService: PersonnelTransactionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -101,6 +104,7 @@ export class PersonelsalaryhistoryComponent implements OnInit {
         if (f.mode === 'showAll') {
           this.currentDateFrom = null;
           this.currentDateTo = null;
+          this.cdr.detectChanges();
           this.loadInitialData();
           return;
         }
@@ -112,6 +116,9 @@ export class PersonelsalaryhistoryComponent implements OnInit {
           const dateFrom = normalizeDatePickerValue(f.dateFrom, today);
           const dateTo = normalizeDatePickerValue(f.dateTo, today);
 
+          this.currentDateFrom = dateFrom;
+          this.currentDateTo = dateTo;
+          this.cdr.detectChanges();
           this.applyFilter(dateFrom, dateTo);
         }
       }
