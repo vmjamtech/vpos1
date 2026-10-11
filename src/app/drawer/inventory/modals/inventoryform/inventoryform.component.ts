@@ -90,6 +90,7 @@ export class InventoryformComponent implements OnInit {
 
   itemCost = 0;
   criticalLevel = 0;
+  floorstock = 0;
 
   constructor(
     private modalCtrl: ModalController,
@@ -120,6 +121,7 @@ export class InventoryformComponent implements OnInit {
       this.pickupCommission = this.itemData.compickup || 0;
       this.itemCost = this.itemData.itemcost || 0;
       this.criticalLevel = this.itemData.alertnum || 0;
+      this.floorstock = this.itemData.floorstock || 0;
     }
   }
 
@@ -164,6 +166,7 @@ export class InventoryformComponent implements OnInit {
       compickup: this.pickupCommission,
       itemcost: this.itemCost,
       alertnum: this.criticalLevel,
+      floorstock: this.floorstock,
       lendqty: 0,
     };
 
@@ -199,6 +202,7 @@ export class InventoryformComponent implements OnInit {
         compickup: this.pickupCommission,
         itemcost: this.itemCost,
         alertnum: this.criticalLevel,
+        floorstock: this.floorstock,
         origfillqty: this.origfillqty,
         origemptyqty: this.origemptyqty,
         origtotalqty: this.origtotalqty,

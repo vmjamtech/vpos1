@@ -4,6 +4,7 @@ import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import { firstValueFrom } from 'rxjs';
 import { apiBaseUrl } from './api-url';
+import { DailyInventorySnapshotService } from './daily-inventory-snapshot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class WarehouseService {
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
-    private db: SqliteService
+    private db: SqliteService,
+    private snapshotService: DailyInventorySnapshotService
   ) {}
 
   async getInventoryByCategory(
@@ -60,7 +62,7 @@ export class WarehouseService {
     offset: number
   ): Promise<any[]> {
     const sql = `
-    SELECT itemid, itemcode, itemname, itemsize, fillqty, emptyqty, whqty, whfill, whempty, whdispose, icount, itemcategory FROM inventorytbl 
+    SELECT itemid, itemcode, itemname, itemsize, fillqty, emptyqty, whqty, whfill, whempty, whdispose, icount, floorstock, itemcategory FROM inventorytbl
     WHERE itemcategory = ?
     LIMIT ?
     OFFSET ?
@@ -101,6 +103,7 @@ export class WarehouseService {
     comdel?: number;
     compickup?: number;
     icount?: number;
+    floorstock?: number;
   }): Promise<boolean> {
     // Current timestamp in "YYYY-MM-DD HH:mm:ss"
     const now = new Date();
@@ -113,8 +116,8 @@ export class WarehouseService {
 
     const sql = `
     INSERT INTO inventorytbl (
-      itemcode, itemname, itemsize, itemcategory, whfill, whempty, whqty, icount, itemdate
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      itemcode, itemname, itemsize, itemcategory, whfill, whempty, whqty, icount, floorstock, itemdate
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const params = [
@@ -126,6 +129,7 @@ export class WarehouseService {
       item.whempty || 0,
       item.whqty || 0,
       item.icount || 0,
+      item.floorstock || 0,
       itemdate,
     ];
 
@@ -160,6 +164,8 @@ export class WarehouseService {
         [itemdate, item.itemcode, 'ADDED ITEM', item.whqty || 0, historyRemarks]
       );
 
+      await this.snapshotService.captureCurrentInventory();
+
       return true;
     } catch (error) {
       console.error('Error inserting item:', error);
@@ -178,6 +184,7 @@ export class WarehouseService {
     whempty?: number;
     whqty?: number;
     icount?: number;
+    floorstock?: number;
     origfillqty?: number;
     origemptyqty?: number;
     origtotalqty?: number;
@@ -185,7 +192,7 @@ export class WarehouseService {
     const sql = `
     UPDATE inventorytbl
     SET itemcode = ?, itemname = ?, itemsize = ?, itemcategory = ?, 
-        whfill = ?, whempty = ?, whqty = ?, icount = ?
+        whfill = ?, whempty = ?, whqty = ?, icount = ?, floorstock = ?
     WHERE itemid = ?
   `;
 
@@ -198,6 +205,7 @@ export class WarehouseService {
       item.whempty || 0,
       item.whqty || 0,
       item.icount || 0,
+      item.floorstock || 0,
       item.itemid,
     ];
 
@@ -225,6 +233,8 @@ export class WarehouseService {
           historyRemarks,
         ]
       );
+
+      await this.snapshotService.captureCurrentInventory();
 
       return true;
     } catch (error) {
@@ -267,6 +277,8 @@ export class WarehouseService {
           'INCREASE WAREHOUSE DISPOSED QTY FROM DISPOSED ITEM',
         ]
       );
+
+      await this.snapshotService.captureCurrentInventory();
 
       return true;
     } catch (error) {
@@ -357,6 +369,8 @@ export class WarehouseService {
         ]
       );
 
+      await this.snapshotService.captureCurrentInventory();
+
       console.log(
         `Disposed qty updated successfully for ${item.itemcode} (${item.type})`
       );
@@ -373,6 +387,8 @@ export class WarehouseService {
     DELETE FROM inventorytbl
     WHERE itemid = ?
   `;
-    return await this.db.insert(sql, [id]);
+    const deleted = await this.db.insert(sql, [id]);
+    if (deleted > 0) await this.snapshotService.captureCurrentInventory();
+    return deleted;
   }
 }

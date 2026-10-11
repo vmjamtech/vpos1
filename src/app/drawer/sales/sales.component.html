@@ -101,7 +101,8 @@
             }}
           </div>
           <div class="meta">
-            <strong>Payment Method:</strong> {{ item.salespaym }}
+            <strong>Payment Method:</strong>
+            {{ item.salespaym === "GCASH" ? "EWALLET" : item.salespaym }}
           </div>
           <div class="meta balance-row">
             <div class="left">

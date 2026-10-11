@@ -28,6 +28,43 @@ const migrations: DatabaseMigration[] = [
       }
     },
   },
+  {
+    version: 2,
+    apply: async (database) => {
+      const result = await database.query(
+        'PRAGMA table_info(inventorytbl)'
+      );
+      const hasFloorstock = (result.values ?? []).some(
+        (column: { name: string }) => column.name === 'floorstock'
+      );
+
+      if (!hasFloorstock) {
+        await database.run(
+          'ALTER TABLE inventorytbl ADD COLUMN floorstock INTEGER NOT NULL DEFAULT 0'
+        );
+      }
+    },
+  },
+  {
+    version: 3,
+    apply: async (database) => {
+      await database.run(`
+        CREATE TABLE IF NOT EXISTS daily_inventory_snapshots (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          snapshot_date TEXT NOT NULL,
+          location TEXT NOT NULL CHECK (location IN ('STORE', 'WAREHOUSE')),
+          item_code TEXT NOT NULL,
+          description TEXT NOT NULL DEFAULT '',
+          filled_qty INTEGER NOT NULL DEFAULT 0,
+          empty_qty INTEGER NOT NULL DEFAULT 0,
+          floorstock INTEGER NOT NULL DEFAULT 0,
+          cashier_name TEXT NOT NULL DEFAULT '',
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (snapshot_date, location, item_code)
+        )
+      `);
+    },
+  },
 ];
 
 export async function runDatabaseMigrations(

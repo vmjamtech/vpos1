@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import { apiBaseUrl } from './api-url';
+import { DailyInventorySnapshotService } from './daily-inventory-snapshot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class InventoryService {
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
-    private db: SqliteService
+    private db: SqliteService,
+    private snapshotService: DailyInventorySnapshotService
   ) {}
 
   async getInventoryByCategory(
@@ -83,6 +85,7 @@ export class InventoryService {
       t1.Non_Refill,
       t0.lendqty,
       t0.alertnum,
+      t0.floorstock,
       t0.itemcost,
       t0.itemcategory,
       t2.compickup,
@@ -152,6 +155,7 @@ export class InventoryService {
     compickup?: number;
     itemcost?: number;
     alertnum?: number;
+    floorstock?: number;
   }): Promise<boolean> {
     // Current timestamp in "YYYY-MM-DD HH:mm:ss"
     const now = new Date();
@@ -165,8 +169,8 @@ export class InventoryService {
     const sql = `
     INSERT INTO inventorytbl (
       itemcode, itemname, itemsize, itemcategory, fillqty, emptyqty, itemqty, 
-      itemcost, alertnum, itemdate
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      itemcost, alertnum, floorstock, itemdate
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const params = [
@@ -179,6 +183,7 @@ export class InventoryService {
       item.itemqty || 0,
       item.itemcost || 0,
       item.alertnum || 0,
+      item.floorstock || 0,
       itemdate,
     ];
 
@@ -219,6 +224,8 @@ export class InventoryService {
         ]
       );
 
+      await this.snapshotService.captureCurrentInventory();
+
       return true;
     } catch (error) {
       console.error('Error inserting item:', error);
@@ -242,6 +249,7 @@ export class InventoryService {
     compickup?: number;
     itemcost?: number;
     alertnum?: number;
+    floorstock?: number;
     origfillqty?: number;
     origemptyqty?: number;
     origtotalqty?: number;
@@ -249,7 +257,7 @@ export class InventoryService {
     const sql = `
     UPDATE inventorytbl
     SET itemcode = ?, itemname = ?, itemsize = ?, itemcategory = ?, 
-        fillqty = ?, emptyqty = ?, itemqty = ?, itemcost = ?, alertnum = ?
+        fillqty = ?, emptyqty = ?, itemqty = ?, itemcost = ?, alertnum = ?, floorstock = ?
     WHERE itemid = ?
   `;
 
@@ -263,6 +271,7 @@ export class InventoryService {
       item.itemqty || 0,
       item.itemcost || 0,
       item.alertnum || 0,
+      item.floorstock || 0,
       item.itemid,
     ];
 
@@ -309,6 +318,8 @@ export class InventoryService {
         ]
       );
 
+      await this.snapshotService.captureCurrentInventory();
+
       return true;
     } catch (error) {
       console.error('Error updating item:', error);
@@ -321,10 +332,15 @@ export class InventoryService {
     DELETE FROM inventorytbl
     WHERE itemid = ?
   `;
-    return await this.db.insert(sql, [id]);
+    const deleted = await this.db.insert(sql, [id]);
+    if (deleted > 0) await this.snapshotService.captureCurrentInventory();
+    return deleted;
   }
 
-  async updateInventoryQtydb(cartItems: any[]): Promise<void> {
+  async updateInventoryQtydb(
+    cartItems: any[],
+    captureSnapshot = true
+  ): Promise<void> {
     for (const item of cartItems) {
       const unit = item.unit || 'REFILL';
 
@@ -352,6 +368,11 @@ export class InventoryService {
         await this.db.execute(query, [item.qty, item.qty, item.itemid]);
       }
     }
+    if (captureSnapshot) await this.snapshotService.captureCurrentInventory();
+  }
+
+  async captureCurrentInventorySnapshot(): Promise<void> {
+    await this.snapshotService.captureCurrentInventory();
   }
 
   async updateCancelInventoryQtyDb(
@@ -412,6 +433,7 @@ export class InventoryService {
         [itemdate, refnum, itemid, 'CANCEL PURCHASE', qty, remarks]
       );
     }
+    await this.snapshotService.captureCurrentInventory();
   }
 
   async loadEmptyQty(itemcode: string): Promise<number> {
@@ -461,6 +483,7 @@ export class InventoryService {
         `INCREASE LEND QTY FROM LEND ITEM REFNUM: ${refnum}`,
       ]
     );
+    await this.snapshotService.captureCurrentInventory();
   }
 
   async cancelItemUpdateDb(
@@ -547,6 +570,9 @@ export class InventoryService {
           `INCREASE FILL QTY FROM CANCEL ITEM REFNUM: ${refnum}`,
         ]
       );
+    }
+    if (itemType === 'REFILL' || itemType === 'NON-REFILL') {
+      await this.snapshotService.captureCurrentInventory();
     }
   }
 }

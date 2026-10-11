@@ -28,7 +28,7 @@
         <span class="value">{{ sales?.custadd || "" }}</span>
       </div>
       <div class="row">
-        <span class="tender">{{ sales?.salespaym || "" }}</span>
+        <span class="tender">{{ sales?.salespaym === "GCASH" ? "EWALLET" : sales?.salespaym || "" }}</span>
         <span class="tender">{{ sales?.salestender | currency : "PHP" }}</span>
       </div>
       <div class="row">

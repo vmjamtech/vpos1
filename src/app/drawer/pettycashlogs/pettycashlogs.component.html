@@ -90,7 +90,8 @@
             }}
           </div>
           <div class="meta">
-            <strong>Payment Method:</strong> {{ item.pettypaymenthod }}
+            <strong>Payment Method:</strong>
+            {{ item.pettypaymenthod === "GCASH" ? "EWALLET" : item.pettypaymenthod }}
           </div>
           <div class="meta">
             <strong>Action:</strong> {{ item.pettylogtype }}

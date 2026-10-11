@@ -1,6 +1,13 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  from,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { StorageService } from './storage.service';
 import { SqliteService } from './sqlite.service';
 import { apiBaseUrl } from './api-url';
@@ -9,11 +16,27 @@ import { apiBaseUrl } from './api-url';
   providedIn: 'root',
 })
 export class UserService {
+  private readonly currentUserSubject = new BehaviorSubject<any | null>(null);
+  readonly currentUser$ = this.currentUserSubject.asObservable();
+
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
     private db: SqliteService
   ) {}
+
+  async initializeCurrentUser(): Promise<void> {
+    const user = await this.storageService.get<any>('login-data');
+    this.currentUserSubject.next(user);
+  }
+
+  setCurrentUser(user: any): void {
+    this.currentUserSubject.next(user);
+  }
+
+  clearCurrentUser(): void {
+    this.currentUserSubject.next(null);
+  }
 
   async login(username: string, password: string): Promise<any> {
     // Get saved connection from storage

@@ -142,7 +142,7 @@ export class PrinterService {
         await this.iminPrinter.printText(
           this.formatLine(
             '',
-            `${sales.salespaym.toUpperCase()}:`,
+            `${sales.salespaym.toUpperCase() === 'GCASH' ? 'EWALLET' : sales.salespaym.toUpperCase()}:`,
             parseFloat(sales.salestender).toFixed(2)
           ),
           2

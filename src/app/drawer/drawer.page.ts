@@ -44,6 +44,8 @@ import { DrawerScreen } from '../types/drawer';
 import { StorageService } from '../services/storage.service';
 import { AppdateService } from '../services/appdate.service';
 import { PrinterService } from '../services/printer.service';
+import { UserService } from '../services/user.service';
+import { DailyInventorySnapshotService } from '../services/daily-inventory-snapshot.service';
 import { ChatComponent } from './dashboard/modal/chat/chat.component';
 
 /*
@@ -106,6 +108,7 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
     { name: 'AI Assistant', icon: 'sparkles-outline', action: 'ai' },
     { name: 'Transfer Items', icon: 'repeat-outline', url: '/menu/transfers' },
     { name: 'Sales', icon: 'cash-outline', url: '/menu/sales' },
+    { name: 'Reports', icon: 'document-text-outline', url: '/menu/reports' },
     { name: 'Customers', icon: 'people-outline', url: '/menu/customers' },
     { name: 'Personnel', icon: 'person-outline', url: '/menu/personnel' },
     { name: 'Petty Cash Logs', icon: 'wallet-outline', url: '/menu/pettycash' },
@@ -117,6 +120,7 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
   activeTab = 'Dashboard';
   isSplitPane = false;
   routeChangeEvent?: Subscription;
+  userSubscription?: Subscription;
   user: any = null;
   Blogo: string | null = null;
 
@@ -128,7 +132,9 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
     private appdaterService: AppdateService,
     private alertController: AlertController,
     private printerService: PrinterService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private userService: UserService,
+    private snapshotService: DailyInventorySnapshotService
   ) {
     this.widthCalculations();
     this.platform.resize.subscribe(() => {
@@ -142,11 +148,10 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.storageService.get<any>('login-data').then((user) => {
-      if (user) {
-        this.user = user;
-      }
+    this.userSubscription = this.userService.currentUser$.subscribe((user) => {
+      this.user = user;
     });
+    void this.userService.initializeCurrentUser();
 
     const routerEvent = this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd)
@@ -201,6 +206,7 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.routeChangeEvent?.unsubscribe();
+    this.userSubscription?.unsubscribe();
   }
 
   private syncActiveTab(url: string) {
@@ -321,9 +327,11 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
         },
         {
           text: 'Yes',
-          handler: () => {
-            this.storageService.remove('login-data');
-            this.router.navigateByUrl('/sign-in');
+          handler: async () => {
+            await this.snapshotService.captureCurrentInventory(this.user?.empname);
+            await this.storageService.remove('login-data');
+            this.userService.clearCurrentUser();
+            await this.router.navigateByUrl('/sign-in');
           },
         },
       ],

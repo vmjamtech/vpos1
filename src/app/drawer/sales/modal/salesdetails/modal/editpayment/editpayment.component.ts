@@ -57,6 +57,9 @@ export class EditpaymentComponent implements OnInit {
   ngOnInit() {
     // Make a copy to edit locally
     this.localSales = { ...this.sales };
+    if (this.localSales.salespaym === 'GCASH') {
+      this.localSales.salespaym = 'EWALLET';
+    }
     this.origpaytype = this.localSales.salespaytype;
   }
 

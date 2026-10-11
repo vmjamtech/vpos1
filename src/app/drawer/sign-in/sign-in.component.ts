@@ -213,6 +213,7 @@ export class SignInComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Store both user and selected location using Ionic Storage
       await this.storageService.set('login-data', user);
+      this.userService.setCurrentUser(user);
 
       this.onSettingsclose();
       await this.menu.close('main-menu');

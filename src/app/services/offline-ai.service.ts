@@ -247,14 +247,14 @@ export class PosAiRestService {
       };
     }
 
-    if (/(payment methods|supported payment|how can i pay|gcash|bank transfer)/i.test(q)) {
+    if (/(payment methods|supported payment|how can i pay|ewallet|bank transfer)/i.test(q)) {
       return {
         intentKey: 'help_payment_methods',
         confidence: 0.97,
         html: `
           <div>
             <strong>Supported Payments (POS)</strong><br/>
-            Methods: <strong>Cash</strong>, <strong>GCash</strong>, <strong>Bank Transfer</strong><br/>
+            Methods: <strong>Cash</strong>, <strong>E-wallet</strong>, <strong>Bank Transfer</strong><br/>
             Types: <strong>Full Payment</strong> and <strong>Partial Payment</strong>
             <div style="margin-top:8px;font-size:12px;color:#4b5563;">
               <strong>Tip:</strong> Use Partial Payment when tendered is less than total. The sale becomes <strong>UNPAID</strong> with a remaining balance.

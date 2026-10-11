@@ -1,0 +1,267 @@
+<ion-header class="reports-toolbar">
+  <ion-toolbar>
+    <ion-title>{{ activeView ? activeViewTitle : 'Reports' }}</ion-title>
+    <ion-buttons slot="end" *ngIf="activeView">
+      <ion-button
+        fill="clear"
+        aria-label="Back to Reports"
+        (click)="onBackToReports()"
+      >
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="reports-content">
+  <main class="reports-page">
+    <section class="filters" *ngIf="activeView === 'summary'">
+      <label class="filter-control">
+        <span>Date</span>
+        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+      </label>
+      <label class="filter-control">
+        <span>Cashier</span>
+        <select [(ngModel)]="cashier" (change)="loadActiveReport()">
+          <option value="">All Cashiers</option>
+          <option *ngFor="let name of cashiers" [value]="name">{{ name }}</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="filters" *ngIf="activeView === 'floorstock'">
+      <label class="filter-control">
+        <span>Date</span>
+        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+      </label>
+    </section>
+
+    <section class="filters" *ngIf="activeView === 'item-sold'">
+      <label class="filter-control">
+        <span>From</span>
+        <input type="date" [(ngModel)]="fromDate" (change)="loadActiveReport()" />
+      </label>
+      <label class="filter-control">
+        <span>To</span>
+        <input type="date" [(ngModel)]="toDate" (change)="loadActiveReport()" />
+      </label>
+    </section>
+
+    <section class="filters" *ngIf="activeView === 'inventory'">
+      <label class="filter-control">
+        <span>As of</span>
+        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+      </label>
+    </section>
+
+    <div
+      class="loading-state"
+      *ngIf="loading && !(activeView === 'summary' && summary)"
+    >
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+      <ion-list
+        *ngIf="!activeView"
+        class="reports-menu-list"
+        lines="none"
+      >
+        <ion-item-sliding #summarySlide>
+          <ion-item
+            button="true"
+            class="report-menu-item"
+            (click)="onSelectReport('summary')"
+          >
+            <ion-label class="report-card-title">SUMMARY</ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option
+              class="print-option-btn"
+              (click)="onQuickPrint('summary', summarySlide)"
+            >
+              <ion-icon slot="top" name="print-outline"></ion-icon>
+              PRINT
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+
+        <ion-item-sliding #itemSoldSlide>
+          <ion-item
+            button="true"
+            class="report-menu-item"
+            (click)="onSelectReport('item-sold')"
+          >
+            <ion-label class="report-card-title">Item Sold</ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option
+              class="print-option-btn"
+              (click)="onQuickPrint('item-sold', itemSoldSlide)"
+            >
+              <ion-icon slot="top" name="print-outline"></ion-icon>
+              PRINT
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+
+        <ion-item-sliding #inventorySlide>
+          <ion-item
+            button="true"
+            class="report-menu-item"
+            (click)="onSelectReport('inventory')"
+          >
+            <ion-label class="report-card-title">Inventory</ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option
+              class="print-option-btn"
+              (click)="onQuickPrint('inventory', inventorySlide)"
+            >
+              <ion-icon slot="top" name="print-outline"></ion-icon>
+              PRINT
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+
+        <ion-item-sliding #floorstockSlide>
+          <ion-item
+            button="true"
+            class="report-menu-item"
+            (click)="onSelectReport('floorstock')"
+          >
+            <ion-label class="report-card-title">Floorstock</ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option
+              class="print-option-btn"
+              (click)="onQuickPrint('floorstock', floorstockSlide)"
+            >
+              <ion-icon slot="top" name="print-outline"></ion-icon>
+              PRINT
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+
+      <section *ngIf="activeView === 'summary' && summary" class="report-content report-detail-view">
+        <ion-list class="summary-metrics-list" lines="none">
+          <ion-item *ngFor="let item of summaryRows" [class.final-total]="item.final">
+            <ion-label>{{ item.label }}</ion-label>
+            <strong>{{ item.amount | currency : 'PHP' }}</strong>
+          </ion-item>
+        </ion-list>
+      </section>
+
+      <section *ngIf="activeView === 'item-sold' && itemSold" class="report-content report-detail-view">
+        <div class="report-columns item-sold-grid">
+          <span>Item Code</span><span>Size</span><span>Total Item</span>
+        </div>
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="itemSold.rows.length">
+          <ion-item *ngFor="let item of visibleItemSoldRows">
+            <ion-label>
+              <div class="report-item-row item-sold-grid">
+                <span>{{ item.itemCode }}</span>
+                <span>{{ item.size }}</span>
+                <strong>{{ item.totalItems }}</strong>
+              </div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-button
+          *ngIf="itemSold.rows.length > itemSoldVisibleCount"
+          class="load-more"
+          fill="clear"
+          size="small"
+          (click)="showMoreItemSold()"
+        >
+          Load More
+        </ion-button>
+        <div class="totals-row"><span>Total Kg <strong>{{ itemSold.totalKg | number : '1.0-2' }}</strong></span><span>Total Items <strong>{{ itemSold.totalItems }}</strong></span></div>
+        <ion-note *ngIf="itemSold.rows.length === 0">No Record Found</ion-note>
+      </section>
+
+      <section *ngIf="activeView === 'inventory'" class="report-content report-detail-view">
+        <h2>Store</h2>
+        <div class="report-columns inventory-grid">
+          <span>Item Code</span><span>Description</span><span>Filled Qty</span><span>Empty Qty</span>
+        </div>
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="storeInventoryRows.length">
+          <ion-item *ngFor="let item of visibleStoreInventoryRows">
+            <ion-label>
+              <div class="report-item-row inventory-grid">
+                <span>{{ item.itemCode }}</span>
+                <span>{{ item.description }}</span>
+                <span>{{ item.filledQty }}</span>
+                <strong>{{ item.emptyQty }}</strong>
+              </div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-button
+          *ngIf="storeInventoryRows.length > storeInventoryVisibleCount"
+          class="load-more"
+          fill="clear"
+          size="small"
+          (click)="showMoreStoreInventory()"
+        >
+          Load More Store Items
+        </ion-button>
+        <ion-note *ngIf="storeInventoryRows.length === 0">No Record Found</ion-note>
+
+        <h2>Warehouse</h2>
+        <div class="report-columns inventory-grid">
+          <span>Item Code</span><span>Description</span><span>Filled Qty</span><span>Empty Qty</span>
+        </div>
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="warehouseInventoryRows.length">
+          <ion-item *ngFor="let item of visibleWarehouseInventoryRows">
+            <ion-label>
+              <div class="report-item-row inventory-grid">
+                <span>{{ item.itemCode }}</span>
+                <span>{{ item.description }}</span>
+                <span>{{ item.filledQty }}</span>
+                <strong>{{ item.emptyQty }}</strong>
+              </div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-button
+          *ngIf="warehouseInventoryRows.length > warehouseInventoryVisibleCount"
+          class="load-more"
+          fill="clear"
+          size="small"
+          (click)="showMoreWarehouseInventory()"
+        >
+          Load More Warehouse Items
+        </ion-button>
+        <ion-note *ngIf="warehouseInventoryRows.length === 0">No Record Found</ion-note>
+      </section>
+
+      <section *ngIf="activeView === 'floorstock'" class="report-content report-detail-view">
+        <div class="report-columns floorstock-grid">
+          <span>Item Code</span><span>Filled Qty</span><span>Floorstock</span><span>Restock Need</span>
+        </div>
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="floorstockRows.length">
+          <ion-item *ngFor="let item of visibleFloorstockRows">
+            <ion-label>
+              <div class="report-item-row floorstock-grid">
+                <span>{{ item.itemCode }}</span>
+                <span>{{ item.filledQty }}</span>
+                <span>{{ item.floorstock }}</span>
+                <strong>{{ item.restockNeed }}</strong>
+              </div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-button
+          *ngIf="floorstockRows.length > floorstockVisibleCount"
+          class="load-more"
+          fill="clear"
+          size="small"
+          (click)="showMoreFloorstock()"
+        >
+          Load More
+        </ion-button>
+        <ion-note *ngIf="floorstockRows.length === 0">No Record Found</ion-note>
+      </section>
+  </main>
+</ion-content>

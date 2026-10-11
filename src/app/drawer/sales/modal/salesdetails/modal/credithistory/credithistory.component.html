@@ -67,7 +67,8 @@
             <strong>Paid :</strong> ₱ {{ item.cppay | number : "1.2-2" }}
           </div>
           <div class="meta">
-            <strong>Payment Method :</strong> {{ item.cppaymethod }}
+            <strong>Payment Method :</strong>
+            {{ item.cppaymethod === "GCASH" ? "EWALLET" : item.cppaymethod }}
           </div>
           <div class="meta">
             <strong>Cashier :</strong> {{ item.cpcashier }}

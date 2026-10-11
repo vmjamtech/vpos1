@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
 import { StorageService } from './storage.service';
 import { apiBaseUrl } from './api-url';
+import { DailyInventorySnapshotService } from './daily-inventory-snapshot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class LenditemsService {
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
-    private db: SqliteService
+    private db: SqliteService,
+    private snapshotService: DailyInventorySnapshotService
   ) {}
 
   async getLends(): Promise<any> {
@@ -269,6 +271,8 @@ export class LenditemsService {
           `INCREASE STORE EMPTY QTY FROM RETURN ITEM REFNUM : ${item.refnum}`,
         ]
       );
+
+      await this.snapshotService.captureCurrentInventory();
 
       return true;
     } catch (error) {

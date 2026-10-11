@@ -4,6 +4,7 @@ import { StorageService } from './storage.service';
 import { firstValueFrom } from 'rxjs';
 import { SqliteService } from './sqlite.service';
 import moment from 'moment-timezone';
+import { DailyInventorySnapshotService } from './daily-inventory-snapshot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,8 @@ export class TransferService {
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
-    private db: SqliteService
+    private db: SqliteService,
+    private snapshotService: DailyInventorySnapshotService
   ) {}
 
   async getTransfers(limit: number = 20, offset: number = 0): Promise<any[]> {
@@ -324,6 +326,7 @@ export class TransferService {
         UPDATE pouttbl SET pulloutremarks = 'CONFIRMED' WHERE poutrefnum = ?
       `;
       await this.db.query(updateSql, [poRef]);
+      await this.snapshotService.captureCurrentInventory();
     } catch (error) {
       console.error('Error updateStoreQuantity:', error);
       throw new Error('Failed to Update.');
@@ -382,6 +385,7 @@ export class TransferService {
         UPDATE pouttbl SET pulloutremarks = 'CANCELLED' WHERE poutrefnum = ?
       `;
       await this.db.query(updateSql, [poRef]);
+      await this.snapshotService.captureCurrentInventory();
     } catch (error) {
       console.error('Error updateStoreQuantity:', error);
       throw new Error('Failed to Update.');

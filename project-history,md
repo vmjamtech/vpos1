@@ -2,7 +2,7 @@
 
 > **Purpose:** Transferable project memory for resuming the VPOS1 project in a fresh AI/coding-assistant session on another machine.
 >
-> **Last consolidated:** 2026-10-06  
+> **Last consolidated:** 2026-10-08  
 > **Project:** `vpos1`  
 > **Primary workflow:** VS Code + GitHub Copilot / Vibe Coding  
 > **Important:** Preserve existing functionality and user data. Do not make destructive or broad refactors without first auditing, explaining the root cause/impact, and getting approval.
@@ -807,6 +807,83 @@ These rules are part of the project's development workflow and should travel wit
 
 ---
 
+## 6. Session Log - 2026-10-08 (Date filters, refresh, Dashboard)
+
+### 6.1 Requirement change (supersedes section 4.7 / Priority 4)
+
+The earlier note said refresh must **preserve** the selected date range on tab return. The new rule is:
+
+- Returning to / switching to a page resets Date From and Date To to **today** (device local date, never hardcoded) and reloads once.
+- Pull-to-refresh and the new Sales refresh button **preserve** the active filter (including Show All).
+- Show All keeps its semantics (null dates, no date clause) and is displayed as "All" in the inline date UI.
+
+### 6.2 What was done
+
+**Shared inline date display**
+- New standalone component `app-date-range-display` (read-only Date From / Date To in the Dashboard layout; shows "All" when null).
+- Added to Sales List, Transfer Items, Petty Cash Logs, Personnel Transactions, Personnel Salary History, Lend History.
+- On Sales / Transfers / Petty Cash it sits in a sticky `.sticky-filters` block with the search bar (the first version was hidden behind the fixed `.download-header`; list `padding-top` raised 65px -> 85px).
+- The side filter button, `FiltermodalComponent`, Apply Filter and Show All are unchanged. Dates are changed only through the filter modal.
+- After the filter modal closes, `ChangeDetectorRef.detectChanges()` is called so the inline dates update immediately.
+
+**Refresh behavior**
+- Sales / Transfers / Petty Cash: `ionViewDidEnter` (not on first entry) resets to today and reloads once, guarded by `!isLoading`.
+- Dashboard: same reset on re-entry; its own date inputs remain editable.
+- Sales List: pull-to-refresh removed; header refresh button added (`refresh-outline`, aria-label/title, spinner, disabled while loading; reloads with the current filter).
+- Transfers and Petty Cash keep pull-to-refresh.
+
+**Dashboard fixes (root causes)**
+- Sales card showed 0: `getSales()` non-admin branch filters `salescashier = ?` but the Dashboard never passed `empname`; also the role check was case-sensitive. Now passes `empname` and compares role case-insensitively (Sales and Personnel queries only).
+- Lend / Return Timeline empty: `lenddate BETWEEN DATE(?) AND DATE(?)` compared a full timestamp to date-only bounds. Now `DATE(t1.lenddate) BETWEEN ...`.
+- Top Items Sold / Personnel charts blank: charts were created with empty `series` and `highcharts-angular` 5.4.1 `chart.update()` does not add new series unless `oneToOne` is true. Added `[oneToOne]="true"` to both `<highcharts-chart>` elements. Verified on device (Highcharts rendered, data points present).
+- Personnel Transactions chart: removed the Salary series, value axis `min: 0, softMax: 30, allowDecimals: false` (grows past 30 automatically), category labels now `name (count)`, axis title changed to "Transactions".
+- Profit formula documented (see 6.4); no change made to it.
+
+**Build / tooling**
+- A dropped-brace bug I introduced in `personelsalaryhistory` and `personeltransaction` handlers broke `ng build`; fixed.
+- Debug APKs built with `build-debug.bat` and installed with `adb install -r` (data preserved). Package id `com.vmjamtech.posandroid`.
+- WebView debugging via `chrome://inspect` / CDP works against the app (used to read the console and chart DOM).
+
+### 6.3 Files modified
+
+New:
+- `src/app/shared/date-range-display/date-range-display.component.ts` / `.html` / `.scss`
+
+Modified:
+- `src/app/drawer/sales/sales.component.ts`, `.html`, `.scss`
+- `src/app/drawer/transfers/transfers.component.ts`, `.html`, `.scss`
+- `src/app/drawer/pettycashlogs/pettycashlogs.component.ts`, `.html`, `.scss`
+- `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.ts`, `.html`
+- `src/app/drawer/personels/modal/personelsalaryhistory/personelsalaryhistory.component.ts`, `.html`
+- `src/app/drawer/customers/modal/lendhistory/lendhistory.component.ts`, `.html`
+- `src/app/drawer/dashboard/dashboard.component.ts`, `.html`
+- `src/app/services/dashboard.service.ts`
+
+Not touched: database schema/migrations, other services, `FiltermodalComponent`, printing, Android/Gradle config, dependencies.
+
+### 6.4 Dashboard Profit formula (reference)
+
+```text
+profit  = margin + income - expense
+margin  = sales total + discounts + special discounts - item cost (qty * itemcost)
+income  = credit payments received + petty cash CASH IN
+expense = petty cash CASH OUT + credit/unpaid balance (tendertotal) + salary paid + discounts + special discounts
+```
+
+Discounts cancel out. Restock purchases are summed in the query but unused. Items with missing `itemcost` inflate profit.
+
+### 6.5 Known leftovers / notes
+
+- Debug artifacts in the workspace root (outside the repo) can be deleted: `cdp-probe.cjs`, `probe-result.txt`, `probe-out*.txt`, `screen1.png`, `screen2.png`, `chart1.png`, `t.txt`.
+- Dashboard still has debug `console.log` calls (`top items`, expenses, lend).
+- `lenditems.service.ts` stores `lenddate` with `toISOString()` (UTC); entries between 00:00-08:00 local may carry the previous date. Not changed.
+- Dashboard Sales card is cashier-filtered for non-admin roles while Profit is not (existing design).
+- For CASHIER logins, Sales / Personnel Dashboard data depends on `salescashier` / `delcashier` matching `empname`.
+- `oneToOne` and `update` inputs on `highcharts-angular` are deprecated in 5.4.1 but supported.
+- Terminal tool in the agent environment was unreliable late in the session; verify builds/installs via `adb dumpsys package` lastUpdateTime.
+
+---
+
 ## Transfer / Resume Instructions for a Fresh AI
 
 When resuming this project, assume:
@@ -837,9 +914,11 @@ When resuming this project, assume:
 [ ] Printing: Purchase logo enabled but logo not printed
 [ ] Printing: Sales Reprint .reduce() data-shape error
 [ ] Printing: iMin output should use receipt address fields / match preview
-[ ] Date filters: default From/To should be today
-[ ] Date filters: same-day ranges must include the entire day
-[ ] Refresh: refresh relevant tabs/screens without resetting filters
+[x] Date filters: default From/To should be today (Dashboard, Sales, Transfers, Petty Cash, Personnel modals, Lend History)
+[x] Date filters: same-day ranges must include the entire day (Dashboard Lend timeline fixed 2026-10-08; other pages already used DATE())
+[x] Refresh: tabs/pages reset to today on return; pull-to-refresh / Sales refresh button preserve filter (rule changed 2026-10-08)
+[x] Dashboard: Sales card, Lend/Return timeline, Top Items Sold and Personnel charts populate
+[x] Dashboard: Personnel chart transactions-only, 0-30 soft scale, count beside name
 [ ] Petty Cash: separate Cash In and Cash Out totals
 [ ] Development: improve Android testing/live-reload workflow
 [ ] Versioning: increment app version while preserving SQLite data

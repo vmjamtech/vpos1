@@ -80,7 +80,8 @@
             <strong>Paid By :</strong> {{ item.salpaidby }}
           </div>
           <div class="meta">
-            <strong>Payment Method :</strong> {{ item.salpaymethod }}
+            <strong>Payment Method :</strong>
+            {{ item.salpaymethod === "GCASH" ? "EWALLET" : item.salpaymethod }}
           </div>
           <div class="meta">
             <strong>Remarks :</strong> {{ item.salremarks }}

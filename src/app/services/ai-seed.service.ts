@@ -165,7 +165,7 @@ Keep answers concise and actionable.`;
         title: 'Payment Methods',
         tags: 'sales,payment,methods',
         content:
-          'POS payment methods supported: CASH, GCASH, and BANK TRANSFER. Payment type can be FULL PAYMENT or PARTIAL PAYMENT. Partial payments produce an UNPAID sale with a remaining tender balance.',
+          'POS payment methods supported: CASH, EWALLET, and BANK TRANSFER. Payment type can be FULL PAYMENT or PARTIAL PAYMENT. Partial payments produce an UNPAID sale with a remaining tender balance.',
       },
       {
         domain: 'sales',
@@ -193,7 +193,7 @@ Keep answers concise and actionable.`;
         title: 'Sales Module Rules',
         tags: 'sales,payment,credit',
         content:
-          'Sales supports FULL PAYMENT and PARTIAL PAYMENT. Payment methods include CASH, GCASH, and BANK TRANSFER. Unpaid sales keep tender balance and can be settled later from sales details.',
+          'Sales supports FULL PAYMENT and PARTIAL PAYMENT. Payment methods include CASH, EWALLET, and BANK TRANSFER. Unpaid sales keep tender balance and can be settled later from sales details.',
       },
       {
         domain: 'inventory',

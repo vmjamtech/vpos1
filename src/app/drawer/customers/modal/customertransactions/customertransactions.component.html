@@ -68,7 +68,7 @@
             }}
           </div>
           <div class="meta">
-            <strong> {{ item.salespaym }}</strong> ₱{{
+            <strong> {{ item.salespaym === "GCASH" ? "EWALLET" : item.salespaym }}</strong> ₱{{
               item.salestender | number : "1.2-2"
             }}
           </div>

@@ -90,7 +90,7 @@ export class PurchaseSummaryComponent implements OnInit {
 
   currentDate: Date = new Date();
   paymentType: 'FULL PAYMENT' | 'PARTIAL PAYMENT' = 'FULL PAYMENT';
-  paymentMethod: 'CASH' | 'GCASH' | 'BANK TRANSFER' = 'CASH';
+  paymentMethod: 'CASH' | 'EWALLET' | 'BANK TRANSFER' = 'CASH';
   tenderedAmount: string = '';
   notes: string = '';
   partialPaymentConfirmed: boolean = false;
@@ -356,6 +356,8 @@ export class PurchaseSummaryComponent implements OnInit {
     // Log the complete JSON
     console.log('Receipt Preview Props:', modalData);
     console.log('Data to send :', sale);
+    let inventoryChanged = false;
+    let inventorySnapshotCaptured = false;
     try {
       const salesresult = await this.salesService.createSaledb(sale);
 
@@ -384,7 +386,8 @@ export class PurchaseSummaryComponent implements OnInit {
         console.log('add sales Item result:', itemresult);
         const itemupdate = await this.inventoryService.updateInventoryQtydb([
           { itemid: item.itemid, qty: item.qty, unit: item.unit },
-        ]);
+        ], false);
+        inventoryChanged = true;
         console.log('itemupdate result', itemupdate);
         const itemhistorydata = {
           itemhdate: datestr,
@@ -398,6 +401,11 @@ export class PurchaseSummaryComponent implements OnInit {
           itemhistorydata
         );
         console.log('itemhistory result', itemhistory);
+      }
+
+      if (inventoryChanged) {
+        await this.inventoryService.captureCurrentInventorySnapshot();
+        inventorySnapshotCaptured = true;
       }
 
       const p1Id = modalData.transaction.posData.personnel1Id;
@@ -463,6 +471,9 @@ export class PurchaseSummaryComponent implements OnInit {
         'success'
       );
     } catch (error) {
+      if (inventoryChanged && !inventorySnapshotCaptured) {
+        await this.inventoryService.captureCurrentInventorySnapshot();
+      }
       console.error('Error during transaction:', error);
       await processingLoader.dismiss();
       await this.appdateService.showToastjs(
