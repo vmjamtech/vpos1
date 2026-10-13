@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent,
   IonButton,
-  IonButtons,
-  IonHeader,
   IonItem,
   IonItemOption,
   IonItemOptions,
@@ -15,8 +13,6 @@ import {
   IonList,
   IonNote,
   IonSpinner,
-  IonTitle,
-  IonToolbar,
 } from '@ionic/angular/standalone';
 import {
   ItemSoldReport,
@@ -36,8 +32,6 @@ type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
     FormsModule,
     IonContent,
     IonButton,
-    IonButtons,
-    IonHeader,
     IonItem,
     IonItemOption,
     IonItemOptions,
@@ -47,8 +41,6 @@ type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
     IonList,
     IonNote,
     IonSpinner,
-    IonTitle,
-    IonToolbar,
   ],
 })
 export class ReportsComponent {

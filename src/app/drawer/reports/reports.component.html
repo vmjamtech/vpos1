@@ -1,19 +1,19 @@
-<ion-header class="reports-toolbar">
-  <ion-toolbar>
-    <ion-title>{{ activeView ? activeViewTitle : 'Reports' }}</ion-title>
-    <ion-buttons slot="end" *ngIf="activeView">
+<ion-content [scrollEvents]="true" class="reports-content">
+  <div class="download-header">
+    <div class="download-header-content">
+      <h2 class="download-title">{{ activeView ? activeViewTitle : 'Reports' }}</h2>
       <ion-button
+        *ngIf="activeView"
         fill="clear"
+        class="download-action-btn"
         aria-label="Back to Reports"
         (click)="onBackToReports()"
       >
-        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+        <ion-icon name="arrow-back-outline"></ion-icon>
       </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+    </div>
+  </div>
 
-<ion-content class="reports-content">
   <main class="reports-page">
     <section class="filters" *ngIf="activeView === 'summary'">
       <label class="filter-control">
@@ -61,22 +61,22 @@
       <ion-spinner name="crescent"></ion-spinner>
     </div>
 
-      <ion-list
-        *ngIf="!activeView"
-        class="reports-menu-list"
-        lines="none"
-      >
-        <ion-item-sliding #summarySlide>
+      <div *ngIf="!activeView" class="reports-container product-list-container">
+      <ion-list class="product-list card-list reports-card-list" lines="none">
+        <ion-item-sliding #summarySlide class="report-slider-card">
           <ion-item
-            button="true"
-            class="report-menu-item"
+            button
+            [detail]="false"
+            class="report-card-item"
             (click)="onSelectReport('summary')"
           >
-            <ion-label class="report-card-title">SUMMARY</ion-label>
+            <ion-label class="ion-text-center">
+              <h2 class="desc report-title">Summary</h2>
+            </ion-label>
           </ion-item>
           <ion-item-options side="end">
             <ion-item-option
-              class="print-option-btn"
+              class="yellow-print-option"
               (click)="onQuickPrint('summary', summarySlide)"
             >
               <ion-icon slot="top" name="print-outline"></ion-icon>
@@ -85,17 +85,20 @@
           </ion-item-options>
         </ion-item-sliding>
 
-        <ion-item-sliding #itemSoldSlide>
+        <ion-item-sliding #itemSoldSlide class="report-slider-card">
           <ion-item
-            button="true"
-            class="report-menu-item"
+            button
+            [detail]="false"
+            class="report-card-item"
             (click)="onSelectReport('item-sold')"
           >
-            <ion-label class="report-card-title">Item Sold</ion-label>
+            <ion-label class="ion-text-center">
+              <h2 class="desc report-title">Item Sold</h2>
+            </ion-label>
           </ion-item>
           <ion-item-options side="end">
             <ion-item-option
-              class="print-option-btn"
+              class="yellow-print-option"
               (click)="onQuickPrint('item-sold', itemSoldSlide)"
             >
               <ion-icon slot="top" name="print-outline"></ion-icon>
@@ -104,17 +107,20 @@
           </ion-item-options>
         </ion-item-sliding>
 
-        <ion-item-sliding #inventorySlide>
+        <ion-item-sliding #inventorySlide class="report-slider-card">
           <ion-item
-            button="true"
-            class="report-menu-item"
+            button
+            [detail]="false"
+            class="report-card-item"
             (click)="onSelectReport('inventory')"
           >
-            <ion-label class="report-card-title">Inventory</ion-label>
+            <ion-label class="ion-text-center">
+              <h2 class="desc report-title">Inventory</h2>
+            </ion-label>
           </ion-item>
           <ion-item-options side="end">
             <ion-item-option
-              class="print-option-btn"
+              class="yellow-print-option"
               (click)="onQuickPrint('inventory', inventorySlide)"
             >
               <ion-icon slot="top" name="print-outline"></ion-icon>
@@ -123,17 +129,20 @@
           </ion-item-options>
         </ion-item-sliding>
 
-        <ion-item-sliding #floorstockSlide>
+        <ion-item-sliding #floorstockSlide class="report-slider-card">
           <ion-item
-            button="true"
-            class="report-menu-item"
+            button
+            [detail]="false"
+            class="report-card-item"
             (click)="onSelectReport('floorstock')"
           >
-            <ion-label class="report-card-title">Floorstock</ion-label>
+            <ion-label class="ion-text-center">
+              <h2 class="desc report-title">Floorstock</h2>
+            </ion-label>
           </ion-item>
           <ion-item-options side="end">
             <ion-item-option
-              class="print-option-btn"
+              class="yellow-print-option"
               (click)="onQuickPrint('floorstock', floorstockSlide)"
             >
               <ion-icon slot="top" name="print-outline"></ion-icon>
@@ -142,6 +151,7 @@
           </ion-item-options>
         </ion-item-sliding>
       </ion-list>
+      </div>
 
       <section *ngIf="activeView === 'summary' && summary" class="report-content report-detail-view">
         <ion-list class="summary-metrics-list" lines="none">

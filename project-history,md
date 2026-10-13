@@ -938,3 +938,48 @@ Two prior ChatGPT conversation URLs were supplied as source context for this his
 Those links currently require ChatGPT authentication when accessed externally, so their private message contents were not directly readable from the public web page. This document therefore consolidates the project facts, decisions, requirements, code snippets, and issue history available from the existing project context and prior VPOS1 work rather than pretending that inaccessible conversation text was retrieved.
 
 **Important:** Treat the actual current repository/code as authoritative for implementation details. This document is a continuity/context layer, not a substitute for auditing the current source.
+
+---
+
+## 7. Session Log - 2026-10-13 (Reports Card Layout)
+
+### 7.1 What was fixed
+
+- Reports landing cards now use the Personnel list/card structure and title hierarchy.
+- Fixed Summary card clipping by applying the Reports-specific `reports-container` class that activates the scoped height/overflow reset, preventing the shared full-viewport `.product-list-container` rule from creating a nested scroller.
+- Added top clearance below the fixed Reports header and kept the existing compact 76px card height, consistent margins, and bottom-tab spacing.
+- Kept the four landing-card selection and swipe-to-Print placeholder behavior unchanged. Report detail views, database schema, report queries, and calculations were not changed as part of this layout fix.
+
+### 7.2 Files modified
+
+- `src/app/drawer/reports/reports.component.html`
+- `src/app/drawer/reports/reports.component.scss`
+- `src/app/drawer/reports/reports.component.ts` (removed unused Ionic imports only)
+
+### 7.3 Verification
+
+- `npm run build` passed.
+- `build-debug.bat` completed and installed the debug APK on the connected device.
+- A device screenshot after launch confirmed all four Reports cards, including Summary, were visible below the header.
+- No database files or transaction logic were changed.
+
+### 7.4 Remaining Reports / test items
+
+- Verify Reports Summary responsiveness after the single-query/cached-row updates; the latest Summary data load has not yet been confirmed by the user.
+- Reports swipe-to-Print remains a placeholder; actual printer integration is still pending.
+- The Angular test command has not produced a pass/fail summary in this environment; confirm the test suite in a functioning Karma/ChromeHeadless session.
+- Existing unrelated lint failures and the remaining items in section 6.5 are still open.
+
+### 7.5 Suggested commit message
+
+```text
+fix(reports): align landing cards with Personnel layout
+
+Reuse the Personnel product-list/card-list structure for Reports, standardize
+card titles and sizing, and reset the inherited nested scroller that clipped
+the Summary card beneath the fixed header. Preserve report selection and swipe
+print placeholders without changing queries, calculations, or database schema.
+
+Validation: Angular build passed; debug APK installed and Summary visibility
+verified on-device.
+```

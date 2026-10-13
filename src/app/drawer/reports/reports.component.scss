@@ -11,7 +11,7 @@
 .reports-page {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 24px clamp(16px, 3vw, 36px) 0;
+  padding: 100px clamp(16px, 3vw, 36px) 0;
   color: var(--report-ink);
 }
 
@@ -108,36 +108,47 @@ ion-list {
   padding: 0 0 4px;
 }
 
-.reports-menu-list {
+.reports-container.product-list-container {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 64px 0 90px;
+}
+
+.product-list.card-list {
   padding: 0 0 4px;
   background: transparent;
 }
 
-.reports-menu-list ion-item-sliding {
-  margin: 12px 8px;
+.product-list.card-list ion-item {
+  background: var(--ion-background-color);
   border-radius: 12px;
-  overflow: hidden;
+  margin: 8px 12px;
+  box-shadow: 0 4px 10px rgba(var(--ion-color-dark-rgb), 0.08);
+  --inner-padding-end: 16px;
+  --padding-start: 16px;
+  transition: transform 0.2s;
 }
 
-.reports-menu-list .report-menu-item {
-  --background: var(--report-surface);
-  --color: var(--report-ink);
-  --min-height: 96px;
-  --padding-start: 20px;
-  --inner-padding-end: 20px;
-  border: 1px solid var(--report-line);
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(var(--ion-color-dark-rgb), 0.1);
-}
-
-.report-card-title {
-  color: var(--report-ink);
-  font-size: 24px;
-  font-weight: 650;
+.product-list.card-list ion-item.report-card-item {
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  --min-height: 76px;
   text-align: center;
 }
 
-.print-option-btn {
+.product-list.card-list .report-title {
+  display: block;
+  width: 100%;
+  margin: 0;
+  color: var(--ion-text-color);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  white-space: normal;
+}
+
+.yellow-print-option {
   --background: #ffe500;
   --background-hover: #ffe500;
   --background-focused: #ffe500;
@@ -146,7 +157,7 @@ ion-list {
   font-weight: 750;
 }
 
-.print-option-btn ion-icon {
+.yellow-print-option ion-icon {
   margin-bottom: 4px;
   color: #000000;
   font-size: 24px;
