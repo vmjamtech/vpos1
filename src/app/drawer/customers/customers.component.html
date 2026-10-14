@@ -14,6 +14,14 @@
     </div>
   </div>
 
+  <input
+    #fileInput
+    type="file"
+    accept=".csv, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+    style="display: none"
+    (change)="onCustomerFileSelected($event)"
+  />
+
   <ion-refresher
     slot="fixed"
     (ionRefresh)="doRefresh($event)"

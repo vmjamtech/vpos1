@@ -217,15 +217,69 @@ export class CustomersService {
   }
 
   async checknameExists(custname: string): Promise<boolean> {
-    const sql = `SELECT 1 FROM custinfo WHERE custname = ? LIMIT 1`;
+    const sql = `
+      SELECT 1
+      FROM custinfo
+      WHERE LOWER(TRIM(custname)) = LOWER(TRIM(?))
+        AND custstatus <> 'inactive'
+      LIMIT 1`;
 
     try {
       const result = await this.db.query(sql, [custname]);
-      // If any row returned, code exists
       return result.length > 0;
     } catch (error) {
       console.error('Error checking custname:', error);
-      // optional: rethrow or return false
+      return false;
+    }
+  }
+
+  async findCustomerByName(custname: string): Promise<any | null> {
+    const sql = `
+      SELECT custid, custname, custstatus, custadd, custcontnum, custemail
+      FROM custinfo
+      WHERE LOWER(TRIM(custname)) = LOWER(TRIM(?))
+      ORDER BY CASE WHEN custstatus = 'inactive' THEN 1 ELSE 0 END
+      LIMIT 1`;
+
+    try {
+      const customers = await this.db.query(sql, [custname]);
+      return customers[0] ?? null;
+    } catch (error) {
+      console.error('Error finding customer by name:', error);
+      throw new Error('Failed to check existing customer.');
+    }
+  }
+
+  async restoreDuplicateCustomer(
+    custid: number,
+    details: {
+      custadd?: string;
+      custcontnum?: string;
+      custemail?: string;
+    }
+  ): Promise<boolean> {
+    const sql = `
+      UPDATE custinfo
+      SET custstatus = 'active',
+          custadd = CASE WHEN ? IS NULL THEN custadd ELSE ? END,
+          custcontnum = CASE WHEN ? IS NULL THEN custcontnum ELSE ? END,
+          custemail = CASE WHEN ? IS NULL THEN custemail ELSE ? END
+      WHERE custid = ?`;
+    const params = [
+      details.custadd ?? null,
+      details.custadd ?? null,
+      details.custcontnum ?? null,
+      details.custcontnum ?? null,
+      details.custemail ?? null,
+      details.custemail ?? null,
+      custid,
+    ];
+
+    try {
+      await this.db.query(sql, params);
+      return true;
+    } catch (error) {
+      console.error('Error restoring duplicate customer:', error);
       return false;
     }
   }
@@ -267,6 +321,52 @@ export class CustomersService {
       return false;
     }
   }
+
+  async bulkInsertCustomers(
+    customers: Array<{
+      custname: string;
+      custadd?: string;
+      custcontnum?: string;
+      custemail?: string;
+    }>
+  ): Promise<{ added: number; skipped: number; failed: number }> {
+    const existingCustomers = await this.db.query<{ custname: string }>(
+      'SELECT custname FROM custinfo'
+    );
+    const existingNames = new Set(
+      existingCustomers.map((customer) => customer.custname?.trim().toLowerCase())
+    );
+    let added = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const customer of customers) {
+      const custname = customer.custname.trim();
+      if (!custname || custname === '.Customer') continue;
+
+      const normalizedName = custname.toLowerCase();
+      if (existingNames.has(normalizedName)) {
+        skipped++;
+        continue;
+      }
+
+      const inserted = await this.insert({
+        custname,
+        custadd: customer.custadd ?? '',
+        custcontnum: customer.custcontnum ?? '',
+        custemail: customer.custemail ?? '',
+      });
+      if (inserted) {
+        added++;
+        existingNames.add(normalizedName);
+      } else {
+        failed++;
+      }
+    }
+
+    return { added, skipped, failed };
+  }
+
   async update(data: {
     custid: number;
     custname: string;
@@ -419,28 +519,74 @@ export class CustomersService {
     }
   }
 
-  async UpdateInactiveCustomers(): Promise<boolean> {
-    const sql = `
-               UPDATE custinfo 
-    SET custstatus = 'inactive' 
-    WHERE custid NOT IN (
-        SELECT salescustid 
-        FROM (
-            SELECT salescustid, MAX(salesdate) AS max_salesdate
-            FROM salestbl
-            GROUP BY salescustid
-        ) AS max_dates
-        WHERE julianday('now') - julianday(max_salesdate) <= 180
-    ) 
-    AND julianday('now') - julianday(custdate) > 180;`;
+  async updateInactiveCustomersByDays(
+    days: number
+  ): Promise<{
+    movedCount: number;
+    reactivatedCount: number;
+    skippedCount: number;
+  }> {
+    if (!Number.isSafeInteger(days) || days < 1) {
+      throw new Error('Inactivity duration must be a positive whole number.');
+    }
+
+    const hasTransactionHistory = `EXISTS (
+      SELECT 1
+      FROM salestbl s
+      WHERE s.salescustid = c.custid
+        AND UPPER(COALESCE(s.salestatus, '')) <> 'CANCELLED'
+    )`;
+    const latestTransactionDate = `(
+      SELECT MAX(s.salesdate)
+      FROM salestbl s
+      WHERE s.salescustid = c.custid
+        AND UPPER(COALESCE(s.salestatus, '')) <> 'CANCELLED'
+    )`;
 
     try {
-      await this.db.query(sql);
+      const inactiveCount = await this.db.query<{ count: number }>(
+      `SELECT COUNT(*) AS count
+       FROM custinfo c
+       WHERE COALESCE(c.custstatus, '') <> 'inactive'
+         AND ${hasTransactionHistory}
+         AND julianday(${latestTransactionDate}) < julianday('now') - ?`,
+        [days]
+      );
+      const reactivatedCount = await this.db.query<{ count: number }>(
+        `SELECT COUNT(*) AS count
+         FROM custinfo c
+         WHERE c.custstatus = 'inactive'
+           AND ${hasTransactionHistory}
+           AND julianday(${latestTransactionDate}) >= julianday('now') - ?`,
+        [days]
+      );
+      const skippedCount = await this.db.query<{ count: number }>(
+        `SELECT COUNT(*) AS count
+         FROM custinfo c
+         WHERE NOT ${hasTransactionHistory}`
+      );
 
-      return true;
+      const updateSql = `
+        UPDATE custinfo AS c
+        SET custstatus = CASE
+          WHEN julianday(${latestTransactionDate}) >= julianday('now') - ?
+            THEN 'active'
+          WHEN julianday(${latestTransactionDate}) < julianday('now') - ?
+            THEN 'inactive'
+          ELSE c.custstatus
+        END
+        WHERE ${hasTransactionHistory}
+      `;
+      await this.db.query(updateSql, [days, days]);
+
+      return {
+        movedCount: Number(inactiveCount[0]?.count ?? 0),
+        reactivatedCount: Number(reactivatedCount[0]?.count ?? 0),
+        skippedCount: Number(skippedCount[0]?.count ?? 0),
+      };
     } catch (error) {
-      console.error('Error updating customer:', error);
-      return false;
+      console.error('Error updating inactive customers:', error);
+      throw new Error('Failed to update inactive customers.');
     }
   }
 
@@ -462,8 +608,17 @@ export class CustomersService {
     limit: number = 20,
     offset: number = 0
   ): Promise<any[]> {
-    const sql = `SELECT * FROM custinfo WHERE custstatus='inactive'
-      ORDER BY custname ASC
+    const sql = `
+      SELECT c.*,
+        (
+          SELECT MAX(s.salesdate)
+          FROM salestbl s
+          WHERE s.salescustid = c.custid
+            AND UPPER(COALESCE(s.salestatus, '')) <> 'CANCELLED'
+        ) AS last_transaction_date
+      FROM custinfo c
+      WHERE c.custstatus = 'inactive'
+      ORDER BY c.custname ASC
       LIMIT ? OFFSET ?`;
 
     try {

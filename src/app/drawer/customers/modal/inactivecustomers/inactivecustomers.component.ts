@@ -70,6 +70,7 @@ export class InactivecustomersComponent implements OnInit {
   skeletonArray = Array(10);
   total: number = 0;
   currentSort: string = 'name-asc'; // default sort
+  isUpdatingInactive = false;
 
   constructor(
     private modalCtrl: ModalController,
@@ -86,21 +87,108 @@ export class InactivecustomersComponent implements OnInit {
   /** Full initialization: update inactive customers, then load data */
   async initialize() {
     const loading = await this.loadingController.create({
-      message: 'Updating inactive customers...',
+      message: 'Loading inactive customers...',
       spinner: 'crescent',
     });
     await loading.present();
 
     try {
-      // 1️⃣ Update inactive customers
-      await this.customerService.UpdateInactiveCustomers();
-
-      // 2️⃣ Load initial data
       await this.loadInitialData();
     } catch (err) {
       console.error('Initialization failed:', err);
     } finally {
       loading.dismiss();
+    }
+  }
+
+  async promptInactivityDuration() {
+    const alert = await this.alertController.create({
+      header: 'Update Inactive Customers',
+      subHeader: 'Mark customers based on their transaction inactivity:',
+      buttons: [
+        {
+          text: '1 Week (7 Days)',
+          handler: async () => await this.executeInactiveCheck(7),
+        },
+        {
+          text: '1 Month (30 Days)',
+          handler: async () => await this.executeInactiveCheck(30),
+        },
+        {
+          text: '3 Months (90 Days)',
+          handler: async () => await this.executeInactiveCheck(90),
+        },
+        {
+          text: 'Custom Days',
+          handler: async () => await this.promptCustomDays(),
+        },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await alert.present();
+  }
+
+  async promptCustomDays() {
+    const alert = await this.alertController.create({
+      header: 'Custom Inactivity Period',
+      inputs: [
+        {
+          name: 'days',
+          type: 'number',
+          placeholder: 'Enter number of days',
+          min: 1,
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Apply',
+          handler: async (data) => {
+            const days = Number(data.days);
+            if (!Number.isSafeInteger(days) || days < 1) {
+              await this.appdateService.showToastjs(
+                'Please enter a valid number of days.',
+                'warning'
+              );
+              return false;
+            }
+
+            await this.executeInactiveCheck(days);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async executeInactiveCheck(days: number) {
+    if (this.isUpdatingInactive) return;
+    this.isUpdatingInactive = true;
+
+    const loading = await this.loadingController.create({
+      message: 'Checking customer activity...',
+      spinner: 'crescent',
+    });
+    await loading.present();
+
+    try {
+      const result =
+        await this.customerService.updateInactiveCustomersByDays(days);
+      await this.loadInitialData();
+      await this.appdateService.showToastjs(
+        `Updated: ${result.movedCount} marked inactive, ${result.reactivatedCount} reactivated, ${result.skippedCount} skipped (no transaction history).`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Failed to update inactive customers:', error);
+      await this.appdateService.showToastjs(
+        'Failed to update inactive customers.',
+        'danger'
+      );
+    } finally {
+      this.isUpdatingInactive = false;
+      await loading.dismiss();
     }
   }
 

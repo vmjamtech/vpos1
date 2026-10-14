@@ -2,6 +2,13 @@
   <ion-toolbar color="primary">
     <ion-title style="margin-top: 20px">Inactive Customers</ion-title>
     <ion-buttons slot="end" style="margin-top: 20px">
+      <ion-button
+        aria-label="Update inactive customers"
+        [disabled]="isUpdatingInactive"
+        (click)="promptInactivityDuration()"
+      >
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
       <ion-button (click)="dismiss()">Close</ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -57,9 +64,18 @@
             <div class="meta">
               <strong>Email:</strong> {{ item.custemail || "N/A" }}
             </div>
+            <ion-badge
+              *ngIf="item.custbalance > 0"
+              [color]="item.custbalance >= 2000 ? 'danger' : 'warning'"
+            >
+              With balance (₱{{ item.custbalance | number : "1.2-2" }})
+            </ion-badge>
             <div class="meta">
-              <strong>Balance:</strong> ₱{{
-                item.custbalance | number : "1.2-2"
+              <strong>Last Active:</strong>
+              {{
+                item.last_transaction_date
+                  ? (item.last_transaction_date | date : "mediumDate")
+                  : "Never"
               }}
             </div>
           </ion-label>

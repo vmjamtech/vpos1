@@ -1032,3 +1032,76 @@ visibility remains pending user confirmation on-device.
 Validation: Angular build, Capacitor sync, Android debug build, and APK install
 passed. No database, calculation, POS receipt, or drawer-kick behavior changed.
 ```
+
+---
+
+## 9. Session Log - 2026-10-14 (Customer Import, Inactivity, and Restore)
+
+### 9.1 What changed
+
+- Added an Import Customer action to the Customers action sheet. CSV, XLSX, and XLS files are parsed with dynamically detected headers, including files with title rows before the header. Balance values in the file are ignored; customer insertion uses the existing `custinfo` insert path and database balance default. Existing customer names are checked locally, and the import reports added, skipped, and failed counts.
+- Added a user-triggered inactivity update for 7, 30, 90, or custom days. Selecting a duration runs the update immediately. Only customers with at least one non-cancelled sale are evaluated; zero-history customers keep their current status and are counted as skipped. Unpaid, non-cancelled sales count as activity. Customers with an old transaction can be marked inactive regardless of balance, and recently active inactive customers can be reactivated.
+- Added latest qualifying sale date and a balance badge to inactive-customer cards. Balances are preserved; the badge uses warning below ₱2,000 and danger at or above ₱2,000.
+- Updated Add Customer duplicate handling. Active duplicate names remain blocked with a warning. An inactive duplicate prompts for confirmation; restoring updates the existing row's status and only non-empty address/contact/Gas values entered in the form. Existing balances and sales history remain unchanged.
+- No database schema, table definitions, sales rows, or calculation formulas were changed.
+
+### 9.2 Files modified
+
+- `package.json`
+- `package-lock.json`
+- `src/app/drawer/customers/customers.component.html`
+- `src/app/drawer/customers/customers.component.ts`
+- `src/app/drawer/customers/modal/customerform/customerform.component.html`
+- `src/app/drawer/customers/modal/customerform/customerform.component.ts`
+- `src/app/drawer/customers/modal/inactivecustomers/inactivecustomers.component.html`
+- `src/app/drawer/customers/modal/inactivecustomers/inactivecustomers.component.ts`
+- `src/app/services/customers.service.ts`
+- `project-history,md` (this entry)
+
+### 9.3 Verification
+
+- `npm install xlsx` completed and added the parser dependency. npm reported dependency audit findings; no audit fixes were applied.
+- `npm run build` passed with the existing Stencil empty-glob warning.
+- `build-debug.bat` completed the Angular build, Capacitor Android sync, and Gradle debug APK build successfully.
+- `adb install -r` reported `Success` for the connected device. APK output: `android/app/build/outputs/apk/debug/app-debug.apk`.
+- Installation success does not constitute end-to-end on-device verification of the customer workflows below.
+
+### 9.4 Remaining customer verification
+
+- Manually test CSV and Excel imports, including title rows before headers, placeholder fields, duplicate names, and confirmation that imported Balance values are ignored.
+- Manually test inactivity durations with zero-history customers, recent and old sales, cancelled and unpaid sales, existing balances, reactivation, custom-day input, and reported counts.
+- Manually test inactive-duplicate restore with both No and Yes, optional detail updates, active-list refresh, and preservation of balance/history.
+- Angular unit tests and lint were not run for this session.
+
+### 9.5 Open issue queue
+
+The existing queue in section 6.5 remains open and unchanged:
+
+- Printing: Business Contact Number not reflected on printed receipt.
+- Printing: Purchase logo enabled but logo not printed.
+- Printing: Sales Reprint `.reduce()` data-shape error.
+- Printing: iMin output should use receipt address fields / match preview.
+- Printing: Report preview Print button still needs user confirmation; Reports swipe-to-Print remains a placeholder.
+- Petty Cash: separate Cash In and Cash Out totals.
+- Development: improve Android testing/live-reload workflow.
+- Versioning: increment app version while preserving SQLite data.
+- Git: verify/configure source control on new machine.
+- Copilot rules: keep VPOS/token/safety instructions in separate files.
+
+### 9.6 Suggested commit message
+
+```text
+feat(customers): import customers and manage inactivity restores
+
+Add CSV/XLSX/XLS customer import with dynamic header detection, local
+duplicate checks, placeholder cleanup, and balance-safe inserts. Add
+duration-based inactivity updates that skip customers without sale history,
+count unpaid non-cancelled sales as activity, and preserve customer balances
+and sales history. Show last-active dates and balance badges for inactive
+customers, and prompt to restore an existing inactive customer instead of
+creating a duplicate.
+
+Validation: Angular production build, Capacitor Android sync, Gradle debug
+APK build, and adb install -r passed. Manual customer workflow verification,
+unit tests, and lint remain outstanding. No schema or POS sales data changed.
+```

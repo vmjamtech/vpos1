@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  AlertController,
   IonButton,
   IonButtons,
   IonContent,
@@ -52,6 +53,7 @@ export class CustomerformComponent implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
+    private alertController: AlertController,
     private customerService: CustomersService,
     private appdateService: AppdateService
   ) {}
@@ -82,8 +84,17 @@ export class CustomerformComponent implements OnInit {
   }
 
   async saveItem() {
+    const custname = this.custname.trim();
+    if (!custname) {
+      await this.appdateService.showToastjs(
+        'Please enter a customer name.',
+        'warning'
+      );
+      return;
+    }
+
     const data = {
-      custname: this.custname,
+      custname,
       custadd: this.custadd,
       custcontnum: this.custcontnum ?? '',
       custemail: this.custemail ?? '',
@@ -92,6 +103,23 @@ export class CustomerformComponent implements OnInit {
     let success = false;
 
     if (this.mode === 'add') {
+      const existingCustomer =
+        await this.customerService.findCustomerByName(custname);
+
+      if (existingCustomer?.custstatus === 'inactive') {
+        await this.promptRestoreCustomer(existingCustomer);
+        return;
+      }
+
+      if (existingCustomer) {
+        this.custnameExists = true;
+        await this.appdateService.showToastjs(
+          'Customer already exists in the active list.',
+          'warning'
+        );
+        return;
+      }
+
       success = await this.customerService.insert({
         ...data,
       });
@@ -134,5 +162,49 @@ export class CustomerformComponent implements OnInit {
         );
       }
     }
+  }
+
+  async promptRestoreCustomer(customer: any) {
+    const alert = await this.alertController.create({
+      header: 'Customer Inactive',
+      message:
+        'This customer already exists in the Inactive Customer list. Do you want to restore it?',
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        {
+          text: 'Yes',
+          handler: async () => {
+            const restored =
+              await this.customerService.restoreDuplicateCustomer(
+                customer.custid,
+                {
+                  custadd: this.custadd.trim() || undefined,
+                  custcontnum: this.custcontnum.trim() || undefined,
+                  custemail: this.custemail.trim() || undefined,
+                }
+              );
+
+            if (!restored) {
+              await this.appdateService.showToastjs(
+                'Failed to restore customer.',
+                'danger'
+              );
+              return;
+            }
+
+            await this.appdateService.showToastjs(
+              'Customer restored successfully.',
+              'success'
+            );
+            await this.modalCtrl.dismiss({
+              refreshed: true,
+              custid: customer.custid,
+            });
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 }

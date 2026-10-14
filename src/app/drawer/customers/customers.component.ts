@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ActionSheetController,
@@ -33,6 +33,7 @@ import { LendeditemsComponent } from './modal/lendeditems/lendeditems.component'
 import { InactivecustomersComponent } from './modal/inactivecustomers/inactivecustomers.component';
 import { LendhistoryComponent } from './modal/lendhistory/lendhistory.component';
 import { CustomertransactionsComponent } from './modal/customertransactions/customertransactions.component';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-customers',
@@ -81,6 +82,7 @@ export class CustomersComponent implements OnInit {
   };
 
   @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private customerService: CustomersService,
@@ -135,6 +137,13 @@ export class CustomersComponent implements OnInit {
           },
         },
         {
+          text: 'Import Customer',
+          icon: 'cloud-upload-outline',
+          handler: () => {
+            this.triggerCustomerImport();
+          },
+        },
+        {
           text: 'Cancel',
           role: 'cancel',
         },
@@ -144,13 +153,97 @@ export class CustomersComponent implements OnInit {
     await actionSheet.present();
   }
 
+  triggerCustomerImport() {
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  async onCustomerFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        await this.appdateService.showToastjs(
+          'Invalid file format: No worksheet found.',
+          'danger'
+        );
+        return;
+      }
+
+      const worksheet = workbook.Sheets[sheetName];
+      const rawRows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+        header: 1,
+        defval: '',
+      });
+      const headerIndex = rawRows.findIndex((row) =>
+        row.some(
+          (cell) => String(cell).trim().toLowerCase() === 'customer name'
+        )
+      );
+
+      if (headerIndex === -1) {
+        await this.appdateService.showToastjs(
+          'Invalid file format: Missing "Customer Name" column.',
+          'danger'
+        );
+        return;
+      }
+
+      const headers = rawRows[headerIndex].map((header) =>
+        String(header).trim().toLowerCase()
+      );
+      const nameIndex = headers.indexOf('customer name');
+      const addressIndex = headers.indexOf('address');
+      const gasIndex = headers.indexOf('gas');
+      const contactIndex = headers.indexOf('contact number');
+      const cleanField = (value: unknown) => {
+        const cleaned = String(value ?? '').trim();
+        return /^(-----|n\/a)$/i.test(cleaned) ? '' : cleaned;
+      };
+
+      const customers = rawRows.slice(headerIndex + 1).map((row) => ({
+        custname: String(row[nameIndex] ?? '').trim(),
+        custadd: cleanField(row[addressIndex]),
+        custemail: cleanField(row[gasIndex]),
+        custcontnum: cleanField(row[contactIndex]),
+      }));
+      const result = await this.customerService.bulkInsertCustomers(customers);
+
+      await this.resetAndLoad();
+      const failureMessage = result.failed
+        ? ` ${result.failed} could not be imported.`
+        : '';
+      await this.appdateService.showToastjs(
+        `Import finished: ${result.added} added, ${result.skipped} skipped (already exists).${failureMessage}`,
+        result.failed ? 'warning' : 'success'
+      );
+    } catch (error) {
+      console.error('Customer import failed:', error);
+      await this.appdateService.showToastjs(
+        'Customer import failed. Check the file and try again.',
+        'danger'
+      );
+    } finally {
+      input.value = '';
+    }
+  }
+
   async openCustomerWithBalance() {
     const modal = await this.modalCtrl.create({
       component: CustomerbalanceComponent,
       expandToScroll: false,
     });
 
-    modal.onDidDismiss().then((res) => {});
+    modal.onDidDismiss().then(async () => {
+      await this.resetAndLoad();
+    });
 
     return await modal.present();
   }
