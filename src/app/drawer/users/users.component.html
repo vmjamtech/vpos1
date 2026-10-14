@@ -69,6 +69,12 @@
       class="product-list card-list"
     >
       <ion-item-sliding *ngFor="let item of filteredItems">
+        <ion-item-options side="start" *ngIf="permissionService.canAssignPermissions">
+          <ion-item-option color="primary" (click)="openUserPermissions(item)">
+            <ion-icon slot="top" name="shield-checkmark-outline"></ion-icon>
+            Permission
+          </ion-item-option>
+        </ion-item-options>
         <ion-item (click)="openEditModal(item)">
           <ion-label>
             <h2 class="desc">{{ item.empname }}</h2>

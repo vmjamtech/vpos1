@@ -30,6 +30,7 @@ import {
 import { AppdateService } from 'src/app/services/appdate.service';
 import { SupplierService } from 'src/app/services/supplier.service';
 import { SupplierformComponent } from './modal/supplierform/supplierform.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-supplier',
@@ -80,7 +81,8 @@ export class SupplierComponent implements OnInit {
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
-    private appdateService: AppdateService
+    private appdateService: AppdateService,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -161,6 +163,8 @@ export class SupplierComponent implements OnInit {
   }
 
   async openAddCategoryModal() {
+    if (!this.permissionService.has('transferItems.supplier')) return;
+
     const modal = await this.modalCtrl.create({
       component: SupplierformComponent,
       initialBreakpoint: 0.6,
@@ -191,6 +195,8 @@ export class SupplierComponent implements OnInit {
   }
 
   async openEditCategoryModal(item: any) {
+    if (!this.permissionService.has('transferItems.supplier')) return;
+
     const modal = await this.modalCtrl.create({
       component: SupplierformComponent,
       initialBreakpoint: 0.6,
@@ -230,6 +236,8 @@ export class SupplierComponent implements OnInit {
   }
 
   async deleteCategoryConfirm(category: any) {
+    if (!this.permissionService.has('transferItems.supplier')) return;
+
     const alert = await this.alertCtrl.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete "${category.suppname}"?`,

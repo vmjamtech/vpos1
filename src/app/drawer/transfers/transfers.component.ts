@@ -39,8 +39,10 @@ import { ItemconvertformComponent } from './modals/itemconvertform/itemconvertfo
 import { StorageService } from 'src/app/services/storage.service';
 import { ItemconvertdetailsComponent } from './modals/itemconvertdetails/itemconvertdetails.component';
 import { ItemrestockformComponent } from './modals/itemrestockform/itemrestockform.component';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
 import { RestockdetailsComponent } from './modals/restockdetails/restockdetails.component';
 import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-transfers',
@@ -104,6 +106,8 @@ export class TransfersComponent implements OnInit {
     private modalCtrl: ModalController,
     private appdateService: AppdateService,
     private actionSheetController: ActionSheetController,
+    private storeOnly: StoreOnlyService,
+    private permissionService: PermissionService,
     private storageService: StorageService,
     private zone: NgZone,
     private cdr: ChangeDetectorRef
@@ -216,6 +220,8 @@ export class TransfersComponent implements OnInit {
   }
 
   async openSupplier() {
+    if (!this.permissionService.has('transferItems.supplier')) return;
+
     const modal = await this.modalCtrl.create({
       component: SupplierComponent,
     });
@@ -241,7 +247,10 @@ export class TransfersComponent implements OnInit {
           text: 'Cancel',
           role: 'cancel',
         },
-      ],
+      ].filter((button) =>
+        button.text !== 'Supplier' ||
+        this.permissionService.has('transferItems.supplier')
+      ),
     });
 
     await actionSheet.present();
@@ -385,7 +394,7 @@ export class TransfersComponent implements OnInit {
   async openAddModal() {
     const actionSheet = await this.actionSheetController.create({
       header: 'Transfer Creation',
-      buttons: [
+      buttons: this.storeOnly.filterActions([
         {
           text: 'Store Convert',
           icon: 'swap-horizontal-outline',
@@ -504,7 +513,7 @@ export class TransfersComponent implements OnInit {
           text: 'Cancel',
           role: 'cancel',
         },
-      ],
+      ]),
     });
 
     await actionSheet.present();

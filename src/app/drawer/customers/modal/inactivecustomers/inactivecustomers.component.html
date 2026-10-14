@@ -89,7 +89,7 @@
             INACTIVE
           </ion-badge>
         </ion-item>
-        <ion-item-options side="end">
+        <ion-item-options side="end" *ngIf="permissionService.has('customer.deleteInactiveCustomer')">
           <ion-item-option color="danger" (click)="deleteConfirm(item)">
             <ion-icon name="trash-outline"></ion-icon> Delete
           </ion-item-option>

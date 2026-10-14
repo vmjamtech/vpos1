@@ -109,6 +109,7 @@
                 }}</span
               >
               <span
+                *ngIf="hasPermission('inventory.viewCostPrice')"
                 ><strong>Cost:</strong> ₱{{
                   item.itemcost | number : "1.2-2"
                 }}</span
@@ -130,7 +131,7 @@
         </ion-item>
 
         <!-- Swipe to delete -->
-        <ion-item-options side="end">
+        <ion-item-options side="end" *ngIf="hasPermission('inventory.deleteItem')">
           <ion-item-option color="danger" (click)="deleteItemConfirm(item)">
             <ion-icon name="trash-outline"></ion-icon> Delete
           </ion-item-option>
@@ -167,6 +168,7 @@
   slot="fixed"
   class="fab-custom"
   (click)="openAddItemModal()"
+  *ngIf="hasPermission('inventory.addItem')"
 >
   <ion-fab-button color="primary">
     <ion-icon name="add-outline"></ion-icon>

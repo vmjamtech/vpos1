@@ -12,10 +12,15 @@ import {
   IonItem,
   IonLabel,
   IonTitle,
+  IonToggle,
   IonToolbar,
   ModalController,
 } from '@ionic/angular/standalone';
-import { AppdateService } from 'src/app/services/appdate.service';
+import {
+  AppdateService,
+  loadBirSettings,
+  saveBirSettings,
+} from 'src/app/services/appdate.service';
 import { PrinterService } from 'src/app/services/printer.service';
 
 interface LayoutField {
@@ -49,11 +54,16 @@ interface LayoutField {
     IonButtons,
     IonInput,
     IonIcon,
+    IonToggle,
   ],
 })
 export class CardLayoutComponent implements OnInit {
   @ViewChild('logoInput') logoInput!: ElementRef<HTMLInputElement>;
   appdateid?: number;
+  bir_enabled = false;
+  tin = '';
+  min = '';
+  sn = '';
   showPreview = true;
   previewContent: { type: 'text' | 'image'; value: string }[] = [];
 
@@ -139,6 +149,10 @@ export class CardLayoutComponent implements OnInit {
   async loadSettings() {
     const info = await this.appdaterService.getReceiptBusinessInfo();
     this.appdateid = info.appdateid;
+    this.bir_enabled = !!info.birEnabled;
+    this.tin = info.tin ?? '';
+    this.min = info.min ?? '';
+    this.sn = info.sn ?? '';
 
     this.fields.forEach((field) => {
       if (!field.style) field.style = {}; // ensure style object exists
@@ -233,6 +247,12 @@ export class CardLayoutComponent implements OnInit {
             };
 
             try {
+              saveBirSettings({
+                bir_enabled: this.bir_enabled,
+                tin: this.tin.trim(),
+                min: this.min.trim(),
+                sn: this.sn.trim(),
+              });
               if (this.appdateid) {
                 await this.appdaterService.updateReceiptLayout(
                   this.appdateid,
@@ -275,7 +295,12 @@ export class CardLayoutComponent implements OnInit {
       .map((f) => ({ type: f.type, value: f.value || '' }));
 
     this.showPreview = true;
-    await this.printerService.printPreviewToPrinter(this.previewContent);
+    await this.printerService.printPreviewToPrinter(this.previewContent, {
+      enabled: this.bir_enabled,
+      tin: this.tin.trim(),
+      min: this.min.trim(),
+      sn: this.sn.trim(),
+    });
   }
 
   // Close modal

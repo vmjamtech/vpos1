@@ -30,6 +30,7 @@ import { AppdateService } from 'src/app/services/appdate.service';
 import { RatesettingsComponent } from './modal/ratesettings/ratesettings.component';
 import { PersoneltransactionComponent } from './modal/personeltransaction/personeltransaction.component';
 import { PersonelsalaryhistoryComponent } from './modal/personelsalaryhistory/personelsalaryhistory.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-personels',
@@ -83,7 +84,8 @@ export class PersonelsComponent implements OnInit {
     private actionSheetController: ActionSheetController,
     private modalCtrl: ModalController,
     private appdateService: AppdateService,
-    private loadingCtrl: LoadingController
+    private loadingCtrl: LoadingController,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -134,13 +136,18 @@ export class PersonelsComponent implements OnInit {
           role: 'cancel',
           icon: 'close-outline',
         },
-      ],
+      ].filter((button) =>
+        button.text !== 'Personnel Rate Settings' ||
+        this.permissionService.has('personnel.viewRateSettings')
+      ),
     });
 
     await actionSheet.present();
   }
 
   async openPersonnelRateSettings(item: any) {
+    if (!this.permissionService.has('personnel.viewRateSettings')) return;
+
     let breakpoints = 0.4;
     if (item.prole === 'Driver') {
       breakpoints = 0.8;
@@ -341,6 +348,8 @@ export class PersonelsComponent implements OnInit {
   }
 
   async openAddModal() {
+    if (!this.permissionService.has('personnel.addPersonnel')) return;
+
     const modal = await this.modalCtrl.create({
       component: PersonelformComponent,
       initialBreakpoint: 0.5,
@@ -362,6 +371,8 @@ export class PersonelsComponent implements OnInit {
   }
 
   async openEditModal(item: any) {
+    if (!this.permissionService.has('personnel.updatePersonnel')) return;
+
     const modal = await this.modalCtrl.create({
       component: PersonelformComponent,
       initialBreakpoint: 0.5,
@@ -388,6 +399,8 @@ export class PersonelsComponent implements OnInit {
   }
 
   async deleteConfirm(item: any) {
+    if (!this.permissionService.has('personnel.deletePersonnel')) return;
+
     const alert = await this.alertController.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete this personnel?`,

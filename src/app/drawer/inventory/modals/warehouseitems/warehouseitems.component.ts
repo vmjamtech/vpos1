@@ -32,6 +32,7 @@ import {
 import { CategoryService } from 'src/app/services/category.service';
 import { WarehouseService } from 'src/app/services/warehouse.service';
 import { WarehouseformComponent } from './modal/warehouseform/warehouseform.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-warehouseitems',
@@ -89,7 +90,8 @@ export class WarehouseitemsComponent implements OnInit {
     private categoryService: CategoryService,
     private alertController: AlertController,
     private loadingCtrl: LoadingController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -251,7 +253,12 @@ export class WarehouseitemsComponent implements OnInit {
       breakpoints: [0.9],
       backdropDismiss: false,
       expandToScroll: false,
-      componentProps: { mode: 'edit', itemid: item.itemid, itemData: item },
+      componentProps: {
+        mode: 'view',
+        itemid: item.itemid,
+        itemData: item,
+        canEdit: this.permissionService.has('warehouse.updateWarehouseItem'),
+      },
     });
 
     modal.onDidDismiss().then((res) => {

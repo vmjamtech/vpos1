@@ -1,7 +1,11 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title>{{ mode === "edit" ? "Update Item" : "Add Item" }}</ion-title>
+    <ion-title>{{ mode === "add" ? "Add Item" : isEditMode ? "Update Item" : "Item Details" }}</ion-title>
     <ion-buttons slot="end">
+      <ion-button *ngIf="mode === 'view' && canEdit" (click)="beginEdit()">
+        <ion-icon name="create-outline"></ion-icon>
+        Edit
+      </ion-button>
       <ion-button (click)="dismiss()">Close</ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -16,7 +20,7 @@
         [(ngModel)]="itemcode"
         name="itemcode"
         placeholder="Enter Item Code"
-        [disabled]="mode === 'edit'"
+        [disabled]="!isEditMode || mode === 'edit'"
         (ionInput)="validateItemCode()"
         debounce="300"
       ></ion-input>
@@ -32,6 +36,7 @@
         [(ngModel)]="description"
         name="description"
         placeholder="Enter Item Description"
+        [disabled]="!isEditMode"
       ></ion-input>
     </ion-item>
 
@@ -42,6 +47,7 @@
         [(ngModel)]="selectedSize"
         name="selectedSize"
         interface="popover"
+        [disabled]="!isEditMode"
       >
         <ion-select-option [value]="null" disabled selected hidden>
           Select Size
@@ -59,6 +65,7 @@
         [(ngModel)]="selectedCategory"
         name="selectedCategory"
         interface="popover"
+        [disabled]="!isEditMode"
       >
         <ion-select-option [value]="null" disabled selected hidden>
           Select Category
@@ -77,6 +84,7 @@
         [(ngModel)]="fillqty"
         name="fillqty"
         (ionChange)="computeTotal()"
+        [disabled]="!isEditMode"
       ></ion-input>
     </ion-item>
 
@@ -88,6 +96,7 @@
         [(ngModel)]="emptyqty"
         name="emptyqty"
         (ionChange)="computeTotal()"
+        [disabled]="!isEditMode"
       ></ion-input>
     </ion-item>
 
@@ -104,6 +113,7 @@
         type="number"
         [(ngModel)]="criticalLevel"
         name="criticalLevel"
+        [disabled]="!isEditMode"
       ></ion-input>
     </ion-item>
 
@@ -114,10 +124,12 @@
         min="0"
         [(ngModel)]="floorstock"
         name="floorstock"
+        [disabled]="!isEditMode"
       ></ion-input>
     </ion-item>
   </div>
   <ion-button
+    *ngIf="isEditMode"
     class="sticky-btn"
     expand="block"
     color="primary"

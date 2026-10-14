@@ -28,6 +28,8 @@ import {
 import { AppdateService } from 'src/app/services/appdate.service';
 import { UserService } from 'src/app/services/user.service';
 import { UserformComponent } from './modal/userform/userform.component';
+import { UserpermissionsComponent } from './modal/userpermissions/userpermissions.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-users',
@@ -83,7 +85,8 @@ export class UsersComponent implements OnInit {
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
     private appdateService: AppdateService,
-    private actionSheetController: ActionSheetController
+    private actionSheetController: ActionSheetController,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -309,6 +312,20 @@ export class UsersComponent implements OnInit {
       }
     });
 
+    await modal.present();
+  }
+
+  async openUserPermissions(user: any) {
+    if (!this.permissionService.canAssignPermissions) return;
+
+    const modal = await this.modalCtrl.create({
+      component: UserpermissionsComponent,
+      initialBreakpoint: 0.9,
+      breakpoints: [0.9],
+      backdropDismiss: false,
+      expandToScroll: false,
+      componentProps: { user },
+    });
     await modal.present();
   }
 

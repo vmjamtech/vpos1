@@ -5,6 +5,28 @@ import { PrinterService } from './printer.service';
 import { StorageService } from './storage.service';
 
 describe('PrinterService', () => {
+  it('builds a fixed-width coupon body and reserves the final slot as the reward', () => {
+    const service = new PrinterService(
+      {} as AlertController,
+      {} as IminPrinterService,
+      {} as AppdateService,
+      {} as StorageService
+    );
+    const lines = service.buildCouponCard(50, 10);
+
+    expect(lines.every((line) => line.length === 42)).toBeTrue();
+    expect(lines.filter((line) => line.includes('(   ) SLOT')).length).toBe(9);
+    expect(lines.some((line) => line.includes('CLAIM DISCOUNT'))).toBeTrue();
+    expect(lines.some((line) => line.includes('50.00 pesos OFF!'))).toBeTrue();
+    const rewardRows = lines.filter((line) =>
+      line.includes('CLAIM DISCOUNT') || line.includes('PESOS OFF')
+    );
+    expect(rewardRows.length).toBe(2);
+    expect(rewardRows.every((line) => line.startsWith('|') && line.endsWith('|'))).toBeTrue();
+    expect(rewardRows.reduce((count, line) => count + (line.match(/\|/g)?.length ?? 0), 0)).toBe(4);
+    expect(() => service.buildCouponCard(50, 11)).toThrowError();
+  });
+
   it('waits for image loading and printer image output to finish', async () => {
     const image = {
       src: '',

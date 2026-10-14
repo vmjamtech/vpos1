@@ -34,6 +34,9 @@ import { CommissionsComponent } from './modals/commissions/commissions.component
 import { InventoryformComponent } from './modals/inventoryform/inventoryform.component';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { WarehouseitemsComponent } from './modals/warehouseitems/warehouseitems.component';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
+import { PermissionPath } from 'src/app/models/user-permissions.model';
+import { PermissionService } from 'src/app/services/permission.service';
 import { DisposeitemsComponent } from './modals/disposeitems/disposeitems.component';
 import { ItemhistoryComponent } from './modals/itemhistory/itemhistory.component';
 
@@ -95,6 +98,8 @@ export class InventoryComponent implements OnInit {
     private alertController: AlertController,
     private loadingCtrl: LoadingController,
     private actionSheetController: ActionSheetController,
+    private storeOnly: StoreOnlyService,
+    public permissionService: PermissionService,
     private modalCtrl: ModalController,
     private appdateService: AppdateService
   ) {}
@@ -334,7 +339,7 @@ export class InventoryComponent implements OnInit {
 
   async showOptionsSheet() {
     const actionSheet = await this.actionSheetController.create({
-      buttons: [
+      buttons: this.storeOnly.filterActions([
         {
           text: 'Categories',
           icon: 'grid-outline',
@@ -371,15 +376,41 @@ export class InventoryComponent implements OnInit {
           text: 'Cancel',
           role: 'cancel',
         },
-      ],
+      ].filter((button) => {
+        if (button.text === 'Categories') {
+          return [
+            'inventory.addCategory',
+            'inventory.updateCategory',
+            'inventory.deleteCategory',
+          ].some((permission) =>
+            this.permissionService.has(permission as PermissionPath)
+          );
+        }
+        return button.text !== 'Commissions' ||
+          this.permissionService.has('inventory.editItemCommission');
+      })),
     });
 
     await actionSheet.present();
   }
 
+  hasPermission(permission: PermissionPath): boolean {
+    return this.permissionService.has(permission);
+  }
+
   async openCategory() {
+    if (
+      !['inventory.addCategory', 'inventory.updateCategory', 'inventory.deleteCategory']
+        .some((permission) => this.permissionService.has(permission as PermissionPath))
+    ) return;
+
     const modal = await this.modalCtrl.create({
       component: CategoryComponent,
+      componentProps: {
+        canAdd: this.permissionService.has('inventory.addCategory'),
+        canUpdate: this.permissionService.has('inventory.updateCategory'),
+        canDelete: this.permissionService.has('inventory.deleteCategory'),
+      },
     });
 
     modal.onDidDismiss().then((res) => {});
@@ -388,6 +419,8 @@ export class InventoryComponent implements OnInit {
   }
 
   async openCommission() {
+    if (!this.permissionService.has('inventory.editItemCommission')) return;
+
     const modal = await this.modalCtrl.create({
       component: CommissionsComponent,
     });
@@ -419,13 +452,19 @@ export class InventoryComponent implements OnInit {
 
   /** Open Add Item Modal */
   async openAddItemModal() {
+    if (!this.permissionService.has('inventory.addItem')) return;
+
     const modal = await this.modalCtrl.create({
       component: InventoryformComponent,
       initialBreakpoint: 0.9,
       breakpoints: [0.9],
       backdropDismiss: false,
       expandToScroll: false,
-      componentProps: { mode: 'add' },
+      componentProps: {
+        mode: 'add',
+        canViewCostPrice: this.permissionService.has('inventory.viewCostPrice'),
+        canEditCommission: this.permissionService.has('inventory.editItemCommission'),
+      },
     });
 
     modal.onDidDismiss().then(async (res) => {
@@ -445,7 +484,14 @@ export class InventoryComponent implements OnInit {
       breakpoints: [0.9],
       backdropDismiss: false,
       expandToScroll: false,
-      componentProps: { mode: 'edit', itemid: item.itemid, itemData: item },
+      componentProps: {
+        mode: 'view',
+        itemid: item.itemid,
+        itemData: item,
+        canEdit: this.permissionService.has('inventory.updateItem'),
+        canEditCommission: this.permissionService.has('inventory.editItemCommission'),
+        canViewCostPrice: this.permissionService.has('inventory.viewCostPrice'),
+      },
     });
 
     modal.onDidDismiss().then((res) => {
@@ -465,6 +511,8 @@ export class InventoryComponent implements OnInit {
   }
 
   async deleteItemConfirm(item: any) {
+    if (!this.permissionService.has('inventory.deleteItem')) return;
+
     const alert = await this.alertController.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete "${item.itemname}"?`,

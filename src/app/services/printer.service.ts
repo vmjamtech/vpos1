@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { AlertController } from '@ionic/angular/standalone';
 import { IminPrinterService } from './imin-printer.service';
-import { AppdateService, ReceiptBusinessInfo } from './appdate.service';
+import {
+  AppdateService,
+  BIR_DISCLAIMER,
+  ReceiptBusinessInfo,
+  birHeaderLines,
+} from './appdate.service';
 import moment from 'moment';
 import 'moment-timezone';
 import { StorageService } from './storage.service';
@@ -11,6 +16,9 @@ import { loadImage } from '../utils/load-image';
   providedIn: 'root',
 })
 export class PrinterService {
+  private readonly couponLineWidth = 42;
+  private readonly couponPaperWidth = 384;
+
   constructor(
     private alertController: AlertController,
     private iminPrinter: IminPrinterService,
@@ -194,6 +202,7 @@ export class PrinterService {
           0
         );
         await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
+        await this.printBirFooter(businessInfo);
 
         await this.iminPrinter.printText('', 0);
         await this.iminPrinter.printText('', 0);
@@ -370,6 +379,7 @@ export class PrinterService {
           0
         );
         await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
+        await this.printBirFooter(businessInfo);
         await this.iminPrinter.printText('', 0);
         await this.iminPrinter.printText('', 0);
 
@@ -457,6 +467,7 @@ export class PrinterService {
           0
         );
         await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
+        await this.printBirFooter(businessInfo);
         await this.iminPrinter.printText('', 0);
         await this.iminPrinter.printText('', 0);
 
@@ -531,8 +542,91 @@ export class PrinterService {
     }
   }
 
+  buildCouponCard(
+    discount: number,
+    slotCount: number
+  ): string[] {
+    if (
+      !Number.isFinite(discount) ||
+      discount <= 0 ||
+      !Number.isInteger(slotCount) ||
+      slotCount < 2 ||
+      slotCount > 10
+    ) {
+      throw new Error('Coupon requires a positive discount and 2 to 10 slots.');
+    }
+
+    const width = this.couponLineWidth;
+    const center = (value: string, lineWidth = width): string => {
+      const text = value.trim().substring(0, lineWidth);
+      const left = Math.floor((lineWidth - text.length) / 2);
+      return `${' '.repeat(left)}${text}`.padEnd(lineWidth, ' ');
+    };
+    const lines: string[] = [];
+    const divider = '-'.repeat(width);
+    const border = `+${'-'.repeat(width - 2)}+`;
+    const boxed = (label: string) => `|${center(label, width - 2)}|`;
+    const boxedReward = (label: string): string => {
+      const text = label.trim().substring(0, width - 2);
+      const padding = width - 2 - text.length;
+      const leftPadding = Math.floor(padding / 2);
+      const rightPadding = padding - leftPadding;
+      return `|${' '.repeat(leftPadding)}${text}${' '.repeat(rightPadding)}|`;
+    };
+    lines.push(
+      divider,
+      center('Collect all and get'),
+      center(`${discount.toFixed(2)} pesos OFF!`),
+      center(''),
+      border
+    );
+
+    for (let slot = 1; slot < slotCount; slot++) {
+      lines.push(boxed(`(   ) SLOT ${slot}`), border);
+    }
+    lines.push(
+      boxedReward('CLAIM DISCOUNT'),
+      boxedReward(`${discount.toFixed(2)} PESOS OFF`),
+      border,
+      divider
+    );
+    return lines;
+  }
+
+  async printCouponCard(discount: number, slotCount: number): Promise<void> {
+    try {
+      const connected = await this.iminPrinter.connect();
+      if (!connected) throw new Error('Cannot connect to printer');
+
+      await this.iminPrinter.resetPrinterState();
+      try {
+        const businessInfo = await this.appdateService.getReceiptBusinessInfo();
+        await this.printBusinessHeader(businessInfo);
+        const lines = this.buildCouponCard(discount, slotCount);
+        await this.iminPrinter.setPrintWidth(this.couponPaperWidth);
+        await this.iminPrinter.setAlignment(0);
+        for (const line of lines) {
+          await this.iminPrinter.printText(line, 0);
+        }
+        await this.iminPrinter.feedPaper(3);
+        await this.iminPrinter.cutPaper();
+      } finally {
+        await this.iminPrinter.resetPrinterState();
+      }
+    } catch (error: any) {
+      console.error('Coupon print error:', error);
+      const alert = await this.alertController.create({
+        header: 'Printer Error',
+        message: error?.message || 'Unable to print coupon.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+    }
+  }
+
   async printPreviewToPrinter(
-    previewContent: { type: string; value: string }[]
+    previewContent: { type: string; value: string }[],
+    bir?: { enabled: boolean; tin: string; min: string; sn: string }
   ) {
     try {
       const connected = await this.iminPrinter.connect();
@@ -551,10 +645,23 @@ export class PrinterService {
         }
       }
 
+      for (const line of birHeaderLines({
+        birEnabled: bir?.enabled,
+        tin: bir?.tin,
+        min: bir?.min,
+        sn: bir?.sn,
+      })) {
+        await this.iminPrinter.printText(line, 1);
+      }
+
       await this.iminPrinter.printText(
         '-----------------------------------------------',
         0
       );
+
+      if (bir && !bir.enabled) {
+        await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
+      }
 
       await this.iminPrinter.printText('', 0);
       await this.iminPrinter.printText('', 0);
@@ -578,6 +685,14 @@ export class PrinterService {
     await this.iminPrinter.printText(info.compContact, 1);
     await this.iminPrinter.printText(info.compContact1, 1);
     await this.iminPrinter.printText(info.compContact2, 1);
+    for (const line of birHeaderLines(info)) {
+      await this.iminPrinter.printText(line, 1);
+    }
+  }
+
+  private async printBirFooter(info: ReceiptBusinessInfo): Promise<void> {
+    if (info.birEnabled) return;
+    await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
   }
 
   private async printBusinessLogo(info: ReceiptBusinessInfo): Promise<void> {

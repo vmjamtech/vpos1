@@ -20,6 +20,7 @@ import {
 } from '@ionic/core/components';
 import {
   MenuController,
+  ActionSheetController,
   Platform,
   IonContent,
   IonMenu,
@@ -45,6 +46,7 @@ import { StorageService } from '../services/storage.service';
 import { AppdateService } from '../services/appdate.service';
 import { PrinterService } from '../services/printer.service';
 import { UserService } from '../services/user.service';
+import { PermissionService } from '../services/permission.service';
 import { DailyInventorySnapshotService } from '../services/daily-inventory-snapshot.service';
 import { ChatComponent } from './dashboard/modal/chat/chat.component';
 
@@ -131,9 +133,11 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
     private menu: MenuController,
     private appdaterService: AppdateService,
     private alertController: AlertController,
+    private actionSheetController: ActionSheetController,
     private printerService: PrinterService,
     private modalCtrl: ModalController,
     private userService: UserService,
+      public permissionService: PermissionService,
     private snapshotService: DailyInventorySnapshotService
   ) {
     this.widthCalculations();
@@ -163,6 +167,13 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
 
     this.syncActiveTab(this.router.url);
     this.loadSettings();
+  }
+
+  hasPagePermission(pageName: string): boolean {
+    if (pageName === 'Personnel') return this.permissionService.has('sidePanel.personnel');
+    if (pageName === 'User Accounts') return this.permissionService.has('sidePanel.userAccount');
+    if (pageName === 'Settings') return this.permissionService.has('sidePanel.settings');
+    return true;
   }
 
   async loadSettings() {
@@ -342,6 +353,74 @@ export class DrawerPage implements AfterViewInit, OnInit, OnDestroy {
 
   async printBusinessDetails() {
     await this.printerService.printBusinessDetails();
+  }
+
+  async onLogoClick(): Promise<void> {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Print Business Material',
+      buttons: [
+        {
+          text: 'Calling Card',
+          icon: 'card-outline',
+          handler: () => this.printBusinessDetails(),
+        },
+        {
+          text: 'Loyalty / Stamp Coupon',
+          icon: 'ticket-outline',
+          handler: () => this.promptCouponDetails(),
+        },
+        { text: 'Cancel', role: 'cancel', icon: 'close-outline' },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  async promptCouponDetails(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Coupon Settings',
+      inputs: [
+        {
+          name: 'discount',
+          type: 'number',
+          placeholder: 'Discount Amount (e.g. 50)',
+          min: 0.01,
+        },
+        {
+          name: 'slotCount',
+          type: 'number',
+          placeholder: 'Slot Count (2-10)',
+          min: 2,
+          max: 10,
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Print',
+          handler: async (values) => {
+            const discount = Number(values.discount);
+            const slotCount = Number(values.slotCount);
+            if (
+              !Number.isFinite(discount) ||
+              discount <= 0 ||
+              !Number.isInteger(slotCount) ||
+              slotCount < 2 ||
+              slotCount > 10
+            ) {
+              await this.appdaterService.showToastjs(
+                'Enter a positive discount and a whole slot count from 2 to 10.',
+                'warning'
+              );
+              return false;
+            }
+
+            await this.printerService.printCouponCard(discount, slotCount);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   async openAI() {

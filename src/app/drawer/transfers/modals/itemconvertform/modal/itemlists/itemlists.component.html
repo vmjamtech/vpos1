@@ -67,6 +67,7 @@
             }}</span
           >
           <span
+            *ngIf="permissionService.has('inventory.viewCostPrice')"
             ><strong>Cost:</strong> ₱{{
               item.itemcost | number : "1.2-2"
             }}</span

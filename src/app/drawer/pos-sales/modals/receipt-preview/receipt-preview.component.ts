@@ -23,6 +23,8 @@ export class ReceiptPreviewComponent {
   @Input() compContact1!: string;
   @Input() compContact2!: string;
   @Input() receiptEndGreet!: string;
+  @Input() birLines: string[] = [];
+  @Input() birDisclaimer = '';
   @Input() withlogo!: string;
   @Input() logo?: string;
 

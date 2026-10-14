@@ -122,7 +122,7 @@
                   (ionChange)="onLocationChange($event.detail.value)"
                 >
                   <ion-select-option value="STORE">STORE</ion-select-option>
-                  <ion-select-option value="WAREHOUSE"
+                  <ion-select-option *ngIf="!storeOnly.enabled" value="WAREHOUSE"
                     >WAREHOUSE</ion-select-option
                   >
                 </ion-select>

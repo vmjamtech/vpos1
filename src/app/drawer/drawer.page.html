@@ -13,7 +13,7 @@
     >
       <div class="headerToolbar">
         <div class="userContainer">
-          <ion-avatar class="userImage" (click)="printBusinessDetails()">
+          <ion-avatar class="userImage" (click)="onLogoClick()">
             <ion-img [src]="Blogo" loading="lazy" alt="User Image"></ion-img>
           </ion-avatar>
 
@@ -34,6 +34,7 @@
             auto-hide="false"
             *ngFor="let p of appPages"
             #drawerItemList
+            [hidden]="!hasPagePermission(p.name)"
           >
             <ion-item
               class="drawerItem"

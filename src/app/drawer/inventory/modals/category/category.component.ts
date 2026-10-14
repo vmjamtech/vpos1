@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
@@ -63,6 +63,10 @@ import { AppdateService } from 'src/app/services/appdate.service';
   ],
 })
 export class CategoryComponent implements OnInit {
+  @Input() canAdd = true;
+  @Input() canUpdate = true;
+  @Input() canDelete = true;
+
   items: any[] = [];
   filteredItems: any[] = [];
 
@@ -162,6 +166,8 @@ export class CategoryComponent implements OnInit {
   }
 
   async openAddCategoryModal() {
+    if (!this.canAdd) return;
+
     const modal = await this.modalCtrl.create({
       component: CategoryformComponent,
       initialBreakpoint: 0.7,
@@ -194,6 +200,8 @@ export class CategoryComponent implements OnInit {
   }
 
   async openEditCategoryModal(item: any) {
+    if (!this.canUpdate) return;
+
     const modal = await this.modalCtrl.create({
       component: CategoryformComponent,
       initialBreakpoint: 0.7,
@@ -233,6 +241,8 @@ export class CategoryComponent implements OnInit {
   }
 
   async deleteCategoryConfirm(category: any) {
+    if (!this.canDelete) return;
+
     const alert = await this.alertCtrl.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete "${category.category}"?`,

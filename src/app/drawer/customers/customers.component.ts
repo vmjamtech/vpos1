@@ -34,6 +34,7 @@ import { InactivecustomersComponent } from './modal/inactivecustomers/inactivecu
 import { LendhistoryComponent } from './modal/lendhistory/lendhistory.component';
 import { CustomertransactionsComponent } from './modal/customertransactions/customertransactions.component';
 import * as XLSX from 'xlsx';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-customers',
@@ -90,7 +91,8 @@ export class CustomersComponent implements OnInit {
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
     private appdateService: AppdateService,
-    private actionSheetController: ActionSheetController
+    private actionSheetController: ActionSheetController,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -441,6 +443,8 @@ export class CustomersComponent implements OnInit {
 
   /** Open Add Item Modal */
   async openAddModal() {
+    if (!this.permissionService.has('customer.addCustomer')) return;
+
     const modal = await this.modalCtrl.create({
       component: CustomerformComponent,
       initialBreakpoint: 0.5,
@@ -462,6 +466,8 @@ export class CustomersComponent implements OnInit {
   }
 
   async openEditModal(item: any) {
+    if (!this.permissionService.has('customer.updateCustomer')) return;
+
     const modal = await this.modalCtrl.create({
       component: CustomerformComponent,
       initialBreakpoint: 0.5,
@@ -490,6 +496,8 @@ export class CustomersComponent implements OnInit {
   }
 
   async deleteConfirm(item: any) {
+    if (!this.permissionService.has('customer.deleteCustomer')) return;
+
     const alert = await this.alertController.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete this customer?`,

@@ -16,6 +16,27 @@
   }
 }
 
+.duplicate-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 16px 2px;
+
+  ion-icon {
+    font-size: 1rem;
+  }
+}
+
+.danger-text {
+  color: var(--ion-color-danger, #eb445a);
+}
+
+.warning-text {
+  color: var(--ion-color-warning, #ffc409);
+}
+
 .sticky-btn {
   position: sticky;
   bottom: 16px; /* distance from bottom of modal */

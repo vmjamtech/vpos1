@@ -234,6 +234,7 @@
         </ion-button>
         <ion-note *ngIf="filteredStoreInventoryRows.length === 0">No Record Found</ion-note>
 
+        <ng-container *ngIf="!storeOnly.enabled">
         <h2>Warehouse</h2>
         <div class="report-columns inventory-grid">
           <span>Item Code</span><span>Description</span><span>Filled Qty</span><span>Empty Qty</span>
@@ -260,6 +261,7 @@
           Load More Warehouse Items
         </ion-button>
         <ion-note *ngIf="filteredWarehouseInventoryRows.length === 0">No Record Found</ion-note>
+        </ng-container>
       </section>
 
       <section *ngIf="activeView === 'floorstock'" class="report-content report-detail-view">

@@ -67,10 +67,11 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item lines="none" class="scope-label">
+        <ion-item lines="none" class="scope-label" *ngIf="!storeOnly.enabled">
           <ion-label>Location Scope</ion-label>
         </ion-item>
         <ion-segment
+          *ngIf="!storeOnly.enabled"
           [(ngModel)]="scope"
           (ionChange)="onOptionsChanged()"
           aria-label="Inventory location scope"

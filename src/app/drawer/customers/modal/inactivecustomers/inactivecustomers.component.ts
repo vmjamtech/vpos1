@@ -27,6 +27,7 @@ import {
 } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { CustomersService } from 'src/app/services/customers.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-inactivecustomers',
@@ -77,7 +78,8 @@ export class InactivecustomersComponent implements OnInit {
     private alertController: AlertController,
     private customerService: CustomersService,
     private appdateService: AppdateService,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    public permissionService: PermissionService
   ) {}
 
   ngOnInit() {
@@ -341,6 +343,8 @@ export class InactivecustomersComponent implements OnInit {
   }
 
   async deleteConfirm(item: any) {
+    if (!this.permissionService.has('customer.deleteInactiveCustomer')) return;
+
     const alert = await this.alertController.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete this customer?`,

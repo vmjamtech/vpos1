@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonButton,
@@ -20,6 +20,7 @@ import {
   ModalController,
 } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
 import { ReportsDataService } from 'src/app/services/reports-data.service';
 import {
   InventoryPrintSection,
@@ -79,7 +80,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
   toDate = '';
   cashier = '';
   category = 'ALL';
-  scope: InventoryPrintScope = 'BOTH';
+  readonly storeOnly = inject(StoreOnlyService);
+  scope: InventoryPrintScope = this.storeOnly.enabled ? 'STORE' : 'BOTH';
   dateRangeError = '';
   formattedReceiptText = '';
   isPreviewLoading = false;

@@ -102,7 +102,7 @@
           </ion-badge>
         </ion-item>
         <!-- Swipe to delete -->
-        <ion-item-options side="end">
+        <ion-item-options side="end" *ngIf="permissionService.has('customer.deleteLendReturned')">
           <ion-item-option color="danger" (click)="deleteItemConfirm(item)">
             <ion-icon name="trash-outline"></ion-icon> Delete
           </ion-item-option>

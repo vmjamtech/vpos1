@@ -14,6 +14,7 @@
     <div class="header-text center">{{ compContact }}</div>
     <div class="header-text center">{{ compContact1 }}</div>
     <div class="header-text center">{{ compContact2 }}</div>
+    <div class="header-text center" *ngFor="let line of birLines">{{ line }}</div>
 
     <hr />
 
@@ -83,6 +84,7 @@
     <hr />
     <!-- FOOTER -->
     <div class="header-text center">{{ receiptEndGreet }}</div>
+    <div class="header-text center" *ngIf="birDisclaimer">{{ birDisclaimer }}</div>
   </div>
 
   <!-- Sticky action buttons -->

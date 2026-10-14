@@ -1105,3 +1105,124 @@ Validation: Angular production build, Capacitor Android sync, Gradle debug
 APK build, and adb install -r passed. Manual customer workflow verification,
 unit tests, and lint remain outstanding. No schema or POS sales data changed.
 ```
+
+---
+
+## 10. Session Log - 2026-10-14 (BIR, Store-Only, Permissions, Coupon Printing)
+
+### 10.1 What changed
+
+- Moved the BIR Registered toggle and TIN/MIN/SN fields into Business Info Slip Layout. BIR configuration remains in local storage; no database columns or tables were added. Receipt output now places BIR values in the header or the non-BIR input-tax disclaimer in the footer, and the POS receipt preview includes the same information.
+- Added the master-only Store Only setting for `vmjamadmin`, persisted locally. Warehouse navigation/actions and inventory report scope/sections are masked in the covered drawer, inventory, dashboard, transfer, and report paths. Warehouse records and calculations remain unchanged.
+- Added a six-group per-user permission editor to User Accounts. Accounts whose type is `ADMINISTRATOR` can assign settings; `vmjamadmin` retains full access. Permission JSON is stored in local storage per user, with existing accounts defaulting to all permissions enabled. UI actions are gated without schema or calculation changes.
+- Changed store and warehouse item details to open in view-only mode, with Edit available only when the matching update permission is enabled. Cost-price visibility, inventory actions, customer deletions, personnel actions, rate settings, salary payment, supplier access, and side-panel links are permission-gated at their UI/action entry points.
+- Added Calling Card / Loyalty-Stamps choices to the drawer logo action. Coupon printing reuses the Calling Card header helper and prints a 42-character coupon body with 2-10 slots. Reward rows are emitted as fixed-width raw text with explicit left/right pipes. A native-column printing attempt omitted the reward text and was removed; the latest version returns to raw text output.
+- No database schema, tables, records, or calculation formulas were changed.
+
+### 10.2 Files modified
+
+Business settings and receipts:
+
+- `src/app/drawer/appsettings/appsettings.component.html`
+- `src/app/drawer/appsettings/appsettings.component.ts`
+- `src/app/drawer/appsettings/components/card-layout/card-layout.component.html`
+- `src/app/drawer/appsettings/components/card-layout/card-layout.component.ts`
+- `src/app/services/appdate.service.ts`
+- `src/app/services/appdate.service.spec.ts`
+- `src/app/drawer/pos-sales/modals/purchase-summary/purchase-summary.component.ts`
+- `src/app/drawer/pos-sales/modals/receipt-preview/receipt-preview.component.html`
+- `src/app/drawer/pos-sales/modals/receipt-preview/receipt-preview.component.ts`
+
+Store-only mode, reporting, and dashboard:
+
+- `src/app/services/store-only.service.ts`
+- `src/app/drawer/dashboard/dashboard.component.html`
+- `src/app/drawer/dashboard/dashboard.component.ts`
+- `src/app/drawer/inventory/inventory.component.html`
+- `src/app/drawer/inventory/inventory.component.ts`
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.html`
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.ts`
+- `src/app/drawer/reports/reports.component.html`
+- `src/app/drawer/reports/reports.component.ts`
+- `src/app/drawer/transfers/transfers.component.ts`
+
+Permissions and view-only inventory:
+
+- `src/app/models/user-permissions.model.ts`
+- `src/app/services/permission.service.ts`
+- `src/app/services/permission.service.spec.ts`
+- `src/app/drawer/users/users.component.html`
+- `src/app/drawer/users/users.component.ts`
+- `src/app/drawer/users/modal/userpermissions/userpermissions.component.html`
+- `src/app/drawer/users/modal/userpermissions/userpermissions.component.ts`
+- `src/app/drawer/drawer.page.html`
+- `src/app/drawer/drawer.page.ts`
+- `src/app/drawer/inventory/modals/category/category.component.html`
+- `src/app/drawer/inventory/modals/category/category.component.ts`
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.html`
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.ts`
+- `src/app/drawer/inventory/modals/warehouseitems/warehouseitems.component.ts`
+- `src/app/drawer/inventory/modals/warehouseitems/modal/warehouseform/warehouseform.component.html`
+- `src/app/drawer/inventory/modals/warehouseitems/modal/warehouseform/warehouseform.component.ts`
+- `src/app/drawer/customers/customers.component.html`
+- `src/app/drawer/customers/customers.component.ts`
+- `src/app/drawer/customers/modal/inactivecustomers/inactivecustomers.component.html`
+- `src/app/drawer/customers/modal/inactivecustomers/inactivecustomers.component.ts`
+- `src/app/drawer/customers/modal/lendeditems/lendeditems.component.html`
+- `src/app/drawer/customers/modal/lendeditems/lendeditems.component.ts`
+- `src/app/drawer/personels/personels.component.html`
+- `src/app/drawer/personels/personels.component.ts`
+- `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.html`
+- `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.ts`
+- `src/app/drawer/transfers/modals/supplier/supplier.component.html`
+- `src/app/drawer/transfers/modals/supplier/supplier.component.ts`
+- `src/app/drawer/pos-sales/modals/item-list/item-list.component.html`
+- `src/app/drawer/pos-sales/modals/item-list/item-list.component.ts`
+- `src/app/drawer/transfers/modals/itemconvertform/modal/itemlists/itemlists.component.html`
+- `src/app/drawer/transfers/modals/itemconvertform/modal/itemlists/itemlists.component.ts`
+
+Coupon printing:
+
+- `src/app/services/printer.service.ts`
+- `src/app/services/printer.service.spec.ts`
+- `src/app/drawer/drawer.page.html`
+- `src/app/drawer/drawer.page.ts`
+
+The existing uncommitted customer-form changes listed in section 9.2 were present in the working tree and were not changed as part of this session.
+
+### 10.3 Verification
+
+- Angular production build passed with the existing Stencil empty-glob warning.
+- Capacitor Android sync and Gradle debug build passed.
+- `adb install -r` reported `Success`; the app was force-stopped and relaunched after the latest coupon build.
+- The focused Jasmine runner did not produce a pass/fail result in this environment; it stalled during browser-bundle generation. Editor diagnostics were clean for the touched service/spec files.
+- Latest APK: `android/app/build/outputs/apk/debug/app-debug.apk`. The latest raw-text coupon reward change has not yet been confirmed by a new physical print.
+
+### 10.4 Open issue queue
+
+The existing issues in sections 6.5 and 9.5 remain open. Add:
+
+- Coupon printing: the user reported that the reward box/right-side rails were still missing; a native-column attempt made the reward text disappear and was reverted. The installed version uses the Calling Card header helper and raw 42-character coupon rows with four explicit reward-row pipes. Verify the reward box on a new physical print before closing this item.
+- Permissions: permission state is device-local and enforced in the UI; it is not backend authorization and does not sync between installations.
+- Store Only and permission workflows still need user acceptance testing across regular/admin accounts and the listed feature screens.
+
+### 10.5 Suggested commit message
+
+```text
+feat: add BIR receipts, granular permissions, and stamp coupons
+
+Add BIR registration settings to Business Info Slip Layout and print the
+configured identifiers or non-BIR disclaimer on customer receipts. Add a
+vmjamadmin Store Only mode that masks warehouse navigation and report output.
+
+Add per-user permission controls managed by ADMINISTRATOR accounts, with
+vmjamadmin full access and local JSON persistence. Gate the covered actions
+and open store/warehouse item details in view-only mode until authorized Edit.
+
+Add Calling Card and Loyalty / Stamp Coupon choices to the drawer logo action.
+Reuse the existing Calling Card header and generate fixed-width coupon slots
+with a reward box. Keep the database schema and calculation formulas intact.
+
+Validation: Angular/Android build and APK install passed. Focused Jasmine
+execution and final physical coupon-print verification remain outstanding.
+```

@@ -75,6 +75,28 @@
     </ion-item>
   </div>
 
+  <div class="group card">
+    <h3 class="group-title">BIR</h3>
+    <ion-item lines="none">
+      <ion-label>BIR Registered</ion-label>
+      <ion-toggle [(ngModel)]="bir_enabled"></ion-toggle>
+    </ion-item>
+    <ng-container *ngIf="bir_enabled">
+      <ion-item lines="none">
+        <ion-label position="stacked">TIN</ion-label>
+        <ion-input [(ngModel)]="tin"></ion-input>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-label position="stacked">MIN</ion-label>
+        <ion-input [(ngModel)]="min"></ion-input>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-label position="stacked">SN</ion-label>
+        <ion-input [(ngModel)]="sn"></ion-input>
+      </ion-item>
+    </ng-container>
+  </div>
+
   <!-- ====================== -->
   <!-- Actions -->
   <!-- ====================== -->

@@ -1,0 +1,22 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Permissions: {{ user?.empname || user?.usern }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list *ngFor="let group of groups">
+    <ion-item lines="full">
+      <ion-label><h2>{{ group.title }}</h2></ion-label>
+    </ion-item>
+    <ion-item *ngFor="let option of group.options" lines="none">
+      <ion-label>{{ option.label }}</ion-label>
+      <ion-toggle [(ngModel)]="option.enabled"></ion-toggle>
+    </ion-item>
+  </ion-list>
+
+  <ion-button expand="block" (click)="save()">Save Permissions</ion-button>
+</ion-content>

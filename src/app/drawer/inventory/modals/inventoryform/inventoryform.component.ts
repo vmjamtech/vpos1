@@ -8,6 +8,7 @@ import {
   IonFooter,
   IonHeader,
   IonInput,
+  IonIcon,
   IonItem,
   IonItemDivider,
   IonLabel,
@@ -41,6 +42,7 @@ import { InventoryService } from 'src/app/services/inventory.service';
     IonTitle,
     IonButtons,
     IonInput,
+    IonIcon,
     IonItemDivider,
     IonList,
     IonSelectOption,
@@ -49,8 +51,11 @@ import { InventoryService } from 'src/app/services/inventory.service';
   ],
 })
 export class InventoryformComponent implements OnInit {
-  mode: 'add' | 'edit' = 'add';
+  @Input() mode: 'add' | 'edit' | 'view' = 'add';
   @Input() itemData?: any;
+  @Input() canEdit = true;
+  @Input() canEditCommission = true;
+  @Input() canViewCostPrice = true;
 
   itemcode: string = '';
   itemcodeExists: boolean = false;
@@ -91,6 +96,7 @@ export class InventoryformComponent implements OnInit {
   itemCost = 0;
   criticalLevel = 0;
   floorstock = 0;
+  isEditMode = false;
 
   constructor(
     private modalCtrl: ModalController,
@@ -100,6 +106,7 @@ export class InventoryformComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.isEditMode = this.mode === 'add' || this.mode === 'edit';
     this.loadCategories();
 
     if (this.mode === 'edit' && this.itemData) {
@@ -151,7 +158,15 @@ export class InventoryformComponent implements OnInit {
     this.modalCtrl.dismiss();
   }
 
+  beginEdit(): void {
+    if (!this.canEdit) return;
+    this.mode = 'edit';
+    this.isEditMode = true;
+  }
+
   async saveItem() {
+    if (!this.isEditMode) return;
+
     const itemData = {
       itemcode: this.itemcode,
       itemname: this.description,

@@ -13,6 +13,8 @@ import {
   IonToggle,
 } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
+import { StorageService } from 'src/app/services/storage.service';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
 import { CardLayoutComponent } from './components/card-layout/card-layout.component';
 
 @Component({
@@ -40,6 +42,15 @@ export class AppsettingsComponent implements OnInit {
   appdateid?: number;
   Blogo: string | null = null;
   withlogo = false;
+  currentUser: any = null;
+  appSettings = { store_only_mode: false };
+
+  get isMasterAdmin(): boolean {
+    return (
+      this.currentUser?.userid === 'vmjamadmin' ||
+      this.currentUser?.usern === 'vmjamadmin'
+    );
+  }
 
   get businessContactNumber(): string {
     return this.ReceiptPosName;
@@ -54,11 +65,20 @@ export class AppsettingsComponent implements OnInit {
   constructor(
     private appdaterService: AppdateService,
     private modalCtrl: ModalController,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private storageService: StorageService,
+    private storeOnly: StoreOnlyService
   ) {}
 
   async ngOnInit() {
+    this.appSettings.store_only_mode = this.storeOnly.enabled;
+    this.currentUser = await this.storageService.get<any>('login-data');
     await this.loadSettings();
+  }
+
+  onStoreOnlyModeChange() {
+    if (!this.isMasterAdmin) return;
+    this.storeOnly.enabled = this.appSettings.store_only_mode;
   }
 
   async loadSettings() {

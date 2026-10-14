@@ -41,6 +41,7 @@ import { TransferService } from 'src/app/services/transfer.service';
 import { InventoryService } from 'src/app/services/inventory.service';
 import { ItemrestockformComponent } from '../transfers/modals/itemrestockform/itemrestockform.component';
 import { toLocalDateString } from 'src/app/utils/date-range';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -155,6 +156,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     private modalCtrl: ModalController,
     private inventoryService: InventoryService,
     private actionSheetController: ActionSheetController,
+    public storeOnly: StoreOnlyService,
     private transferService: TransferService,
     private zone: NgZone
   ) {}
@@ -571,7 +573,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const actionSheet = await this.actionSheetController.create({
       header: 'Transfer Creation',
-      buttons,
+      buttons: this.storeOnly.filterActions(buttons),
     });
 
     await actionSheet.present();

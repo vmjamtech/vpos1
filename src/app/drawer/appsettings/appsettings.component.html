@@ -47,6 +47,19 @@
       <ion-toggle [(ngModel)]="withlogo" name="withlogo"></ion-toggle>
     </ion-item>
 
+    <!-- Visible exclusively to vmjamadmin -->
+    <ion-item lines="none" class="stacked-item" *ngIf="isMasterAdmin">
+      <ion-label>
+        <h2>Store Only Mode</h2>
+        <p>Hides all Warehouse items, operations, and reports</p>
+      </ion-label>
+      <ion-toggle
+        [(ngModel)]="appSettings.store_only_mode"
+        name="store_only_mode"
+        (ionChange)="onStoreOnlyModeChange()"
+      ></ion-toggle>
+    </ion-item>
+
     <ion-button
       expand="block"
       color="secondary"

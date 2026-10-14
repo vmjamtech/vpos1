@@ -29,6 +29,49 @@ export interface ReceiptBusinessInfo {
   receiptEndGreet: string;
   withLogo: boolean;
   logoDataUrl: string | null;
+  birEnabled?: boolean;
+  tin?: string;
+  min?: string;
+  sn?: string;
+}
+
+export const BIR_DISCLAIMER = 'This document is not valid for claim of input tax';
+const BIR_STORAGE_KEY = 'bir_settings';
+
+export interface BirSettings {
+  bir_enabled: boolean;
+  tin: string;
+  min: string;
+  sn: string;
+}
+
+export function loadBirSettings(): BirSettings {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BIR_STORAGE_KEY) ?? '{}');
+    return {
+      bir_enabled: raw.bir_enabled === true,
+      tin: String(raw.tin ?? ''),
+      min: String(raw.min ?? ''),
+      sn: String(raw.sn ?? ''),
+    };
+  } catch {
+    return { bir_enabled: false, tin: '', min: '', sn: '' };
+  }
+}
+
+export function saveBirSettings(settings: BirSettings): void {
+  localStorage.setItem(BIR_STORAGE_KEY, JSON.stringify(settings));
+}
+
+export function birHeaderLines(
+  info: Pick<ReceiptBusinessInfo, 'birEnabled' | 'tin' | 'min' | 'sn'>
+): string[] {
+  if (!info.birEnabled) return [];
+  return [
+    info.tin ? `TIN: ${info.tin}` : '',
+    info.min ? `MIN: ${info.min}` : '',
+    info.sn ? `SN: ${info.sn}` : '',
+  ].filter(Boolean);
 }
 
 export function normalizeReceiptLogo(value: unknown): string | null {
@@ -114,6 +157,7 @@ export class AppdateService {
 
   async getReceiptBusinessInfo(): Promise<ReceiptBusinessInfo> {
     const row = (await this.getAllAppdate())[0] ?? {};
+    const bir = loadBirSettings();
 
     return {
       appdateid: row.appdateid,
@@ -127,6 +171,10 @@ export class AppdateService {
       receiptEndGreet: row.receiptendgreet ?? '',
       withLogo: row.withlogo === 'Y',
       logoDataUrl: normalizeReceiptLogo(row.Blogo),
+      birEnabled: bir.bir_enabled,
+      tin: bir.tin,
+      min: bir.min,
+      sn: bir.sn,
     };
   }
 

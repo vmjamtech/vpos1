@@ -56,6 +56,10 @@ describe('AppdateService.getReceiptBusinessInfo', () => {
       receiptEndGreet: '',
       withLogo: true,
       logoDataUrl: 'data:image/png;base64,AQI=',
+      birEnabled: false,
+      tin: '',
+      min: '',
+      sn: '',
     });
   });
 

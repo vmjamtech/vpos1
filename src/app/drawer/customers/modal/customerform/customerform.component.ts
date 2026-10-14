@@ -7,12 +7,12 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
   IonSelect,
   IonSelectOption,
-  IonText,
   IonTitle,
   IonToolbar,
   ModalController,
@@ -36,8 +36,8 @@ import { CustomersService } from 'src/app/services/customers.service';
     IonToolbar,
     IonTitle,
     IonButtons,
+    IonIcon,
     IonInput,
-    IonText,
   ],
 })
 export class CustomerformComponent implements OnInit {
@@ -47,9 +47,11 @@ export class CustomerformComponent implements OnInit {
   custid?: number;
   custname: string = '';
   custnameExists: boolean = false;
+  duplicateStatus: 'none' | 'active' | 'inactive' = 'none';
   custadd = '';
   custcontnum = '';
   custemail = '';
+  private nameCheckRequest = 0;
 
   constructor(
     private modalCtrl: ModalController,
@@ -68,15 +70,37 @@ export class CustomerformComponent implements OnInit {
     }
   }
 
-  async validateName() {
-    if (!this.custname) {
+  async validateName(event?: Event) {
+    const request = ++this.nameCheckRequest;
+    const inputValue = (event?.target as HTMLInputElement | null)?.value;
+    const inputName = String(inputValue ?? this.custname).trim();
+
+    if (!inputName) {
       this.custnameExists = false;
+      this.duplicateStatus = 'none';
       return;
     }
 
-    this.custnameExists = await this.customerService.checknameExists(
-      this.custname
-    );
+    try {
+      const customer = await this.customerService.findCustomerByName(inputName);
+      if (request !== this.nameCheckRequest) return;
+
+      if (!customer) {
+        this.custnameExists = false;
+        this.duplicateStatus = 'none';
+      } else if (customer.custstatus === 'inactive') {
+        this.custnameExists = false;
+        this.duplicateStatus = 'inactive';
+      } else {
+        this.custnameExists = true;
+        this.duplicateStatus = 'active';
+      }
+    } catch (error) {
+      if (request !== this.nameCheckRequest) return;
+      console.error('Customer duplicate check failed:', error);
+      this.custnameExists = false;
+      this.duplicateStatus = 'none';
+    }
   }
 
   dismiss() {

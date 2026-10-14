@@ -33,7 +33,9 @@ import {
 import { IminPrinterService } from 'src/app/services/imin-printer.service';
 import {
   AppdateService,
+  BIR_DISCLAIMER,
   ReceiptBusinessInfo,
+  birHeaderLines,
 } from 'src/app/services/appdate.service';
 import { ReceiptPreviewComponent } from '../receipt-preview/receipt-preview.component';
 import { SalesService } from 'src/app/services/sales.service';
@@ -497,6 +499,8 @@ export class PurchaseSummaryComponent implements OnInit {
         compContact1,
         compContact2,
         receiptEndGreet,
+        birLines: birHeaderLines(businessInfo),
+        birDisclaimer: businessInfo.birEnabled ? '' : BIR_DISCLAIMER,
         cart,
         datestr,
         totalAmount: this.totalAmount,
@@ -598,6 +602,9 @@ export class PurchaseSummaryComponent implements OnInit {
           await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
           await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
           await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
+          for (const line of birHeaderLines(businessInfo)) {
+            await this.iminPrinter.printText(line, 1);
+          }
           await this.iminPrinter.printText(
             '-----------------------------------------------',
             0
@@ -728,6 +735,9 @@ export class PurchaseSummaryComponent implements OnInit {
             0
           );
           await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
+          if (!businessInfo.birEnabled) {
+            await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
+          }
           await this.iminPrinter.printText(
             '-----------------------------------------------',
             0
@@ -745,6 +755,9 @@ export class PurchaseSummaryComponent implements OnInit {
         await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
         await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
         await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
+        for (const line of birHeaderLines(businessInfo)) {
+          await this.iminPrinter.printText(line, 1);
+        }
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0
@@ -876,6 +889,9 @@ export class PurchaseSummaryComponent implements OnInit {
           0
         );
         await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
+        if (!businessInfo.birEnabled) {
+          await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
+        }
         await this.iminPrinter.printText(
           '-----------------------------------------------',
           0

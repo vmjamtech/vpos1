@@ -7,6 +7,7 @@ import {
   IonContent,
   IonHeader,
   IonInput,
+  IonIcon,
   IonItem,
   IonItemDivider,
   IonLabel,
@@ -40,14 +41,16 @@ import { WarehouseService } from 'src/app/services/warehouse.service';
     IonTitle,
     IonButtons,
     IonInput,
+    IonIcon,
     IonSelectOption,
     IonSelect,
     IonText,
   ],
 })
 export class WarehouseformComponent implements OnInit {
-  mode: 'add' | 'edit' = 'add';
+  @Input() mode: 'add' | 'edit' | 'view' = 'add';
   @Input() itemData?: any;
+  @Input() canEdit = true;
 
   itemcode: string = '';
   itemcodeExists: boolean = false;
@@ -77,6 +80,7 @@ export class WarehouseformComponent implements OnInit {
   itemCost = 0;
   criticalLevel = 0;
   floorstock = 0;
+  isEditMode = false;
 
   constructor(
     private modalCtrl: ModalController,
@@ -86,6 +90,7 @@ export class WarehouseformComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.isEditMode = this.mode === 'add' || this.mode === 'edit';
     this.loadCategories();
 
     if (this.mode === 'edit' && this.itemData) {
@@ -136,7 +141,15 @@ export class WarehouseformComponent implements OnInit {
     this.modalCtrl.dismiss();
   }
 
+  beginEdit(): void {
+    if (!this.canEdit) return;
+    this.mode = 'edit';
+    this.isEditMode = true;
+  }
+
   async saveItem() {
+    if (!this.isEditMode) return;
+
     const itemData = {
       itemcode: this.itemcode,
       itemname: this.description,

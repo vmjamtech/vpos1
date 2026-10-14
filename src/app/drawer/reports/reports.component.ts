@@ -23,6 +23,7 @@ import {
   ReportsDataService,
 } from 'src/app/services/reports-data.service';
 import { CategoryService } from 'src/app/services/category.service';
+import { StoreOnlyService } from 'src/app/services/store-only.service';
 import { ReportsPrintService, InventoryPrintSection } from 'src/app/services/reports-print.service';
 import {
   ReportPrintOptions,
@@ -167,7 +168,8 @@ export class ReportsComponent {
     private modalController: ModalController,
     private alertController: AlertController,
     private ngZone: NgZone,
-    private changeDetector: ChangeDetectorRef
+    private changeDetector: ChangeDetectorRef,
+    public storeOnly: StoreOnlyService
   ) {}
 
   async onSelectReport(value: ReportView): Promise<void> {
@@ -354,7 +356,7 @@ export class ReportsComponent {
             ]);
             if (requestId === this.loadRequestId) {
               this.storeInventoryRows = storeRows;
-              this.warehouseInventoryRows = warehouseRows;
+              this.warehouseInventoryRows = this.storeOnly.enabled ? [] : warehouseRows;
             }
           }
           break;

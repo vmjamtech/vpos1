@@ -17,13 +17,18 @@
         [(ngModel)]="custname"
         name="custname"
         placeholder="Enter Customer Name" 
-        (ionInput)="validateName()"
+        (ionInput)="validateName($event)"
         debounce="300"
       ></ion-input>
-      <ion-text color="danger" *ngIf="custnameExists">
-        Customer already exists in the active list.
-      </ion-text>
     </ion-item>
+    <div *ngIf="duplicateStatus === 'active'" class="duplicate-warning danger-text">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <span>Customer already exists in active list.</span>
+    </div>
+    <div *ngIf="duplicateStatus === 'inactive'" class="duplicate-warning warning-text">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <span>Customer exists in Inactive list (will prompt to restore on save).</span>
+    </div>
 
     <ion-item lines="none" class="stacked-item">
       <ion-label position="stacked">Address</ion-label>

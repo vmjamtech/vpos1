@@ -112,6 +112,7 @@
   </ion-infinite-scroll>
 
   <ion-fab
+    *ngIf="permissionService.has('personnel.paySalary')"
     vertical="bottom"
     horizontal="end"
     slot="fixed"

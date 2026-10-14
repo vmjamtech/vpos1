@@ -31,6 +31,7 @@ import {
 import { AppdateService } from 'src/app/services/appdate.service';
 import { LenditemsService } from 'src/app/services/lenditems.service';
 import { StorageService } from 'src/app/services/storage.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-lendeditems',
@@ -93,7 +94,8 @@ export class LendeditemsComponent implements OnInit {
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private modalCtrl: ModalController,
-    private actionSheetController: ActionSheetController
+    private actionSheetController: ActionSheetController,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -384,6 +386,8 @@ export class LendeditemsComponent implements OnInit {
   }
 
   async deleteItemConfirm(item: any) {
+    if (!this.permissionService.has('customer.deleteLendReturned')) return;
+
     const alert = await this.alertCtrl.create({
       header: 'Confirm Delete',
       message: `Are you sure you want this record?`,

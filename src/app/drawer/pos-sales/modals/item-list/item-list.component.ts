@@ -21,6 +21,7 @@ import {
 } from '@ionic/angular/standalone';
 import { CategoryService } from 'src/app/services/category.service';
 import { InventoryService } from 'src/app/services/inventory.service';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-item-list',
@@ -63,7 +64,8 @@ export class ItemListComponent implements OnInit {
     private modalCtrl: ModalController,
     private inventoryService: InventoryService,
     private categoryService: CategoryService,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {

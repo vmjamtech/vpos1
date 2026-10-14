@@ -61,7 +61,7 @@
     >
       <ion-item-sliding *ngFor="let item of filteredItems">
         <!-- Main Item (click to edit) -->
-        <ion-item (click)="openEditCategoryModal(item)">
+        <ion-item (click)="openEditCategoryModal(item)" [button]="canUpdate">
           <ion-label>
             <h2 class="desc">{{ item.category }}</h2>
             <div class="meta">
@@ -71,7 +71,7 @@
         </ion-item>
 
         <!-- Sliding Options -->
-        <ion-item-options side="end">
+        <ion-item-options side="end" *ngIf="canDelete">
           <ion-item-option color="danger" (click)="deleteCategoryConfirm(item)">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
           </ion-item-option>
@@ -101,6 +101,7 @@
 
   <!-- FAB -->
   <ion-fab
+    *ngIf="canAdd"
     vertical="bottom"
     horizontal="end"
     slot="fixed"

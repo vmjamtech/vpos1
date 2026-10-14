@@ -31,6 +31,7 @@ import {
   normalizeDatePickerValue,
 } from 'src/app/utils/date-range';
 import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-personeltransaction',
@@ -84,7 +85,8 @@ export class PersoneltransactionComponent implements OnInit {
     private modalCtrl: ModalController,
     private alertController: AlertController,
     private personelTransactionService: PersonnelTransactionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -370,6 +372,8 @@ export class PersoneltransactionComponent implements OnInit {
   }
 
   async openAddModal() {
+    if (!this.permissionService.has('personnel.paySalary')) return;
+
     const modal = await this.modalCtrl.create({
       component: PaysalaryComponent,
       initialBreakpoint: 0.85,
