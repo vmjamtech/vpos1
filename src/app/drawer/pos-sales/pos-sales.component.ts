@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  ActionSheetController,
   AlertController,
   IonBadge,
   IonButton,
@@ -79,6 +80,10 @@ export class PosSalesComponent implements OnInit {
     personnel2Name: '',
     discount: 0,
   };
+  discountType: 'none' | 'regular' | 'special' = 'none';
+  discountMode: 'fixed' | 'percent' = 'fixed';
+  discountInputVal = 0;
+  discountAmount = 0;
 
   // Cart items
   cart: any[] = [];
@@ -88,6 +93,7 @@ export class PosSalesComponent implements OnInit {
     private modalCtrl: ModalController,
     private router: Router,
     private alertController: AlertController,
+    private actionSheetCtrl: ActionSheetController,
     private storageService: StorageService
   ) {
     this.storageService.get<any>('login-data').then((user) => {
@@ -217,6 +223,7 @@ export class PosSalesComponent implements OnInit {
   addCartItem(item: any) {
     item.amount = this.calculateAmount(item.qty, item.price);
     this.cart.push(item);
+    this.updateCartTotals();
   }
 
   // Calculate item amount
@@ -242,6 +249,7 @@ export class PosSalesComponent implements OnInit {
   onUnitChange(item: any) {
     item.price = this.getItemPrice(item);
     item.amount = item.price * item.qty;
+    this.updateCartTotals();
   }
 
   // Qty handlers
@@ -293,7 +301,161 @@ export class PosSalesComponent implements OnInit {
   }
 
   updateCartTotals() {
-    // recalc totals if needed
+    this.calculateTotals();
+  }
+
+  private getSubTotalBeforeDiscount(): number {
+    const total = this.cart.reduce(
+      (sum, item) => sum + this.getItemPrice(item) * item.qty,
+      0
+    );
+    return total - (total * 0.12) / 1.12;
+  }
+
+  calculateTotals() {
+    const subTotal = Number(this.getSubTotalBeforeDiscount().toFixed(2));
+    if (subTotal <= 0) {
+      this.discountType = 'none';
+      this.discountMode = 'fixed';
+      this.discountInputVal = 0;
+    }
+
+    if (this.discountType === 'none') {
+      this.discountAmount = 0;
+    } else if (this.discountMode === 'percent') {
+      const input = Number(this.discountInputVal);
+      const calculated = Number(((subTotal * input) / 100).toFixed(2));
+      this.discountAmount = Math.min(calculated, subTotal);
+    } else {
+      const input = Number(this.discountInputVal);
+      this.discountAmount = Math.min(Number(input.toFixed(2)), subTotal);
+    }
+
+    this.posData.discount = this.discountAmount;
+    this.posData.discountType = this.discountType;
+    this.posData.discountMode = this.discountMode;
+    this.posData.discountInputVal = this.discountInputVal;
+    this.posData.regularDiscount =
+      this.discountType === 'regular' ? this.discountAmount : 0;
+    this.posData.specialDiscount =
+      this.discountType === 'special' ? this.discountAmount : 0;
+  }
+
+  getDiscountLabel(): string {
+    const label =
+      this.discountType === 'special' ? 'Special Discount' : 'Discount';
+    return this.discountType !== 'none' && this.discountMode === 'percent'
+      ? `${label} (${this.discountInputVal}%):`
+      : `${label}:`;
+  }
+
+  async promptDiscountType() {
+    if (this.getSubTotalBeforeDiscount() <= 0) return;
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Select Discount Type',
+      buttons: [
+        {
+          text: 'Discount (Regular)',
+          handler: () => this.promptDiscountMode('regular'),
+        },
+        {
+          text: 'Special Discount',
+          handler: () => this.promptDiscountMode('special'),
+        },
+        ...(this.discountType !== 'none'
+          ? [
+              {
+                text: 'Remove Discount',
+                role: 'destructive',
+                handler: () => {
+                  this.discountType = 'none';
+                  this.discountInputVal = 0;
+                  this.discountMode = 'fixed';
+                  this.calculateTotals();
+                },
+              },
+            ]
+          : []),
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  async promptDiscountMode(type: 'regular' | 'special') {
+    const title = type === 'special' ? 'Special Discount' : 'Regular Discount';
+    const alert = await this.alertController.create({
+      header: title,
+      subHeader: 'Choose calculation mode:',
+      buttons: [
+        {
+          text: 'Fixed Amount (₱)',
+          handler: () => this.promptDiscountValue(type, 'fixed'),
+        },
+        {
+          text: 'Percentage (%)',
+          handler: () => this.promptDiscountValue(type, 'percent'),
+        },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await alert.present();
+  }
+
+  async promptDiscountValue(type: 'regular' | 'special', mode: 'fixed' | 'percent') {
+    const title = type === 'special' ? 'Special Discount' : 'Regular Discount';
+    const isPercent = mode === 'percent';
+    const alert = await this.alertController.create({
+      header: `${title} (${isPercent ? '%' : '₱'})`,
+      inputs: [
+        {
+          name: 'value',
+          type: 'number',
+          placeholder: isPercent ? 'Enter percentage' : 'Enter amount',
+          min: 0,
+          value:
+            this.discountType === type &&
+            this.discountMode === mode &&
+            this.discountInputVal > 0
+              ? this.discountInputVal
+              : '',
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Apply',
+          handler: (data) => {
+            const value = Number(data?.value);
+            if (
+              !Number.isFinite(value) ||
+              value <= 0 ||
+              (isPercent && value > 100)
+            ) {
+              void this.showInvalidDiscountAlert();
+              return false;
+            }
+
+            this.discountType = type;
+            this.discountMode = mode;
+            this.discountInputVal = value;
+            this.calculateTotals();
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async showInvalidDiscountAlert() {
+    const alert = await this.alertController.create({
+      header: 'Invalid Discount',
+      message: 'Enter a positive amount or a percentage from 1 to 100.',
+      buttons: ['OK'],
+    });
+    await alert.present();
   }
 
   getTotal(): number {
@@ -302,19 +464,19 @@ export class PosSalesComponent implements OnInit {
       (sum, item) => sum + this.getItemPrice(item) * item.qty,
       0
     );
-    const discount = parseFloat(this.posData.discount || 0);
-    return totalAmount - discount; // total with VAT
+    const discount = Number(this.posData.discount) || 0;
+    return Number((totalAmount - discount).toFixed(2)); // total with VAT
   }
 
   getVat(): number {
     // VAT portion from total
     const total = this.getTotal();
-    return (total * 0.12) / 1.12; // VAT part of total
+    return Number(((total * 0.12) / 1.12).toFixed(2)); // VAT part of total
   }
 
   getSubTotal(): number {
     // Amount excluding VAT
-    return this.getTotal() - this.getVat();
+    return Number((this.getTotal() - this.getVat()).toFixed(2));
   }
 
   get isCheckoutDisabled(): boolean {
@@ -352,6 +514,7 @@ export class PosSalesComponent implements OnInit {
   }
 
   async endTransaction() {
+    this.resetDiscount();
     this.posData = {
       category: '1-PICK UP',
       customerId: null,
@@ -381,6 +544,7 @@ export class PosSalesComponent implements OnInit {
           text: 'Yes',
           handler: () => {
             // Reset POS data
+            this.resetDiscount();
             this.posData = {
               category: '1-PICK UP',
               customerId: null,
@@ -404,5 +568,12 @@ export class PosSalesComponent implements OnInit {
     });
 
     await alert.present();
+  }
+
+  private resetDiscount() {
+    this.discountType = 'none';
+    this.discountMode = 'fixed';
+    this.discountInputVal = 0;
+    this.discountAmount = 0;
   }
 }

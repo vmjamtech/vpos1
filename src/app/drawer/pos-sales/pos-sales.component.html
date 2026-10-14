@@ -174,10 +174,18 @@
     </ion-card>
     <!-- POS Summary Footer -->
     <div class="pos-footer">
-      <div class="footer-row">
-        <span>Discount:</span>
-        <span>₱{{ posData.discount | number : "1.2-2" }}</span>
-      </div>
+      <button
+        type="button"
+        class="footer-row discount-row"
+        (click)="promptDiscountType()"
+        [attr.aria-label]="getDiscountLabel() + ' ' + (discountAmount | number : '1.2-2')"
+      >
+        <span class="discount-label">
+          {{ getDiscountLabel() }}
+          <ion-icon name="create-outline"></ion-icon>
+        </span>
+        <span>₱{{ discountAmount | number : "1.2-2" }}</span>
+      </button>
       <div class="footer-row">
         <span>Sub Total:</span>
         <span>₱{{ getSubTotal() | number : "1.2-2" }}</span>

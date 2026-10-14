@@ -152,7 +152,13 @@
       </div>
 
       <div class="row-div">
-        <span class="label">Discount</span>
+        <span class="label">
+          {{ posData.discountType === "special" ? "Special Discount" : "Discount" }}
+          <ng-container
+            *ngIf="posData.discountType !== 'none' && posData.discountMode === 'percent'"
+            >({{ posData.discountInputVal }}%)</ng-container
+          >
+        </span>
         <span class="value">₱{{ posData.discount | number : "1.2-2" }}</span>
       </div>
 

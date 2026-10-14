@@ -148,11 +148,12 @@ export class CustomerformComponent implements OnInit {
         ...data,
       });
       if (success) {
+        const customer = await this.customerService.findCustomerByName(custname);
         await this.appdateService.showToastjs(
           'Customer added successfully!',
           'success'
         );
-        this.modalCtrl.dismiss(data);
+        this.modalCtrl.dismiss(customer ?? data);
       } else {
         await this.appdateService.showToastjs(
           'Failed to add Customer.',
@@ -221,8 +222,11 @@ export class CustomerformComponent implements OnInit {
               'success'
             );
             await this.modalCtrl.dismiss({
-              refreshed: true,
               custid: customer.custid,
+              custname: customer.custname,
+              custadd: this.custadd.trim() || customer.custadd,
+              custcontnum: this.custcontnum.trim() || customer.custcontnum,
+              custemail: this.custemail.trim() || customer.custemail,
             });
           },
         },

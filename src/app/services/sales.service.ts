@@ -262,13 +262,13 @@ export class SalesService {
       salesdelby2, salesdelid2, salestotalitem, salessub, salesvat,
       salestotalamount, saleschange, salesdate, salestender, salestatus,
       salescat, salespaytype, tenderbalance, tendertotal, salesremarks,
-      salesdisc, bankrefnum, bankname, Custbankname, paydate
+      salesdisc, specialdisc, bankrefnum, bankname, Custbankname, paydate
     ) VALUES (?,?,?,?,?,
      ?,?,?,?,
      ?,?,?,?,?,
      ?,?,?,?,?,
      ?,?,?,?,?,
-     ?,?,?,?,?)
+    ?,?,?,?,?,?)
   `;
 
     const params = [
@@ -297,6 +297,7 @@ export class SalesService {
       data.tendertotal,
       data.salesremarks,
       data.salesdisc,
+      data.specialdisc ?? 0,
       data.bankrefnum,
       data.bankname,
       data.Custbankname,

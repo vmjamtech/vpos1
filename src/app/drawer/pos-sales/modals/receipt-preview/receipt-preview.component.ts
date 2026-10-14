@@ -34,6 +34,7 @@ export class ReceiptPreviewComponent {
   @Input() tenderedAmount: number = 0;
   @Input() totalVat: number = 0;
   @Input() totalSub: number = 0;
+  @Input() receiptSubTotal: number = 0;
   @Input() totalItems: number = 0;
   @Input() cashierName!: string;
   @Input() datestr!: string;

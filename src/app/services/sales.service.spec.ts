@@ -20,4 +20,28 @@ describe('SalesService date range queries', () => {
     );
     expect(params).toEqual(['2026-09-25', '2026-09-25']);
   });
+
+  it('inserts regular and special discounts into separate existing columns', async () => {
+    const query = jasmine.createSpy('query').and.callFake(async (sql: string) => {
+      if (sql.includes('SELECT COUNT(*)')) return [{ cnt: 0 }];
+      if (sql.includes('last_insert_rowid')) return [{ id: 1 }];
+      return [];
+    });
+    const service = new SalesService(
+      {} as HttpClient,
+      {} as StorageService,
+      { query } as unknown as SqliteService
+    );
+
+    await service.createSaledb({ salesdisc: 12, specialdisc: 25 });
+
+    const [sql, params] = query.calls
+      .allArgs()
+      .find(([statement]) => String(statement).includes('INSERT INTO salestbl'))!;
+    expect(sql).toContain('salesdisc, specialdisc');
+    expect((String(sql).match(/\?/g) ?? []).length).toBe(30);
+    expect(params.length).toBe(30);
+    expect(params[24]).toBe(12);
+    expect(params[25]).toBe(25);
+  });
 });

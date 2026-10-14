@@ -12,6 +12,193 @@ import 'moment-timezone';
 import { StorageService } from './storage.service';
 import { loadImage } from '../utils/load-image';
 
+export interface SalesReceiptPrintData {
+  businessInfo: ReceiptBusinessInfo;
+  invoiceNo: string;
+  date: string;
+  cashier: string;
+  personnel?: string;
+  customer?: string;
+  address?: string;
+  category?: string;
+  notes?: string;
+  items: Array<{ name: string; qty: number; total: number }>;
+  subTotal: number;
+  totalItemsCount: number;
+  discountType: 'none' | 'regular' | 'special';
+  discountAmount: number;
+  totalAmount: number;
+  cashTendered: number;
+  change: number;
+  vatableSales?: number;
+  vatAmount?: number;
+  vatExemptSales?: number;
+  zeroRatedSales?: number;
+}
+
+const SALES_RECEIPT_WIDTH = 30;
+const SALES_RECEIPT_DIVIDER = '-'.repeat(48);
+
+export interface SalesReceiptPrintLine {
+  text: string;
+  alignment: 0 | 1;
+}
+
+function fitSalesReceiptLine(value: string): string {
+  return value.trim().slice(0, SALES_RECEIPT_WIDTH);
+}
+
+function leftSalesReceiptLine(value: string): SalesReceiptPrintLine {
+  return {
+    text:
+      value === SALES_RECEIPT_DIVIDER ? value : fitSalesReceiptLine(value),
+    alignment: 0,
+  };
+}
+
+function centerSalesReceiptLine(value: string): SalesReceiptPrintLine {
+  return { text: fitSalesReceiptLine(value), alignment: 1 };
+}
+
+function wrapSalesReceiptText(value: string): string[] {
+  const words = value.trim().split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > SALES_RECEIPT_WIDTH) {
+      if (line) lines.push(line);
+      line = word.slice(0, SALES_RECEIPT_WIDTH);
+    } else {
+      line = next;
+    }
+  }
+
+  if (line) lines.push(line);
+  return lines;
+}
+
+function salesReceiptColumn(label: string, value: string | number): string {
+  const labelWidth = 19;
+  const valueWidth = SALES_RECEIPT_WIDTH - labelWidth;
+  const valueText =
+    typeof value === 'number' ? value.toFixed(2) : String(value ?? '');
+  return `${label.trim().slice(0, labelWidth).padEnd(labelWidth, ' ')}${valueText
+    .slice(-valueWidth)
+    .padStart(valueWidth, ' ')}`;
+}
+
+export function buildSalesReceiptLines(
+  data: SalesReceiptPrintData
+): SalesReceiptPrintLine[] {
+  const { businessInfo, items } = data;
+  const isBir = businessInfo.birEnabled === true;
+  const lines: SalesReceiptPrintLine[] = [];
+
+  for (const header of [
+    businessInfo.compName,
+    businessInfo.compName1,
+    businessInfo.receiptAddress,
+    businessInfo.receiptAddress1,
+    businessInfo.compContact,
+    businessInfo.compContact1,
+    businessInfo.compContact2,
+  ]) {
+    if (header?.trim()) lines.push(centerSalesReceiptLine(header));
+  }
+  if (isBir) {
+    for (const line of birHeaderLines(businessInfo)) {
+      lines.push(centerSalesReceiptLine(line));
+    }
+  }
+
+  lines.push(
+    leftSalesReceiptLine(SALES_RECEIPT_DIVIDER),
+    leftSalesReceiptLine(`Sales Invoice: ${data.invoiceNo}`),
+    leftSalesReceiptLine(SALES_RECEIPT_DIVIDER),
+    leftSalesReceiptLine(
+      `QTY  ITEM${'TOTAL'.padStart(SALES_RECEIPT_WIDTH - 9, ' ')}`
+    ),
+    leftSalesReceiptLine(SALES_RECEIPT_DIVIDER)
+  );
+
+  const itemNameWidth = SALES_RECEIPT_WIDTH - 16;
+  for (const item of items) {
+    const quantity = String(item.qty).slice(0, 5).padEnd(5, ' ');
+    const name = String(item.name ?? '')
+      .slice(0, itemNameWidth)
+      .padEnd(itemNameWidth, ' ');
+    const total = Number(item.total).toFixed(2).slice(-11).padStart(11, ' ');
+    lines.push(leftSalesReceiptLine(`${quantity}${name}${total}`));
+  }
+
+  lines.push(leftSalesReceiptLine(SALES_RECEIPT_DIVIDER));
+  lines.push(
+    leftSalesReceiptLine(
+      salesReceiptColumn(isBir ? 'Sub Total:' : 'Total Amount:', data.subTotal)
+    ),
+    leftSalesReceiptLine(
+      salesReceiptColumn('Total Item(s):', String(data.totalItemsCount))
+    )
+  );
+  if (data.discountType === 'regular' && data.discountAmount > 0) {
+    lines.push(
+      leftSalesReceiptLine(salesReceiptColumn('Discount:', -data.discountAmount))
+    );
+  }
+  const receiptTotal =
+    data.discountType === 'regular' ? data.totalAmount : data.subTotal;
+  lines.push(
+    leftSalesReceiptLine(salesReceiptColumn('Total:', receiptTotal)),
+    leftSalesReceiptLine(salesReceiptColumn('CASH:', data.cashTendered)),
+    leftSalesReceiptLine(salesReceiptColumn('Change:', data.change))
+  );
+
+  if (isBir) {
+    const vatableSales =
+      data.vatableSales ?? Number((data.totalAmount / 1.12).toFixed(2));
+    const vatAmount =
+      data.vatAmount ?? Number((data.totalAmount - vatableSales).toFixed(2));
+    lines.push(
+      leftSalesReceiptLine(salesReceiptColumn('Vatable Sales:', vatableSales)),
+      leftSalesReceiptLine(salesReceiptColumn('VAT Amount:', vatAmount)),
+      leftSalesReceiptLine(
+        salesReceiptColumn('VAT Exempt Sales:', data.vatExemptSales ?? 0)
+      ),
+      leftSalesReceiptLine(
+        salesReceiptColumn('Zero Rated Sales:', data.zeroRatedSales ?? 0)
+      )
+    );
+  }
+
+  lines.push(leftSalesReceiptLine(SALES_RECEIPT_DIVIDER));
+  for (const value of [
+    `Cashier: ${data.cashier}`,
+    data.date ? `Date : ${data.date}` : '',
+    data.category ? `Category: ${data.category}` : '',
+    data.personnel ? `Personnel: ${data.personnel}` : '',
+    data.customer ? `Customer: ${data.customer}` : '',
+    data.address ? `Address: ${data.address}` : '',
+    data.notes ? `Notes: ${data.notes}` : '',
+  ]) {
+    if (value) lines.push(leftSalesReceiptLine(value));
+  }
+
+  lines.push(leftSalesReceiptLine(SALES_RECEIPT_DIVIDER));
+  if (!isBir) {
+    lines.push(
+      ...wrapSalesReceiptText(BIR_DISCLAIMER).map(centerSalesReceiptLine)
+    );
+    lines.push(leftSalesReceiptLine(SALES_RECEIPT_DIVIDER));
+  }
+  lines.push(
+    centerSalesReceiptLine('THANK YOU, PLEASE COME'),
+    centerSalesReceiptLine('AGAIN!')
+  );
+  return lines;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -77,143 +264,67 @@ export class PrinterService {
 
       // --- LOAD COMPANY SETTINGS ---
       const businessInfo = await this.appdateService.getReceiptBusinessInfo();
-      const receiptEndGreet = businessInfo.receiptEndGreet;
+      const regularDiscount = Number(sales.salesdisc) || 0;
+      const specialDiscount = Number(sales.specialdisc) || 0;
+      const discountType =
+        specialDiscount > 0
+          ? 'special'
+          : regularDiscount > 0
+            ? 'regular'
+            : 'none';
+      const totalAmount = Number(sales.salestotalamount) || 0;
+      const lines = buildSalesReceiptLines({
+        businessInfo,
+        invoiceNo: String(sales.salesrefnum ?? ''),
+        date: String(sales.salesdate ?? ''),
+        cashier: String(sales.salescashier ?? ''),
+        personnel: [sales.salesdelby, sales.salesdelby2]
+          .filter(Boolean)
+          .join(', '),
+        customer: String(sales.salescust ?? ''),
+        address: String(sales.salescustadd ?? sales.custadd ?? ''),
+        category: String(sales.salescat ?? ''),
+        notes: String(sales.salesremarks ?? sales.notes ?? ''),
+        items: items.map((item) => ({
+          name: String(item.scitemcode ?? ''),
+          qty: Number(item.scqty) || 0,
+          total: Number(item.sctotal) || 0,
+        })),
+        subTotal: Number(
+          (totalAmount + regularDiscount + specialDiscount).toFixed(2)
+        ),
+        totalItemsCount: Number(sales.salestotalitem) || 0,
+        discountType,
+        discountAmount: specialDiscount || regularDiscount,
+        totalAmount,
+        cashTendered: Number(sales.salestender) || 0,
+        change: Number(sales.saleschange) || 0,
+        vatableSales: Number(sales.salessub) || 0,
+        vatAmount: Number(sales.salesvat) || 0,
+        vatExemptSales: 0,
+        zeroRatedSales: 0,
+      });
 
-      // Helper: print receipt body
-      const printReceiptContent = async () => {
-        await this.printBusinessHeader(businessInfo);
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(
-          `Sales Invoice: ${sales.salesrefnum}`,
-          0
-        );
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        await this.iminPrinter.setAlignment(0); // left
-
-        // HEADER
-        await this.iminPrinter.printText(
-          'QTY  ITEM                     TOTAL',
-          0
-        );
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        for (const item of items) {
-          const qty = this.pad(item.scqty.toString(), 4);
-          const name = this.pad(item.scitemcode, 20);
-          const total = parseFloat(item.sctotal).toFixed(2);
-
-          // Left part (qty + name)
-          await this.iminPrinter.printTextLineOptional(
-            `${qty}${name}`,
-            0,
-            false
-          );
-
-          await this.iminPrinter.printTextLineOptional(`${total}`, 2, false);
-        }
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(
-          this.formatLine(
-            '',
-            'Total Amount:',
-            sales.salestotalamount.toFixed(2)
-          ),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine(
-            '',
-            'Total Item(s):',
-            sales.salestotalitem.toFixed(0)
-          ),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Discount:', sales.salesdisc.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine(
-            '',
-            `${sales.salespaym.toUpperCase() === 'GCASH' ? 'EWALLET' : sales.salespaym.toUpperCase()}:`,
-            parseFloat(sales.salestender).toFixed(2)
-          ),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Change:', sales.saleschange.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Vatable Sales:', sales.salessub.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'VAT:', sales.salesvat.toFixed(2)),
-          2
-        );
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        // CUSTOMER INFO
-        await this.iminPrinter.printText(`Cashier: ${sales.salescashier}`, 0);
-        await this.iminPrinter.printText(`Date : ${sales.salesdate}`, 0);
-        await this.iminPrinter.printText(`Category: ${sales.salescat}`, 0);
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(`Personnel: ${sales.salesdelby}`, 0);
-        if (sales.salesdelid2) {
-          await this.iminPrinter.printText(
-            `Personnel 2: ${sales.salesdelby2}`,
-            0
-          );
-        }
-
-        await this.iminPrinter.printText(
-          `Customer: ${sales.salescust ?? ''}`,
-          0
-        );
-        await this.iminPrinter.printText(`Address: ${sales.custadd ?? ''}`, 0);
-        await this.iminPrinter.printText(`Notes: ${sales.notes ?? ''}`, 0);
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        await this.iminPrinter.printText(`${receiptEndGreet}`, 1);
-        await this.printBirFooter(businessInfo);
-
-        await this.iminPrinter.printText('', 0);
-        await this.iminPrinter.printText('', 0);
-
-        await this.iminPrinter.cutPaper();
-      };
-
-      // --- LOGO PRINTING (IF AVAILABLE) ---
       await this.printBusinessLogo(businessInfo);
-
-      await printReceiptContent();
+      try {
+        await this.iminPrinter.setTextSize(28);
+        await this.iminPrinter.setTextTypeface(0);
+        await this.iminPrinter.setTextStyle(0);
+        await this.iminPrinter.setAlignment(0);
+        for (const line of lines) {
+          await this.iminPrinter.printText(line.text, line.alignment);
+        }
+        for (let blankLine = 0; blankLine < 2; blankLine++) {
+          await this.iminPrinter.printText('', 0);
+        }
+        await this.iminPrinter.feedPaper(2);
+        await this.iminPrinter.cutPaper();
+      } finally {
+        await this.iminPrinter.setTextSize(28);
+        await this.iminPrinter.setTextTypeface(0);
+        await this.iminPrinter.setTextStyle(0);
+        await this.iminPrinter.setAlignment(0);
+      }
     } catch (error: any) {
       console.error('Print error:', error);
 
@@ -573,10 +684,12 @@ export class PrinterService {
       const rightPadding = padding - leftPadding;
       return `|${' '.repeat(leftPadding)}${text}${' '.repeat(rightPadding)}|`;
     };
+    const line1 = 'Get 1 stamp per order.';
+    const line2 = `Collect ${slotCount}, get ₱${Number(discount).toFixed(0)} OFF!`;
     lines.push(
       divider,
-      center('Collect all and get'),
-      center(`${discount.toFixed(2)} pesos OFF!`),
+      center(line1, 42),
+      center(line2, 42),
       center(''),
       border
     );
@@ -677,22 +790,36 @@ export class PrinterService {
     }
   }
 
-  private async printBusinessHeader(info: ReceiptBusinessInfo): Promise<void> {
-    await this.iminPrinter.printText(info.compName, 1);
-    await this.iminPrinter.printText(info.compName1, 1);
-    await this.iminPrinter.printText(info.receiptAddress, 1);
-    await this.iminPrinter.printText(info.receiptAddress1, 1);
-    await this.iminPrinter.printText(info.compContact, 1);
-    await this.iminPrinter.printText(info.compContact1, 1);
-    await this.iminPrinter.printText(info.compContact2, 1);
+  private async printBusinessHeader(
+    info: ReceiptBusinessInfo,
+    maxLineLength?: number
+  ): Promise<void> {
+    const printLine = (line: string) =>
+      this.iminPrinter.printText(
+        maxLineLength ? line.slice(0, maxLineLength) : line,
+        1
+      );
+    await printLine(info.compName);
+    await printLine(info.compName1);
+    await printLine(info.receiptAddress);
+    await printLine(info.receiptAddress1);
+    await printLine(info.compContact);
+    await printLine(info.compContact1);
+    await printLine(info.compContact2);
     for (const line of birHeaderLines(info)) {
-      await this.iminPrinter.printText(line, 1);
+      await printLine(line);
     }
   }
 
-  private async printBirFooter(info: ReceiptBusinessInfo): Promise<void> {
+  private async printBirFooter(
+    info: ReceiptBusinessInfo,
+    maxLineLength?: number
+  ): Promise<void> {
     if (info.birEnabled) return;
-    await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
+    await this.iminPrinter.printText(
+      maxLineLength ? BIR_DISCLAIMER.slice(0, maxLineLength) : BIR_DISCLAIMER,
+      1
+    );
   }
 
   private async printBusinessLogo(info: ReceiptBusinessInfo): Promise<void> {

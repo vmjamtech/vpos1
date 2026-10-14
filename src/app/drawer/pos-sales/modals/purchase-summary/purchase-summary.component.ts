@@ -46,6 +46,7 @@ import { ItemhistoryService } from 'src/app/services/itemhistory.service';
 import { PersonnelTransactionService } from 'src/app/services/personnel-transaction.service';
 import { CustomersService } from 'src/app/services/customers.service';
 import { loadImage } from 'src/app/utils/load-image';
+import { buildSalesReceiptLines } from 'src/app/services/printer.service';
 
 @Component({
   selector: 'app-purchase-summary',
@@ -130,7 +131,7 @@ export class PurchaseSummaryComponent implements OnInit {
     // Partial payment always shows 0 change
     return this.paymentType === 'PARTIAL PAYMENT'
       ? 0
-      : tendered - this.totalAmount;
+      : Number((tendered - Number(this.totalAmount.toFixed(2))).toFixed(2));
   }
 
   async onPartialDateChanged(event: any) {
@@ -154,24 +155,24 @@ export class PurchaseSummaryComponent implements OnInit {
 
   // Enable/disable confirm button
   canConfirm(): boolean {
-    const tendered = parseFloat(this.tenderedAmount) || 0;
+    const tendered = Number(parseFloat(this.tenderedAmount) || 0);
+    const totalAmount = Number(Number(this.totalAmount).toFixed(2));
 
     if (this.paymentType === 'FULL PAYMENT') {
-      // Tendered must be >= total
       return (
-        this.totalAmount > 0 &&
+        Number.isFinite(totalAmount) &&
+        totalAmount >= 0 &&
         !!this.paymentMethod &&
-        tendered >= this.totalAmount
+        Number(tendered.toFixed(2)) >= totalAmount
       );
     }
 
     if (this.paymentType === 'PARTIAL PAYMENT') {
-      // Tendered must be > 0 and < total
       return (
-        this.totalAmount > 0 &&
+        totalAmount > 0 &&
         !!this.paymentMethod &&
         tendered >= 0 &&
-        tendered < this.totalAmount
+        Number(tendered.toFixed(2)) < totalAmount
       );
     }
 
@@ -285,6 +286,10 @@ export class PurchaseSummaryComponent implements OnInit {
     }
 
     const datestr = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+    const discountAmount = Number(this.posData.discount) || 0;
+    const discountType = this.posData.discountType ?? 'none';
+    const regularDiscount = discountType === 'regular' ? discountAmount : 0;
+    const specialDiscount = discountType === 'special' ? discountAmount : 0;
 
     const modalData = {
       company: {
@@ -323,7 +328,9 @@ export class PurchaseSummaryComponent implements OnInit {
     await processingLoader.present();
     const tendered = parseFloat(this.tenderedAmount) || 0;
     const tenderBalance =
-      this.paymentType === 'FULL PAYMENT' ? 0 : this.totalAmount - tendered;
+      this.paymentType === 'FULL PAYMENT'
+        ? 0
+        : Number((this.totalAmount - tendered).toFixed(2));
     const saleStatus = this.paymentType === 'FULL PAYMENT' ? 'PAID' : 'UNPAID';
     const sale = {
       salescust: modalData.transaction.posData.customerName,
@@ -349,7 +356,8 @@ export class PurchaseSummaryComponent implements OnInit {
       tenderbalance: tenderBalance,
       tendertotal: tenderBalance,
       salesremarks: `TRANSACTION NOTES: ${this.notes}`,
-      salesdisc: parseFloat(modalData.transaction.posData.discount),
+      salesdisc: regularDiscount,
+      specialdisc: specialDiscount,
       bankrefnum: '',
       bankname: '',
       Custbankname: '',
@@ -376,7 +384,10 @@ export class PurchaseSummaryComponent implements OnInit {
           scprice: item.price,
           scqty: item.qty,
           sctotal: item.amount,
-          scdiscount: this.posData.discount || 0,
+          scdiscount:
+            this.posData.discountType === 'regular'
+              ? this.posData.discount || 0
+              : 0,
           sccashier: this.cashierName,
           scstats: 'PAID',
           scpackage: item.itemsize || '',
@@ -513,6 +524,7 @@ export class PurchaseSummaryComponent implements OnInit {
         notes: this.notes,
         totalVat: this.totalvat,
         totalSub: this.totalsub,
+        receiptSubTotal: this.totalAmount + discountAmount,
         formatItemLine: this.formatItemLine.bind(this),
         formatLine: this.formatLine.bind(this),
       },
@@ -575,331 +587,72 @@ export class PurchaseSummaryComponent implements OnInit {
 
         return; // stop printing
       }
-      // await this.iminPrinter.connect();
       await this.iminPrinter.initPrinter();
-
       const status = await this.iminPrinter.getPrinterStatus();
-
       if (status.text !== 'The printer is normal') {
-        // Show alert ONLY when there is a printer issue
+        console.warn('Printer warning:', status.text);
       }
 
-      const { posData, cart, tenderedAmount } = this;
+      const discountAmount = Number(this.posData.discount) || 0;
       const shouldPrintLogo = businessInfo.withLogo && !!businessInfo.logoDataUrl;
-      if (shouldPrintLogo) {
-        const image = await loadImage(businessInfo.logoDataUrl!);
-        const resizedDataURL = resizeImageStretch(image, 384, 250);
-        await this.iminPrinter.printImage(resizedDataURL, 1);
-      }
+      try {
+        await this.iminPrinter.setTextSize(28);
+        await this.iminPrinter.setTextTypeface(0);
+        await this.iminPrinter.setTextStyle(0);
+        await this.iminPrinter.setAlignment(0);
 
-          if (shouldPrintLogo) {
-            // === HEADER ===
-          
-          await this.iminPrinter.printText(`${businessInfo.compName}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.compName1}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.receiptAddress}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.receiptAddress1}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
-          await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
-          for (const line of birHeaderLines(businessInfo)) {
-            await this.iminPrinter.printText(line, 1);
-          }
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
+        if (shouldPrintLogo) {
+          const image = await loadImage(businessInfo.logoDataUrl!);
+          const resizedDataURL = resizeImageStretch(image, 384, 250);
+          await this.iminPrinter.printImage(resizedDataURL, 1);
+        }
 
-          await this.iminPrinter.printText(
-            `Sales Invoice: ${salesreference}`,
-            0
-          );
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
-          // === ITEMS ===
-          await this.iminPrinter.printText(
-            `Qty Item                     Total`,
-            0
-          );
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
+        const lines = buildSalesReceiptLines({
+          businessInfo,
+          invoiceNo: salesreference,
+          date: datestr,
+          cashier: this.cashierName,
+          personnel: [
+            this.posData.personnel1Name,
+            this.posData.personnel2Name,
+          ]
+            .filter(Boolean)
+            .join(', '),
+          customer: this.posData.customerName,
+          address: this.posData.customeraddress,
+          category: this.posData.category,
+          notes: this.notes,
+          items: this.cart.map((item) => ({
+            name: item.itemcode,
+            qty: Number(item.qty) || 0,
+            total: Number(item.amount) || 0,
+          })),
+          subTotal: Number((this.totalAmount + discountAmount).toFixed(2)),
+          totalItemsCount: Number(this.totalitems) || 0,
+          discountType: this.posData.discountType ?? 'none',
+          discountAmount,
+          totalAmount: Number(this.totalAmount) || 0,
+          cashTendered: Number(parseFloat(this.tenderedAmount) || 0),
+          change: Number(this.getChange().toFixed(2)),
+          vatableSales: Number(this.totalsub) || 0,
+          vatAmount: Number(this.totalvat) || 0,
+          vatExemptSales: 0,
+          zeroRatedSales: 0,
+        });
 
-          for (const item of cart) {
-            const line = this.formatItemLine(
-              item.qty,
-              item.itemcode,
-              item.amount,
-              32
-            );
-            await this.iminPrinter.printText(line, 0);
-          }
-
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
-
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Total Amount:', this.totalAmount.toFixed(2)),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Total Item(s):', this.totalitems.toFixed(0)),
-            2
-          );
-          if (posData.discount && posData.discount > 0) {
-            await this.iminPrinter.printText(
-              this.formatLine('', 'Discount:', posData.discount.toFixed(2)),
-              2
-            );
-          }
-          await this.iminPrinter.printText(
-            this.formatLine(
-              '',
-              `${this.paymentMethod.toUpperCase()}:`,
-              parseFloat(tenderedAmount).toFixed(2)
-            ),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Change:', this.getChange().toFixed(2)),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Vatable Sales:', this.totalsub.toFixed(2)),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'VAT:', this.totalvat.toFixed(2)),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'VAT-Amount:', '0.00'),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Non-Vatable Sales:', '0.00'),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'VAT Exempt Sales', '0.00'),
-            2
-          );
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Zero Rated Sales:', '0.00'),
-            2
-          );
-
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
-
-          // === CUSTOMER INFO ===
-          await this.iminPrinter.printText(`Cashier: ${this.cashierName}`, 0);
-          await this.iminPrinter.printText(`Date : ${datestr}`, 0);
-          await this.iminPrinter.printText(`Category: ${posData.category}`, 0);
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
-
-          await this.iminPrinter.printText(
-            `Personnel: ${posData.personnel1Name}`,
-            0
-          );
-
-          if (posData.personnel2Name) {
-            await this.iminPrinter.printText(
-              `Personnel 2: ${posData.personnel2Name}`,
-              0
-            );
-          }
-
-          await this.iminPrinter.printText(
-            `Customer: ${posData.customerName}`,
-            0
-          );
-          await this.iminPrinter.printText(
-            `Address: ${posData.customeraddress}`,
-            0
-          );
-          await this.iminPrinter.printText(`Notes: ${this.notes}`, 0);
-
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
-          await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
-          if (!businessInfo.birEnabled) {
-            await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
-          }
-          await this.iminPrinter.printText(
-            '-----------------------------------------------',
-            0
-          );
+        for (const line of lines) {
+          await this.iminPrinter.printText(line.text, line.alignment);
+        }
+        for (let blankLine = 0; blankLine < 2; blankLine++) {
           await this.iminPrinter.printText('', 0);
-          await this.iminPrinter.printText('', 0);
-
-          await this.iminPrinter.cutPaper();
-      } else {
-        // === HEADER ===
-        await this.iminPrinter.printText(`${businessInfo.compName}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.compName1}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.receiptAddress}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.receiptAddress1}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.compContact}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.compContact1}`, 1);
-        await this.iminPrinter.printText(`${businessInfo.compContact2}`, 1);
-        for (const line of birHeaderLines(businessInfo)) {
-          await this.iminPrinter.printText(line, 1);
         }
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(`Sales Invoice: ${salesreference}`, 0);
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        // === ITEMS ===
-        await this.iminPrinter.printText(
-          'QTY  ITEM                     TOTAL',
-          0
-        );
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        for (const item of cart) {
-          const qty = this.pad(item.qty.toString(), 4);
-          const name = this.pad(item.itemcode, 20);
-          const total = parseFloat(item.amount).toFixed(2);
-
-          // Left part (qty + name)
-          await this.iminPrinter.printTextLineOptional(
-            `${qty}${name}`,
-            0,
-            false
-          );
-
-          await this.iminPrinter.printTextLineOptional(`${total}`, 2, false);
-        }
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Total Amount:', this.totalAmount.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Total Item(s):', this.totalitems.toFixed(0)),
-          2
-        );
-        if (posData.discount && posData.discount > 0) {
-          await this.iminPrinter.printText(
-            this.formatLine('', 'Discount:', posData.discount.toFixed(2)),
-            2
-          );
-        }
-        await this.iminPrinter.printText(
-          this.formatLine(
-            '',
-            `${this.paymentMethod.toUpperCase()}:`,
-            parseFloat(tenderedAmount).toFixed(2)
-          ),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Change:', this.getChange().toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Vatable Sales:', this.totalsub.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'VAT:', this.totalvat.toFixed(2)),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'VAT-Amount:', '0.00'),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Non-Vatable Sales:', '0.00'),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'VAT Exempt Sales', '0.00'),
-          2
-        );
-        await this.iminPrinter.printText(
-          this.formatLine('', 'Zero Rated Sales:', '0.00'),
-          2
-        );
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        // === CUSTOMER INFO ===
-        await this.iminPrinter.printText(`Cashier: ${this.cashierName}`, 0);
-        await this.iminPrinter.printText(`Date : ${datestr}`, 0);
-        await this.iminPrinter.printText(`Category: ${posData.category}`, 0);
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-
-        await this.iminPrinter.printText(
-          `Personnel: ${posData.personnel1Name}`,
-          0
-        );
-
-        if (posData.personnel2Name) {
-          await this.iminPrinter.printText(
-            `Personnel 2: ${posData.personnel2Name}`,
-            0
-          );
-        }
-
-        await this.iminPrinter.printText(
-          `Customer: ${posData.customerName}`,
-          0
-        );
-        await this.iminPrinter.printText(
-          `Address: ${posData.customeraddress}`,
-          0
-        );
-        await this.iminPrinter.printText(`Notes: ${this.notes}`, 0);
-
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        await this.iminPrinter.printText(`${businessInfo.receiptEndGreet}`, 1);
-        if (!businessInfo.birEnabled) {
-          await this.iminPrinter.printText(BIR_DISCLAIMER, 1);
-        }
-        await this.iminPrinter.printText(
-          '-----------------------------------------------',
-          0
-        );
-        await this.iminPrinter.printText('', 0);
-        await this.iminPrinter.printText('', 0);
-
+        await this.iminPrinter.feedPaper(2);
         await this.iminPrinter.cutPaper();
+      } finally {
+        await this.iminPrinter.setTextSize(28);
+        await this.iminPrinter.setTextTypeface(0);
+        await this.iminPrinter.setTextStyle(0);
+        await this.iminPrinter.setAlignment(0);
       }
     } catch (error: any) {
       console.error('Print error:', error);
@@ -918,20 +671,9 @@ export class PurchaseSummaryComponent implements OnInit {
 
   // Helper function to format columns
   private formatLine(qty: string, name: string, amount: string) {
-    // Adjust widths for your printer
-    const qtyWidth = 3; // 3 chars for quantity
-    const nameWidth = 20; // 20 chars for item name
-    const amountWidth = 8; // 8 chars for amount
-
-    // Trim or pad
-    const qtyStr = qty.padStart(qtyWidth, ' ');
-    const nameStr =
-      name.length > nameWidth
-        ? name.slice(0, nameWidth)
-        : name.padEnd(nameWidth, ' ');
-    const amountStr = amount.padStart(amountWidth, ' ');
-
-    return `${qtyStr} ${nameStr} ${amountStr}`;
+    const label = `${qty ? `${qty} ` : ''}${name}`.slice(0, 18).padEnd(18, ' ');
+    const value = amount.slice(0, 14).padStart(14, ' ');
+    return `${label}${value}`;
   }
 
   pad(value: string, length: number) {

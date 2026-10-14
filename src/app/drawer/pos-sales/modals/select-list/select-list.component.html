@@ -17,6 +17,22 @@
     showClearButton="always"
   ></ion-searchbar>
 
+  <div
+    *ngIf="type === 'customer' && permissionService.has('customer.addCustomer')"
+    class="ion-padding-horizontal ion-padding-bottom"
+  >
+    <ion-button
+      expand="block"
+      color="primary"
+      fill="outline"
+      class="add-customer-btn"
+      (click)="openAddCustomerModal()"
+    >
+      <ion-icon slot="start" name="person-add-outline"></ion-icon>
+      Add New Customer
+    </ion-button>
+  </div>
+
   <!-- Loading Skeleton -->
   <ion-skeleton-text
     *ngIf="loading && list.length === 0"

@@ -1226,3 +1226,67 @@ with a reward box. Keep the database schema and calculation formulas intact.
 Validation: Angular/Android build and APK install passed. Focused Jasmine
 execution and final physical coupon-print verification remain outstanding.
 ```
+
+### 10.6 Sales Receipt Divider Convention
+
+- Sales checkout and reprint receipts use 30-character Font A content rows.
+- The official sales receipt divider is exactly 48 hyphens. Keep this count
+  distinct from the 30-character content-row width.
+- Keep the centered thank-you footer on two lines and feed paper before cutting
+  so the final line remains visible.
+
+### 10.7 POS Customer, Discount, Sales Receipt, and Sign-in Updates
+
+#### Changes
+
+- Added a permission-gated Add New Customer action below the POS customer
+  search bar. Successful adds and inactive-customer restores return the full
+  customer record to POS for immediate selection; duplicate checks and restore
+  behavior continue to use the existing customer form/service.
+- Added regular and special discounts with separate fixed/percentage prompts.
+  Discount and payable calculations round to cents; full payment accepts a
+  zero balance, while partial payment still requires a positive balance.
+- Persisted regular and special discounts to the existing sales discount
+  columns. No database schema or revenue formula was changed.
+- Routed POS checkout printing and sales reprints through one shared
+  BIR-aware receipt builder. The Calling Card business fields use native
+  centered alignment. Content rows are 30 columns; sales dividers are exactly
+  48 hyphens. BIR-off receipts omit tax rows and include the disclaimer; BIR-on
+  receipts include TIN/MIN/SN and the requested tax breakdown.
+- Printed the sales thank-you footer as two centered lines and added two
+  explicit blank lines plus `feedPaper(2)` before cutting in both sales paths.
+  Other printer functions were not changed.
+- Login failures use a normalized nonempty message and an awaited danger toast.
+
+#### Files modified
+
+- `src/app/drawer/customers/modal/customerform/customerform.component.ts`
+- `src/app/drawer/pos-sales/modals/purchase-summary/purchase-summary.component.html`
+- `src/app/drawer/pos-sales/modals/purchase-summary/purchase-summary.component.spec.ts`
+- `src/app/drawer/pos-sales/modals/purchase-summary/purchase-summary.component.ts`
+- `src/app/drawer/pos-sales/modals/receipt-preview/receipt-preview.component.html`
+- `src/app/drawer/pos-sales/modals/receipt-preview/receipt-preview.component.ts`
+- `src/app/drawer/pos-sales/modals/select-list/select-list.component.html`
+- `src/app/drawer/pos-sales/modals/select-list/select-list.component.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.html`
+- `src/app/drawer/pos-sales/pos-sales.component.scss`
+- `src/app/drawer/pos-sales/pos-sales.component.spec.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.ts`
+- `src/app/drawer/sign-in/sign-in.component.ts`
+- `src/app/services/printer.service.spec.ts`
+- `src/app/services/printer.service.ts`
+- `src/app/services/sales.service.spec.ts`
+- `src/app/services/sales.service.ts`
+
+#### Verification and remaining issues
+
+- Angular production build passed. Android debug APK build and device install
+  passed. `git diff --check` passed.
+- Focused Jasmine execution did not produce a final pass/fail result. Earlier
+  full-suite attempts were blocked by unrelated constructor-argument errors in
+  the App Settings and Petty Cash Logs specs.
+- Verify the latest 48-dash divider and two-line footer on a fresh physical
+  sales print; prior photos predate these final margin/feed adjustments.
+- Existing open issues remain: sales reprint data-shape `.reduce()` report,
+  report-preview print UI confirmation/integration, and physical coupon reward
+  box verification. See the prior open-issue sections for full context.

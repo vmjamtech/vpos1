@@ -190,8 +190,11 @@ export class SignInComponent implements OnInit, AfterViewInit, OnDestroy {
       failure?.fire();
       this.finishAnimation(reset);
 
-      let msg = err?.message || 'Login failed. Please try again.';
-      this.showToast(msg, 'dark');
+      const message =
+        typeof err?.message === 'string' && err.message.trim()
+          ? err.message.trim()
+          : 'Login failed. Please try again.';
+      await this.showToast(message, 'danger');
     }
   }
 
@@ -312,6 +315,6 @@ export class SignInComponent implements OnInit, AfterViewInit, OnDestroy {
       color,
       position: 'bottom',
     });
-    toast.present();
+    await toast.present();
   }
 }

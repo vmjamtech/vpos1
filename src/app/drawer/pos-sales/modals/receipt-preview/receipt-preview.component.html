@@ -40,13 +40,22 @@
 
     <!-- TOTALS -->
     <pre class="totals">{{
-      formatLine("", "Total Amount:", totalAmount.toFixed(2))
+      formatLine("", "Sub Total:", receiptSubTotal.toFixed(2))
     }}</pre>
     <pre class="totals">{{
       formatLine("", "Total Item(s):", totalItems.toFixed(1))
     }}</pre>
+    <pre
+      class="totals"
+      *ngIf="posData.discountType === 'regular' && posData.discount > 0"
+      >{{ formatLine("", "Discount:", "-" + posData.discount.toFixed(2)) }}</pre
+    >
     <pre class="totals">{{
-      formatLine("", "Discount:", posData.discount.toFixed(2))
+      formatLine(
+        "",
+        "Total:",
+        (posData.discountType === "special" ? receiptSubTotal : totalAmount).toFixed(2)
+      )
     }}</pre>
     <pre class="totals">{{
       formatLine("", paymentMethod.toUpperCase() + ":", tenderedAmount)

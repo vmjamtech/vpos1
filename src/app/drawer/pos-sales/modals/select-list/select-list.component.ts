@@ -6,6 +6,7 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonItem,
@@ -19,6 +20,8 @@ import {
 } from '@ionic/angular/standalone';
 import { CustomersService } from 'src/app/services/customers.service';
 import { PersonelsService } from 'src/app/services/personels.service';
+import { CustomerformComponent } from 'src/app/drawer/customers/modal/customerform/customerform.component';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-select-list',
@@ -38,6 +41,7 @@ import { PersonelsService } from 'src/app/services/personels.service';
     IonButton,
     IonSkeletonText,
     IonHeader,
+    IonIcon,
     IonTitle,
     IonToolbar,
     IonButtons,
@@ -61,7 +65,8 @@ export class SelectListComponent implements OnInit {
   constructor(
     private modalCtrl: ModalController,
     private customerService: CustomersService,
-    private personnelService: PersonelsService
+    private personnelService: PersonelsService,
+    public permissionService: PermissionService
   ) {}
 
   async ngOnInit() {
@@ -144,6 +149,28 @@ export class SelectListComponent implements OnInit {
 
   selectItem(item: any) {
     this.modalCtrl.dismiss(item);
+  }
+
+  async openAddCustomerModal() {
+    if (
+      this.type !== 'customer' ||
+      !this.permissionService.has('customer.addCustomer')
+    ) {
+      return;
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: CustomerformComponent,
+      initialBreakpoint: 0.5,
+      breakpoints: [0.5],
+      backdropDismiss: false,
+      expandToScroll: false,
+      componentProps: { mode: 'add' },
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.custid) this.modalCtrl.dismiss(data);
   }
 
   dismiss() {

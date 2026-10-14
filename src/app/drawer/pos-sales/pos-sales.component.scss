@@ -230,6 +230,23 @@
     font-weight: 500;
   }
 
+  .discount-row {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .discount-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .total-row {
     font-size: 16px;
     font-weight: 700;
