@@ -1,0 +1,168 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cancel</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding report-print-options">
+  <div class="filters-section">
+    <ng-container [ngSwitch]="report">
+      <ion-item *ngSwitchCase="'summary'" lines="full">
+        <ion-label position="stacked">Select Date</ion-label>
+        <ion-input
+          type="date"
+          [(ngModel)]="date"
+          (ionChange)="onOptionsChanged()"
+          required
+        ></ion-input>
+      </ion-item>
+
+      <ng-container *ngSwitchCase="'item-sold'">
+        <ion-item lines="full">
+          <ion-label position="stacked">Date From</ion-label>
+          <ion-input
+            type="date"
+            [(ngModel)]="fromDate"
+            (ionChange)="onOptionsChanged()"
+            required
+          ></ion-input>
+        </ion-item>
+        <ion-item lines="full">
+          <ion-label position="stacked">Date To</ion-label>
+          <ion-input
+            type="date"
+            [(ngModel)]="toDate"
+            (ionChange)="onOptionsChanged()"
+            required
+          ></ion-input>
+        </ion-item>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'inventory'">
+        <ion-item lines="full">
+          <ion-label position="stacked">As of Date</ion-label>
+          <ion-input
+            type="date"
+            [(ngModel)]="date"
+            (ionChange)="onOptionsChanged()"
+            required
+          ></ion-input>
+        </ion-item>
+        <ion-item lines="full">
+          <ion-label position="stacked">Category</ion-label>
+          <ion-select
+            [(ngModel)]="category"
+            (ionChange)="onOptionsChanged()"
+            interface="popover"
+          >
+            <ion-select-option value="ALL">All Categories</ion-select-option>
+            <ion-select-option
+              *ngFor="let item of categories"
+              [value]="item.category"
+            >
+              {{ item.category }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item lines="none" class="scope-label">
+          <ion-label>Location Scope</ion-label>
+        </ion-item>
+        <ion-segment
+          [(ngModel)]="scope"
+          (ionChange)="onOptionsChanged()"
+          aria-label="Inventory location scope"
+        >
+          <ion-segment-button value="STORE">Store</ion-segment-button>
+          <ion-segment-button value="WAREHOUSE">Warehouse</ion-segment-button>
+          <ion-segment-button value="BOTH">Both</ion-segment-button>
+        </ion-segment>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'floorstock'">
+        <ion-item lines="full">
+          <ion-label position="stacked">As of Date</ion-label>
+          <ion-input
+            type="date"
+            [(ngModel)]="date"
+            (ionChange)="onOptionsChanged()"
+            required
+          ></ion-input>
+        </ion-item>
+        <ion-item lines="full">
+          <ion-label position="stacked">Category</ion-label>
+          <ion-select
+            [(ngModel)]="category"
+            (ionChange)="onOptionsChanged()"
+            interface="popover"
+          >
+            <ion-select-option value="ALL">All Categories</ion-select-option>
+            <ion-select-option
+              *ngFor="let item of categories"
+              [value]="item.category"
+            >
+              {{ item.category }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ng-container>
+    </ng-container>
+
+    <p class="validation-message" *ngIf="dateRangeError">
+      {{ dateRangeError }}
+    </p>
+
+    <ion-item *ngIf="report === 'summary'" lines="full">
+      <ion-label position="stacked">Cashier</ion-label>
+      <ion-select
+        [(ngModel)]="cashier"
+        (ionChange)="onOptionsChanged()"
+        interface="popover"
+      >
+        <ion-select-option value="">All Cashiers</ion-select-option>
+        <ion-select-option *ngFor="let name of cashiers" [value]="name">
+          {{ name }}
+        </ion-select-option>
+      </ion-select>
+    </ion-item>
+  </div>
+
+  <section class="receipt-preview-container" aria-live="polite">
+    <div class="receipt-preview-header">
+      <span>TICKET PREVIEW</span>
+      <ion-spinner *ngIf="isPreviewLoading" name="dots"></ion-spinner>
+    </div>
+    <div class="receipt-paper">
+      <pre
+        class="receipt-text"
+        [class.item-sold-receipt-text]="report === 'item-sold'"
+        [class.inventory-receipt-text]="report === 'inventory'"
+        [class.floorstock-receipt-text]="report === 'floorstock'"
+      >{{
+        formattedReceiptText ||
+          (previewError || 'No data to preview for selected criteria.')
+      }}</pre>
+    </div>
+    <p class="preview-error" *ngIf="previewError">{{ previewError }}</p>
+  </section>
+</ion-content>
+
+<ion-footer class="print-modal-footer">
+  <ion-toolbar>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" color="medium" (click)="cancel()">
+        CANCEL
+      </ion-button>
+      <ion-button
+        fill="clear"
+        class="yellow-print-btn"
+        [disabled]="isPreviewLoading || isPrinting || !hasDataToPrint"
+        (click)="onConfirmPrint()"
+      >
+        {{ isPrinting ? 'PRINTING...' : 'PRINT' }}
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

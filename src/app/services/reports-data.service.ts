@@ -165,6 +165,7 @@ export class ReportsDataService {
       const emptyColumn = location === 'STORE' ? 'emptyqty' : 'whempty';
       return this.db.query(
         `SELECT itemcode AS itemCode, itemname AS description,
+           COALESCE(itemcategory, '') AS category,
            COALESCE(${filledColumn}, 0) AS filledQty,
            COALESCE(${emptyColumn}, 0) AS emptyQty
          FROM inventorytbl
@@ -173,11 +174,13 @@ export class ReportsDataService {
     }
 
     return this.db.query(
-      `SELECT item_code AS itemCode, description, filled_qty AS filledQty,
-         empty_qty AS emptyQty
-       FROM daily_inventory_snapshots
-       WHERE snapshot_date = ? AND location = ?
-       ORDER BY item_code`,
+      `SELECT s.item_code AS itemCode, s.description,
+         COALESCE(i.itemcategory, '') AS category,
+         s.filled_qty AS filledQty, s.empty_qty AS emptyQty
+       FROM daily_inventory_snapshots s
+       LEFT JOIN inventorytbl i ON i.itemcode = s.item_code
+       WHERE s.snapshot_date = ? AND s.location = ?
+       ORDER BY s.item_code`,
       [date, location]
     );
   }
@@ -185,7 +188,9 @@ export class ReportsDataService {
   async getFloorstockSnapshot(date: string, cashier = ''): Promise<any[]> {
     if (date === this.getLocalDate()) {
       return this.db.query(
-        `SELECT i.itemcode AS itemCode, COALESCE(i.fillqty, 0) AS filledQty,
+          `SELECT i.itemcode AS itemCode, s.cashier_name AS cashierName,
+            COALESCE(i.itemcategory, '') AS category,
+            COALESCE(i.fillqty, 0) AS filledQty,
            COALESCE(i.floorstock, 0) AS floorstock,
            MAX(0, COALESCE(i.floorstock, 0) - COALESCE(i.fillqty, 0)) AS restockNeed
          FROM inventorytbl i
@@ -198,12 +203,15 @@ export class ReportsDataService {
     }
 
     return this.db.query(
-      `SELECT item_code AS itemCode, filled_qty AS filledQty, floorstock,
-         MAX(0, floorstock - filled_qty) AS restockNeed
-       FROM daily_inventory_snapshots
-       WHERE snapshot_date = ? AND location = 'STORE'
-         AND (? = '' OR cashier_name = ?)
-       ORDER BY item_code`,
+      `SELECT s.item_code AS itemCode, s.cashier_name AS cashierName,
+        COALESCE(i.itemcategory, '') AS category,
+         s.filled_qty AS filledQty, s.floorstock,
+         MAX(0, s.floorstock - s.filled_qty) AS restockNeed
+       FROM daily_inventory_snapshots s
+       LEFT JOIN inventorytbl i ON i.itemcode = s.item_code
+       WHERE s.snapshot_date = ? AND s.location = 'STORE'
+         AND (? = '' OR s.cashier_name = ?)
+       ORDER BY s.item_code`,
       [date, cashier, cashier]
     );
   }

@@ -71,6 +71,14 @@ export class IminPrinterService {
     return this.printerInstance.initPrinter(connectType);
   }
 
+  async resetPrinterState(): Promise<void> {
+    await this.initPrinter();
+    await this.setTextSize(28);
+    await this.setTextStyle(0);
+    await this.setTextTypeface(0);
+    await this.setAlignment(0);
+  }
+
   async printText(text: string, type?: number): Promise<void> {
     return this.printerInstance.printText(text, type);
   }

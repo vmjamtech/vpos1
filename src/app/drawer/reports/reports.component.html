@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <main class="reports-page">
+  <main class="reports-page" [class.report-detail-page]="!!activeView">
     <section class="filters" *ngIf="activeView === 'summary'">
       <label class="filter-control">
         <span>Date</span>
@@ -34,15 +34,19 @@
         <span>Date</span>
         <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
       </label>
+      <div class="cashier-indicator">
+        <span>Cashier in Charge</span>
+        <strong>{{ floorstockCashierName }}</strong>
+      </div>
     </section>
 
-    <section class="filters" *ngIf="activeView === 'item-sold'">
+    <section class="filters date-range-filters" *ngIf="activeView === 'item-sold'">
       <label class="filter-control">
-        <span>From</span>
+        <span>Date From</span>
         <input type="date" [(ngModel)]="fromDate" (change)="loadActiveReport()" />
       </label>
       <label class="filter-control">
-        <span>To</span>
+        <span>Date To</span>
         <input type="date" [(ngModel)]="toDate" (change)="loadActiveReport()" />
       </label>
     </section>
@@ -191,11 +195,23 @@
       </section>
 
       <section *ngIf="activeView === 'inventory'" class="report-content report-detail-view">
+        <div class="category-scroll-container">
+          <div class="category-scroll">
+            <ion-chip
+              *ngFor="let c of categories"
+              [color]="selectedCategory === c.category ? 'primary' : 'medium'"
+              [class.active-chip]="selectedCategory === c.category"
+              (click)="selectCategory(c.category)"
+            >
+              <ion-label>{{ c.category }}</ion-label>
+            </ion-chip>
+          </div>
+        </div>
         <h2>Store</h2>
         <div class="report-columns inventory-grid">
           <span>Item Code</span><span>Description</span><span>Filled Qty</span><span>Empty Qty</span>
         </div>
-        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="storeInventoryRows.length">
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="filteredStoreInventoryRows.length">
           <ion-item *ngFor="let item of visibleStoreInventoryRows">
             <ion-label>
               <div class="report-item-row inventory-grid">
@@ -208,7 +224,7 @@
           </ion-item>
         </ion-list>
         <ion-button
-          *ngIf="storeInventoryRows.length > storeInventoryVisibleCount"
+          *ngIf="filteredStoreInventoryRows.length > storeInventoryVisibleCount"
           class="load-more"
           fill="clear"
           size="small"
@@ -216,13 +232,13 @@
         >
           Load More Store Items
         </ion-button>
-        <ion-note *ngIf="storeInventoryRows.length === 0">No Record Found</ion-note>
+        <ion-note *ngIf="filteredStoreInventoryRows.length === 0">No Record Found</ion-note>
 
         <h2>Warehouse</h2>
         <div class="report-columns inventory-grid">
           <span>Item Code</span><span>Description</span><span>Filled Qty</span><span>Empty Qty</span>
         </div>
-        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="warehouseInventoryRows.length">
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="filteredWarehouseInventoryRows.length">
           <ion-item *ngFor="let item of visibleWarehouseInventoryRows">
             <ion-label>
               <div class="report-item-row inventory-grid">
@@ -235,7 +251,7 @@
           </ion-item>
         </ion-list>
         <ion-button
-          *ngIf="warehouseInventoryRows.length > warehouseInventoryVisibleCount"
+          *ngIf="filteredWarehouseInventoryRows.length > warehouseInventoryVisibleCount"
           class="load-more"
           fill="clear"
           size="small"
@@ -243,14 +259,26 @@
         >
           Load More Warehouse Items
         </ion-button>
-        <ion-note *ngIf="warehouseInventoryRows.length === 0">No Record Found</ion-note>
+        <ion-note *ngIf="filteredWarehouseInventoryRows.length === 0">No Record Found</ion-note>
       </section>
 
       <section *ngIf="activeView === 'floorstock'" class="report-content report-detail-view">
+        <div class="category-scroll-container">
+          <div class="category-scroll">
+            <ion-chip
+              *ngFor="let c of categories"
+              [color]="selectedCategory === c.category ? 'primary' : 'medium'"
+              [class.active-chip]="selectedCategory === c.category"
+              (click)="selectCategory(c.category)"
+            >
+              <ion-label>{{ c.category }}</ion-label>
+            </ion-chip>
+          </div>
+        </div>
         <div class="report-columns floorstock-grid">
           <span>Item Code</span><span>Filled Qty</span><span>Floorstock</span><span>Restock Need</span>
         </div>
-        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="floorstockRows.length">
+        <ion-list class="report-card-list report-static-list" lines="none" *ngIf="filteredFloorstockRows.length">
           <ion-item *ngFor="let item of visibleFloorstockRows">
             <ion-label>
               <div class="report-item-row floorstock-grid">
@@ -263,7 +291,7 @@
           </ion-item>
         </ion-list>
         <ion-button
-          *ngIf="floorstockRows.length > floorstockVisibleCount"
+          *ngIf="filteredFloorstockRows.length > floorstockVisibleCount"
           class="load-more"
           fill="clear"
           size="small"
@@ -271,7 +299,7 @@
         >
           Load More
         </ion-button>
-        <ion-note *ngIf="floorstockRows.length === 0">No Record Found</ion-note>
+        <ion-note *ngIf="filteredFloorstockRows.length === 0">No Record Found</ion-note>
       </section>
   </main>
 </ion-content>

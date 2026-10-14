@@ -1,0 +1,110 @@
+.report-print-options {
+  --background: var(--ion-background-color);
+}
+
+.filters-section {
+  display: grid;
+  gap: 4px;
+}
+
+.report-print-options ion-item {
+  --background: transparent;
+  --padding-start: 0;
+}
+
+.report-print-options ion-input,
+.report-print-options ion-select {
+  min-height: 44px;
+}
+
+.scope-label {
+  margin-top: 12px;
+}
+
+.validation-message {
+  margin: 8px 16px;
+  color: var(--ion-color-danger);
+  font-size: 13px;
+}
+
+.receipt-preview-container {
+  width: 100%;
+  max-width: 440px;
+  margin: 16px auto 0;
+  border: 1px dashed var(--ion-color-medium);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.receipt-preview-header {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px dashed var(--ion-color-medium);
+  color: var(--ion-text-color);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.receipt-preview-header ion-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.receipt-paper {
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: min(38vh, 340px);
+  overflow: auto;
+  padding: 12px 8px;
+  background: #f3f0e8;
+  color: #171717;
+  display: flex;
+  justify-content: center;
+}
+
+.receipt-text {
+  flex: 0 0 auto;
+  width: 30ch;
+  min-width: 30ch;
+  max-width: 30ch;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.receipt-text.item-sold-receipt-text {
+  min-width: 30ch;
+}
+
+.receipt-text.inventory-receipt-text {
+  min-width: 30ch;
+}
+
+.receipt-text.floorstock-receipt-text {
+  min-width: 30ch;
+}
+
+.preview-error {
+  margin: 8px 12px;
+  color: var(--ion-color-danger);
+  font-size: 13px;
+}
+
+.print-modal-footer ion-toolbar {
+  --background: var(--ion-background-color);
+}
+
+.yellow-print-btn {
+  --color: #1c1c1c;
+  --background: #ffe500;
+  --background-hover: #f0d900;
+  --background-activated: #e6d000;
+  --border-radius: 4px;
+  font-weight: 700;
+}

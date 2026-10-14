@@ -70,6 +70,27 @@ ion-segment-button {
   font: inherit;
 }
 
+.cashier-indicator {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+  color: var(--report-muted);
+  font-size: 13px;
+}
+
+.cashier-indicator strong {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--report-line);
+  border-radius: 4px;
+  background: var(--report-surface);
+  color: var(--report-ink);
+  font-weight: 500;
+}
+
 .report-content {
   min-width: 0;
   overflow-x: hidden;
@@ -77,6 +98,30 @@ ion-segment-button {
 
 .report-detail-view {
   min-width: 0;
+}
+
+.category-scroll-container {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 12px 12px;
+}
+
+.category-scroll {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.category-scroll ion-chip {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.category-scroll ion-chip.active-chip {
+  font-weight: 650;
 }
 
 .report-choice {
@@ -345,9 +390,25 @@ ion-item-option {
     padding-top: 16px;
   }
 
+  .reports-page.report-detail-page {
+    padding-top: 110px;
+  }
+
   .filter-control,
   .filter-control input,
   .filter-control select {
+    width: 100%;
+  }
+
+  .filters.date-range-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .date-range-filters .filter-control,
+  .date-range-filters .filter-control input {
+    min-width: 0;
     width: 100%;
   }
 }

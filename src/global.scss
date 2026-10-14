@@ -72,3 +72,30 @@ ion-modal.ai-modal app-chat ion-footer {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+ion-modal.report-print-modal app-report-print-options {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+ion-modal.report-print-modal {
+  --height: 100%;
+  --border-radius: 0;
+}
+
+ion-modal.report-print-modal::part(content) {
+  height: 100%;
+  border-radius: 0;
+}
+
+ion-modal.report-print-modal app-report-print-options ion-content {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+ion-modal.report-print-modal app-report-print-options ion-footer {
+  flex: 0 0 auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+

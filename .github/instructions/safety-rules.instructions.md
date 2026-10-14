@@ -1,4 +1,6 @@
-## applyTo: "**"
+---
+applyTo: "**"
+---
 
 # VPOS1 Safety Rules
 
@@ -37,21 +39,37 @@ Existing user data must survive application updates.
 
 Never replace an existing production database simply because a new schema or database file is available.
 
-## Printing
+## Printing and Print Format Isolation Lock
 
 Printing is an existing production feature.
 
-Before changing printing:
+### Strict Scope Restriction
+
+* All existing production print formats are strictly locked and frozen.
+* Do not modify, alter, or reconfigure existing print formats or shared printer drivers for:
+  * POS Sales Receipts
+  * Purchase Invoices
+  * Reprint Receipts
+  * Cashier Shift / End-of-Day / Logout Receipts
+  * Any other production transactions
+* The only print formatting changes permitted in the application are for the Reports tab: Summary, Item Sold, Inventory, and Floorstock.
+
+Before changing Reports printing:
 
 * inspect the current print flow
-* identify the source of receipt data
+* identify the source of report data
 * distinguish print preview from actual printer output
-* identify shared printing functions
+* identify shared printing functions and other callers
 * determine whether the change affects Sales, Purchase, Reprint, or other print functions
 
-Do not replace the printing architecture unnecessarily.
+Do not replace the printing architecture unnecessarily or modify unrelated printing behavior.
 
-Do not modify unrelated printing behavior.
+### Hardware State Guardrails
+
+* Never modify shared printer driver configurations globally in a way that mutates other modules.
+* Any formatting, font adjustment, or width calibration for Reports must be isolated to the Reports print dispatch routine.
+* After custom font size or mode is used for a Report, explicitly restore standard printer defaults after feed/cut so Sales receipts cannot inherit the altered state.
+* Do not alter POS Sales business logic or receipt templates while changing Reports output.
 
 ## Android
 

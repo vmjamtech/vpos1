@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  AlertController,
   IonContent,
   IonButton,
   IonItem,
@@ -9,16 +10,24 @@ import {
   IonItemOptions,
   IonItemSliding,
   IonIcon,
+  IonChip,
   IonLabel,
   IonList,
   IonNote,
   IonSpinner,
+  ModalController,
 } from '@ionic/angular/standalone';
 import {
   ItemSoldReport,
   ReportSummary,
   ReportsDataService,
 } from 'src/app/services/reports-data.service';
+import { CategoryService } from 'src/app/services/category.service';
+import { ReportsPrintService, InventoryPrintSection } from 'src/app/services/reports-print.service';
+import {
+  ReportPrintOptions,
+  ReportPrintOptionsComponent,
+} from './modal/report-print-options/report-print-options.component';
 
 type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
 
@@ -37,6 +46,7 @@ type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
     IonItemOptions,
     IonItemSliding,
     IonIcon,
+    IonChip,
     IonLabel,
     IonList,
     IonNote,
@@ -59,12 +69,16 @@ export class ReportsComponent {
   storeInventoryRows: any[] = [];
   warehouseInventoryRows: any[] = [];
   floorstockRows: any[] = [];
+  categories: any[] = [];
+  selectedCategory = '';
   itemSoldVisibleCount = this.reportPageSize;
   storeInventoryVisibleCount = this.reportPageSize;
   warehouseInventoryVisibleCount = this.reportPageSize;
   floorstockVisibleCount = this.reportPageSize;
   loading = false;
+  printingReport = false;
   private cashiersLoaded = false;
+  private categoriesLoaded = false;
   private loadRequestId = 0;
 
   get visibleItemSoldRows(): any[] {
@@ -72,18 +86,40 @@ export class ReportsComponent {
   }
 
   get visibleStoreInventoryRows(): any[] {
-    return this.storeInventoryRows.slice(0, this.storeInventoryVisibleCount);
+    return this.filteredStoreInventoryRows.slice(
+      0,
+      this.storeInventoryVisibleCount
+    );
+  }
+
+  get filteredStoreInventoryRows(): any[] {
+    return this.filterRowsByCategory(this.storeInventoryRows);
   }
 
   get visibleWarehouseInventoryRows(): any[] {
-    return this.warehouseInventoryRows.slice(
+    return this.filteredWarehouseInventoryRows.slice(
       0,
       this.warehouseInventoryVisibleCount
     );
   }
 
+  get filteredWarehouseInventoryRows(): any[] {
+    return this.filterRowsByCategory(this.warehouseInventoryRows);
+  }
+
   get visibleFloorstockRows(): any[] {
-    return this.floorstockRows.slice(0, this.floorstockVisibleCount);
+    return this.filteredFloorstockRows.slice(0, this.floorstockVisibleCount);
+  }
+
+  get floorstockCashierName(): string {
+    return (
+      this.floorstockRows.find((row) => row.cashierName)?.cashierName ||
+      'Not recorded'
+    );
+  }
+
+  get filteredFloorstockRows(): any[] {
+    return this.filterRowsByCategory(this.floorstockRows);
   }
 
   get activeViewTitle(): string {
@@ -126,6 +162,10 @@ export class ReportsComponent {
 
   constructor(
     private reportsService: ReportsDataService,
+    private categoryService: CategoryService,
+    private reportsPrintService: ReportsPrintService,
+    private modalController: ModalController,
+    private alertController: AlertController,
     private ngZone: NgZone,
     private changeDetector: ChangeDetectorRef
   ) {}
@@ -145,8 +185,113 @@ export class ReportsComponent {
     report: ReportView,
     slidingItem: IonItemSliding
   ): Promise<void> {
-    console.info('Quick print requested for report:', report);
-    await slidingItem.close();
+    if (this.printingReport) {
+      await slidingItem.close();
+      return;
+    }
+
+    this.printingReport = true;
+    try {
+      const [cashiers, categories] = await Promise.all([
+        report === 'summary' ? this.reportsService.getCashiers() : [],
+        report === 'inventory' || report === 'floorstock'
+          ? this.categoryService.getAllCategories()
+          : [],
+      ]);
+      const modal = await this.modalController.create({
+        component: ReportPrintOptionsComponent,
+        componentProps: {
+          report,
+          today: this.today,
+          cashiers,
+          categories,
+        },
+        cssClass: 'report-print-modal',
+      });
+      await modal.present();
+
+      const { data, role } = await modal.onDidDismiss<ReportPrintOptions>();
+      if (role === 'confirm' && data) {
+        await this.dispatchReportPrint(report, data);
+      }
+    } catch (error) {
+      console.error('Failed to print report:', error);
+      const alert = await this.alertController.create({
+        header: 'Report Print Error',
+        message:
+          error instanceof Error ? error.message : 'Unable to print report.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+    } finally {
+      this.printingReport = false;
+      await slidingItem.close();
+    }
+  }
+
+  private async dispatchReportPrint(
+    report: ReportView,
+    options: ReportPrintOptions
+  ): Promise<void> {
+    switch (report) {
+      case 'summary': {
+        const summary = await this.reportsService.getSummary(
+          options.date,
+          options.cashier
+        );
+        await this.reportsPrintService.printSummary(summary, options);
+        break;
+      }
+      case 'item-sold': {
+        const itemSold = await this.reportsService.getItemSold(
+          options.fromDate,
+          options.toDate
+        );
+        await this.reportsPrintService.printItemSold(itemSold, options);
+        break;
+      }
+      case 'inventory': {
+        const locations: ('STORE' | 'WAREHOUSE')[] =
+          options.scope === 'BOTH'
+            ? ['STORE', 'WAREHOUSE']
+            : [options.scope];
+        const sections: InventoryPrintSection[] = await Promise.all(
+          locations.map(async (location) => {
+            const rows = await this.reportsService.getInventorySnapshot(
+              options.date,
+              location
+            );
+            return {
+              location,
+              rows:
+                options.category === 'ALL'
+                  ? rows
+                  : rows.filter((row) => row.category === options.category),
+            };
+          })
+        );
+        await this.reportsPrintService.printInventory(sections, options);
+        break;
+      }
+      case 'floorstock': {
+        const reportRows = await this.reportsService.getFloorstockSnapshot(
+          options.date
+        );
+        const cashierName =
+          reportRows.find((row) => row.cashierName)?.cashierName ??
+          'Not recorded';
+        const rows =
+          options.category === 'ALL'
+            ? reportRows
+            : reportRows.filter((row) => row.category === options.category);
+        await this.reportsPrintService.printFloorstock(
+          rows,
+          cashierName,
+          options
+        );
+        break;
+      }
+    }
   }
 
   async loadActiveReport(): Promise<void> {
@@ -165,6 +310,10 @@ export class ReportsComponent {
         if (requestId !== this.loadRequestId) return;
         this.cashiers = cashiers;
         this.cashiersLoaded = true;
+      }
+
+      if (view === 'inventory' || view === 'floorstock') {
+        await this.loadCategories();
       }
 
       switch (view) {
@@ -263,6 +412,32 @@ export class ReportsComponent {
 
   showMoreFloorstock(): void {
     this.floorstockVisibleCount += this.reportPageSize;
+  }
+
+  selectCategory(category: string): void {
+    this.selectedCategory = category;
+    this.storeInventoryVisibleCount = this.reportPageSize;
+    this.warehouseInventoryVisibleCount = this.reportPageSize;
+    this.floorstockVisibleCount = this.reportPageSize;
+  }
+
+  private async loadCategories(): Promise<void> {
+    if (this.categoriesLoaded) return;
+
+    try {
+      this.categories = await this.categoryService.getAllCategories();
+      this.categoriesLoaded = true;
+      if (!this.selectedCategory && this.categories.length > 0) {
+        this.selectedCategory = this.categories[0].category;
+      }
+    } catch (error) {
+      console.error('Failed to load report categories:', error);
+    }
+  }
+
+  private filterRowsByCategory(rows: any[]): any[] {
+    if (!this.selectedCategory) return [];
+    return rows.filter((row) => row.category === this.selectedCategory);
   }
 
   private localDate(): string {

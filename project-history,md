@@ -1,8 +1,10 @@
+Reminder: Not Finish still not satisfied in the print UI, Pending will continue
+
 # VPOS1 Project History
 
 > **Purpose:** Transferable project memory for resuming the VPOS1 project in a fresh AI/coding-assistant session on another machine.
 >
-> **Last consolidated:** 2026-10-08  
+> **Last consolidated:** 2026-10-14  
 > **Project:** `vpos1`  
 > **Primary workflow:** VS Code + GitHub Copilot / Vibe Coding  
 > **Important:** Preserve existing functionality and user data. Do not make destructive or broad refactors without first auditing, explaining the root cause/impact, and getting approval.
@@ -914,6 +916,7 @@ When resuming this project, assume:
 [ ] Printing: Purchase logo enabled but logo not printed
 [ ] Printing: Sales Reprint .reduce() data-shape error
 [ ] Printing: iMin output should use receipt address fields / match preview
+[ ] Printing: Report preview Print button remains unresolved; prior layout required scrolling and the sheet moved with the gesture. Latest full-height layout is installed but still needs user confirmation.
 [x] Date filters: default From/To should be today (Dashboard, Sales, Transfers, Petty Cash, Personnel modals, Lend History)
 [x] Date filters: same-day ranges must include the entire day (Dashboard Lend timeline fixed 2026-10-08; other pages already used DATE())
 [x] Refresh: tabs/pages reset to today on return; pull-to-refresh / Sales refresh button preserve filter (rule changed 2026-10-08)
@@ -982,4 +985,50 @@ print placeholders without changing queries, calculations, or database schema.
 
 Validation: Angular build passed; debug APK installed and Summary visibility
 verified on-device.
+```
+
+---
+
+## 8. Session Log - 2026-10-14 (Report Print Layout and Preview Footer)
+
+### 8.1 What changed
+
+- Standardized the four Reports tab print generators to 30 characters per line, with 30-dash dividers and centered single-line titles.
+- Applied the requested column layouts: Item Sold 8/14/8, Inventory 10/10/10, Floorstock 9/7/7/7, and Summary 20/10. Numeric quantity and amount columns are right-aligned.
+- Kept report printing on standard Font A by removing the report-specific Font B typeface switch. The printer reset sets typeface 0.
+- Set the ticket preview to a 30-character monospace width.
+- The Print action/footer visibility remains an open issue. The user reported that the button was only reachable by scrolling and that the sheet moved upward during the scroll gesture. A full-height, non-sheet modal layout was installed as a follow-up, but the user has not confirmed that it now satisfies the print UI requirement. Do not mark this issue resolved.
+- No database schema, report calculation, POS receipt, or drawer-kick behavior was changed.
+
+### 8.2 Files modified for this work
+
+- `src/app/services/reports-print.service.ts`
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.scss`
+- `src/app/drawer/reports/reports.component.ts`
+- `src/global.scss`
+
+### 8.3 Verification
+
+- `npm run build` passed. Angular reported the existing Stencil empty-glob warning.
+- `npm exec -- cap sync android` completed successfully.
+- `gradlew.bat assembleDebug` succeeded.
+- `adb install -r` reported `Success` for the connected Android device.
+- The Print footer still needs on-device confirmation; build and installation success do not establish that the UI issue is fixed.
+
+### 8.4 Suggested commit message
+
+```text
+fix(reports): standardize 30-column print layout and preview modal
+
+Format Item Sold, Inventory, Floorstock, and Summary reports to a strict
+30-character Font A layout with centered titles, fixed dividers, and
+right-aligned numeric columns. Match the ticket preview to the 30-character
+print width.
+
+Make the report preview modal full-height and reserve flex space for its
+footer so preview scrolling does not drag the sheet. The Print action's
+visibility remains pending user confirmation on-device.
+
+Validation: Angular build, Capacitor sync, Android debug build, and APK install
+passed. No database, calculation, POS receipt, or drawer-kick behavior changed.
 ```
