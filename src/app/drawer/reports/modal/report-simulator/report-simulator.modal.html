@@ -1,0 +1,155 @@
+<ion-header>
+  <ion-toolbar color="tertiary">
+    <ion-title>Report Alignment: {{ config.tabKey | uppercase }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button aria-label="Close report settings" (click)="dismiss()">
+        <ion-icon slot="start" name="close-outline"></ion-icon>
+        Close
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding simulator-content">
+  <ion-segment [(ngModel)]="activeView" aria-label="Simulator view">
+    <ion-segment-button value="both"><ion-label>Both</ion-label></ion-segment-button>
+    <ion-segment-button value="heading"><ion-label>Heading</ion-label></ion-segment-button>
+    <ion-segment-button value="values"><ion-label>Values</ion-label></ion-segment-button>
+    <ion-segment-button value="positions"><ion-label>Positions</ion-label></ion-segment-button>
+  </ion-segment>
+
+  <section class="global-settings">
+    <ion-item lines="full">
+      <ion-label>Font Mode</ion-label>
+      <ion-select [(ngModel)]="config.fontMode" aria-label="Font mode">
+        <ion-select-option value="Font A">Font A (Standard 12x24)</ion-select-option>
+        <ion-select-option value="Font B">Font B (Condensed 9x17)</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item lines="full" class="width-setting">
+      <ion-label position="stacked">Receipt Line Width: {{ config.totalWidth }} characters</ion-label>
+      <ion-range min="16" max="48" [(ngModel)]="config.totalWidth" aria-label="Receipt line width"></ion-range>
+      <ion-input type="number" min="16" max="48" [(ngModel)]="config.totalWidth" aria-label="Receipt line width in characters"></ion-input>
+    </ion-item>
+    <div class="totals-grid">
+      <div class="total-badge" [class.valid]="headingTotal === config.totalWidth" [class.invalid]="headingTotal !== config.totalWidth">
+        <span>Heading: {{ headingTotal }} / {{ config.totalWidth }}</span>
+        <ion-button size="small" fill="outline" (click)="equalize('heading')">Equalize</ion-button>
+      </div>
+      <div class="total-badge" [class.valid]="valueTotal === config.totalWidth" [class.invalid]="valueTotal !== config.totalWidth">
+        <span>Values: {{ valueTotal }} / {{ config.totalWidth }}</span>
+        <ion-button size="small" fill="outline" (click)="equalize('values')">Equalize</ion-button>
+      </div>
+    </div>
+  </section>
+
+  <section class="preview-section">
+    <h2>Live Preview</h2>
+    <div class="thermal-preview-box" [class.font-b]="config.fontMode === 'Font B'">
+      <pre *ngIf="activeView !== 'values'" class="preview-line font-header" [class.double-height]="config.headingFontSize === 'double-height'" [class.bold]="config.headingFontSize === 'bold'">{{ simulatedHeadingLine }}</pre>
+      <pre *ngIf="activeView !== 'heading'" class="preview-divider">{{ dividerLine }}</pre>
+      <pre *ngIf="activeView !== 'heading'" class="preview-line font-value" [class.condensed]="config.valueFontSize === 'condensed'">{{ simulatedValueLine }}</pre>
+    </div>
+  </section>
+
+  <div class="columns-header">
+    <h2>Columns Setup</h2>
+    <ion-button size="small" (click)="addColumn()" [disabled]="config.columns.length >= 10">
+      <ion-icon slot="start" name="add-outline"></ion-icon>
+      Add Column
+    </ion-button>
+  </div>
+
+  <article *ngFor="let col of config.columns; let i = index" class="column-card">
+    <div class="col-title-row">
+      <strong>Column {{ i + 1 }}</strong>
+      <ion-button color="danger" fill="clear" size="small" [disabled]="config.columns.length <= 1" (click)="removeColumn(col.id)" [attr.aria-label]="'Remove column ' + (i + 1)">
+        <ion-icon name="trash-outline"></ion-icon>
+      </ion-button>
+    </div>
+
+    <section *ngIf="activeView === 'both' || activeView === 'heading' || activeView === 'positions'" class="column-settings">
+      <h3>Printed Heading</h3>
+      <ion-item *ngIf="activeView !== 'positions'" lines="none">
+        <ion-label position="stacked">Heading Text</ion-label>
+        <ion-input [(ngModel)]="col.name" [attr.aria-label]="'Column ' + (i + 1) + ' heading text'"></ion-input>
+      </ion-item>
+      <div class="inline-fields">
+        <ion-item lines="none">
+          <ion-label position="stacked">Width (chars)</ion-label>
+          <ion-input type="number" min="0" max="48" [(ngModel)]="col.headWidth"></ion-input>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label position="stacked">Align</ion-label>
+          <ion-select [(ngModel)]="col.headAlign" aria-label="Heading alignment">
+            <ion-select-option value="left">Left</ion-select-option>
+            <ion-select-option value="center">Center</ion-select-option>
+            <ion-select-option value="right">Right</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
+    </section>
+
+    <section *ngIf="activeView === 'both' || activeView === 'values' || activeView === 'positions'" class="column-settings">
+      <h3>Sample Value</h3>
+      <ion-item *ngIf="activeView !== 'positions'" lines="none">
+        <ion-label position="stacked">Sample Text</ion-label>
+        <ion-input [(ngModel)]="col.sample" [attr.aria-label]="'Column ' + (i + 1) + ' sample text'"></ion-input>
+      </ion-item>
+      <div class="inline-fields">
+        <ion-item lines="none">
+          <ion-label position="stacked">Width (chars)</ion-label>
+          <ion-input type="number" min="0" max="48" [(ngModel)]="col.valueWidth"></ion-input>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label position="stacked">Align</ion-label>
+          <ion-select [(ngModel)]="col.valueAlign" aria-label="Value alignment">
+            <ion-select-option value="left">Left</ion-select-option>
+            <ion-select-option value="center">Center</ion-select-option>
+            <ion-select-option value="right">Right</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
+    </section>
+  </article>
+
+  <section class="font-settings">
+    <ion-item lines="full">
+      <ion-label>Heading Font Size</ion-label>
+      <ion-select [(ngModel)]="config.headingFontSize" aria-label="Heading font size">
+        <ion-select-option value="normal">Normal</ion-select-option>
+        <ion-select-option value="double-height">Double Height</ion-select-option>
+        <ion-select-option value="bold">Bold</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item lines="full">
+      <ion-label>Value Font Size</ion-label>
+      <ion-select [(ngModel)]="config.valueFontSize" aria-label="Value font size">
+        <ion-select-option value="normal">Normal</ion-select-option>
+        <ion-select-option value="condensed">Condensed</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </section>
+
+  <section class="feed-settings">
+    <ion-item lines="full">
+      <ion-label position="stacked">Paper Feed Before Cut (lines)</ion-label>
+      <ion-input
+        type="number"
+        min="0"
+        max="10"
+        step="1"
+        [(ngModel)]="config.feedCount"
+        aria-label="Paper feed count before cutting"
+      ></ion-input>
+    </ion-item>
+  </section>
+</ion-content>
+
+<ion-footer class="simulator-footer">
+  <ion-button expand="block" color="tertiary" (click)="saveConfig()">
+    Save {{ config.tabKey | uppercase }} Settings
+  </ion-button>
+</ion-footer>
+
+<ion-toast [isOpen]="toastOpen" [message]="toastMessage" duration="2200" position="bottom" (didDismiss)="toastOpen = false"></ion-toast>

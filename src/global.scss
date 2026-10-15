@@ -99,3 +99,20 @@ ion-modal.report-print-modal app-report-print-options ion-footer {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+ion-modal.report-simulator-modal {
+  --height: 100%;
+  --border-radius: 0;
+}
+
+ion-modal.report-simulator-modal::part(content) {
+  height: 100%;
+  border-radius: 0;
+}
+
+ion-modal.report-simulator-modal app-report-simulator-modal {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+

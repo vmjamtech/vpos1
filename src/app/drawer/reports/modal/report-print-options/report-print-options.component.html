@@ -135,12 +135,16 @@
       <span>TICKET PREVIEW</span>
       <ion-spinner *ngIf="isPreviewLoading" name="dots"></ion-spinner>
     </div>
-    <div class="receipt-paper">
+    <div class="receipt-paper" [class.font-b]="layoutConfig.fontMode === 'Font B'">
       <pre
         class="receipt-text"
         [class.item-sold-receipt-text]="report === 'item-sold'"
         [class.inventory-receipt-text]="report === 'inventory'"
         [class.floorstock-receipt-text]="report === 'floorstock'"
+        [class.value-condensed]="layoutConfig.valueFontSize === 'condensed'"
+        [style.width.ch]="layoutConfig.totalWidth"
+        [style.min-width.ch]="layoutConfig.totalWidth"
+        [style.max-width.ch]="layoutConfig.totalWidth"
       >{{
         formattedReceiptText ||
           (previewError || 'No data to preview for selected criteria.')

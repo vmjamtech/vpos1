@@ -26,6 +26,11 @@ import {
   InventoryPrintSection,
   ReportsPrintService,
 } from 'src/app/services/reports-print.service';
+import {
+  ReportLayoutConfig,
+  ReportLayoutTab,
+  readReportLayoutConfig,
+} from '../report-simulator/report-layout.model';
 
 export type ReportPrintType =
   | 'summary'
@@ -88,6 +93,7 @@ export class ReportPrintOptionsComponent implements OnDestroy {
   isPrinting = false;
   hasDataToPrint = false;
   previewError = '';
+  layoutConfig!: ReportLayoutConfig;
   private previewRequestId = 0;
 
   constructor(
@@ -111,6 +117,7 @@ export class ReportPrintOptionsComponent implements OnDestroy {
     this.date ||= this.today;
     this.fromDate ||= this.today;
     this.toDate ||= this.today;
+    this.layoutConfig = readReportLayoutConfig(this.report as ReportLayoutTab);
     void this.refreshPreview();
   }
 
@@ -149,7 +156,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
             this.reportsPrintService.buildSummaryReceiptText(
               summary,
               options,
-              businessInfo
+              businessInfo,
+              this.layoutConfig
             );
           this.hasDataToPrint = true;
           break;
@@ -164,7 +172,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
             this.reportsPrintService.buildItemSoldReceiptText(
               report,
               options,
-              businessInfo
+              businessInfo,
+              this.layoutConfig
             );
           this.hasDataToPrint = report.rows.length > 0;
           break;
@@ -194,7 +203,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
             this.reportsPrintService.buildInventoryReceiptText(
               sections,
               options,
-              businessInfo
+              businessInfo,
+              this.layoutConfig
             );
           this.hasDataToPrint = sections.some((section) => section.rows.length > 0);
           break;
@@ -216,7 +226,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
               rows,
               cashierName,
               options,
-              businessInfo
+              businessInfo,
+              this.layoutConfig
             );
           this.hasDataToPrint = rows.length > 0;
           break;
@@ -245,7 +256,8 @@ export class ReportPrintOptionsComponent implements OnDestroy {
     this.previewError = '';
     try {
       await this.reportsPrintService.printFormattedReceipt(
-        this.formattedReceiptText
+        this.formattedReceiptText,
+        this.layoutConfig
       );
       await this.modalController.dismiss(
         { printed: true },

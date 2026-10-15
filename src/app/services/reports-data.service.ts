@@ -169,7 +169,7 @@ export class ReportsDataService {
            COALESCE(${filledColumn}, 0) AS filledQty,
            COALESCE(${emptyColumn}, 0) AS emptyQty
          FROM inventorytbl
-         ORDER BY itemcode`
+         ORDER BY itemdate ASC, itemid ASC`
       );
     }
 
@@ -180,7 +180,7 @@ export class ReportsDataService {
        FROM daily_inventory_snapshots s
        LEFT JOIN inventorytbl i ON i.itemcode = s.item_code
        WHERE s.snapshot_date = ? AND s.location = ?
-       ORDER BY s.item_code`,
+       ORDER BY i.itemdate ASC, i.itemid ASC, s.item_code`,
       [date, location]
     );
   }
@@ -197,7 +197,7 @@ export class ReportsDataService {
          LEFT JOIN daily_inventory_snapshots s
            ON s.snapshot_date = ? AND s.location = 'STORE' AND s.item_code = i.itemcode
          WHERE (? = '' OR s.cashier_name = ?)
-         ORDER BY i.itemcode`,
+         ORDER BY i.itemdate ASC, i.itemid ASC`,
         [date, cashier, cashier]
       );
     }
@@ -211,7 +211,7 @@ export class ReportsDataService {
        LEFT JOIN inventorytbl i ON i.itemcode = s.item_code
        WHERE s.snapshot_date = ? AND s.location = 'STORE'
          AND (? = '' OR s.cashier_name = ?)
-       ORDER BY s.item_code`,
+       ORDER BY i.itemdate ASC, i.itemid ASC, s.item_code`,
       [date, cashier, cashier]
     );
   }

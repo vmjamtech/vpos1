@@ -96,6 +96,7 @@ export class InventoryService {
        INNER JOIN commtbl t2 
       ON t2.comitemid = t0.itemid
     WHERE t0.itemcategory = ?
+    ORDER BY t0.itemdate ASC, t0.itemid ASC
     LIMIT ?
     OFFSET ?
   `;

@@ -29,6 +29,9 @@ import {
   ReportPrintOptions,
   ReportPrintOptionsComponent,
 } from './modal/report-print-options/report-print-options.component';
+import { ReportLayoutTab } from './modal/report-simulator/report-layout.model';
+import { readReportLayoutConfig } from './modal/report-simulator/report-layout.model';
+import { ReportSimulatorModalComponent } from './modal/report-simulator/report-simulator.modal';
 
 type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
 
@@ -231,17 +234,46 @@ export class ReportsComponent {
     }
   }
 
+  async openReportSimulator(
+    report: ReportLayoutTab,
+    slidingItem: IonItemSliding
+  ): Promise<void> {
+    try {
+      const modal = await this.modalController.create({
+        component: ReportSimulatorModalComponent,
+        componentProps: { reportTab: report },
+        cssClass: 'report-simulator-modal',
+      });
+      await modal.present();
+      await modal.onDidDismiss();
+    } catch (error) {
+      console.error('Failed to open report settings:', error);
+      const alert = await this.alertController.create({
+        header: 'Report Settings Error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to open report settings.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+    } finally {
+      await slidingItem.close();
+    }
+  }
+
   private async dispatchReportPrint(
     report: ReportView,
     options: ReportPrintOptions
   ): Promise<void> {
+    const layout = readReportLayoutConfig(report);
     switch (report) {
       case 'summary': {
         const summary = await this.reportsService.getSummary(
           options.date,
           options.cashier
         );
-        await this.reportsPrintService.printSummary(summary, options);
+        await this.reportsPrintService.printSummary(summary, options, layout);
         break;
       }
       case 'item-sold': {
@@ -249,7 +281,7 @@ export class ReportsComponent {
           options.fromDate,
           options.toDate
         );
-        await this.reportsPrintService.printItemSold(itemSold, options);
+        await this.reportsPrintService.printItemSold(itemSold, options, layout);
         break;
       }
       case 'inventory': {
@@ -272,7 +304,7 @@ export class ReportsComponent {
             };
           })
         );
-        await this.reportsPrintService.printInventory(sections, options);
+        await this.reportsPrintService.printInventory(sections, options, layout);
         break;
       }
       case 'floorstock': {
@@ -289,7 +321,8 @@ export class ReportsComponent {
         await this.reportsPrintService.printFloorstock(
           rows,
           cashierName,
-          options
+          options,
+          layout
         );
         break;
       }

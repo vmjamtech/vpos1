@@ -109,12 +109,12 @@ export class InventoryformComponent implements OnInit {
     this.isEditMode = this.mode === 'add' || this.mode === 'edit';
     this.loadCategories();
 
-    if (this.mode === 'edit' && this.itemData) {
+    if ((this.mode === 'edit' || this.mode === 'view') && this.itemData) {
       console.log('ITEMDATA', this.itemData);
       this.itemid = this.itemData.itemid;
       this.itemcode = this.itemData.itemcode;
       this.description = this.itemData.itemname;
-      this.selectedSize = this.itemData.itemsize.trim() || null;
+      this.selectedSize = (this.itemData.itemsize ?? '').trim() || null;
       this.selectedCategory = this.itemData.itemcategory || null;
       this.fillqty = this.itemData.fillqty || 0;
       this.emptyqty = this.itemData.emptyqty || 0;

@@ -68,6 +68,12 @@
       <div *ngIf="!activeView" class="reports-container product-list-container">
       <ion-list class="product-list card-list reports-card-list" lines="none">
         <ion-item-sliding #summarySlide class="report-slider-card">
+          <ion-item-options side="start">
+            <ion-item-option color="tertiary" (click)="openReportSimulator('summary', summarySlide)">
+              <ion-icon slot="top" name="options-outline"></ion-icon>
+              Setting
+            </ion-item-option>
+          </ion-item-options>
           <ion-item
             button
             [detail]="false"
@@ -90,6 +96,12 @@
         </ion-item-sliding>
 
         <ion-item-sliding #itemSoldSlide class="report-slider-card">
+          <ion-item-options side="start">
+            <ion-item-option color="tertiary" (click)="openReportSimulator('item-sold', itemSoldSlide)">
+              <ion-icon slot="top" name="options-outline"></ion-icon>
+              Setting
+            </ion-item-option>
+          </ion-item-options>
           <ion-item
             button
             [detail]="false"
@@ -112,6 +124,12 @@
         </ion-item-sliding>
 
         <ion-item-sliding #inventorySlide class="report-slider-card">
+          <ion-item-options side="start">
+            <ion-item-option color="tertiary" (click)="openReportSimulator('inventory', inventorySlide)">
+              <ion-icon slot="top" name="options-outline"></ion-icon>
+              Setting
+            </ion-item-option>
+          </ion-item-options>
           <ion-item
             button
             [detail]="false"
@@ -134,6 +152,12 @@
         </ion-item-sliding>
 
         <ion-item-sliding #floorstockSlide class="report-slider-card">
+          <ion-item-options side="start">
+            <ion-item-option color="tertiary" (click)="openReportSimulator('floorstock', floorstockSlide)">
+              <ion-icon slot="top" name="options-outline"></ion-icon>
+              Setting
+            </ion-item-option>
+          </ion-item-options>
           <ion-item
             button
             [detail]="false"
