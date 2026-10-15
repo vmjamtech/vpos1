@@ -67,6 +67,40 @@ export class InventoryService {
     }
   }
 
+  async getItemForCartHydration(itemId: string | number): Promise<any | null> {
+    const sql = `
+      SELECT
+        t0.itemid,
+        t0.itemcode,
+        t0.itemname,
+        t0.itemsize,
+        t0.itemcategory,
+        t0.fillqty,
+        t0.emptyqty,
+        t0.itemqty,
+        t0.lendqty,
+        t0.alertnum,
+        t0.floorstock,
+        t0.itemcost,
+        t1.Refill,
+        t1.Non_Refill,
+        COALESCE(t0.cost_refill, t0.itemcost, 0) AS cost_refill,
+        COALESCE(t0.cost_non_refill, t0.itemcost, 0) AS cost_non_refill
+      FROM inventorytbl t0
+      INNER JOIN pricelisttbl t1 ON t1.itemid = t0.itemid
+      WHERE t0.itemid = ?
+      LIMIT 1
+    `;
+
+    try {
+      const items = await this.db.query(sql, [itemId]);
+      return items[0] ?? null;
+    } catch (error) {
+      console.error('Error fetching inventory item for cart hydration:', error);
+      throw new Error('Failed to load inventory item.');
+    }
+  }
+
   async findByCategory(
     itemcategory: string,
     limit: number,

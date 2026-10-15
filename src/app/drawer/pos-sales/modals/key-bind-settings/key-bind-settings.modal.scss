@@ -1,0 +1,86 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-content {
+  padding: 12px 16px 24px;
+}
+
+.modal-back-button {
+  --color: #ffffff;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  width: 48px;
+  min-height: 48px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ion-color-medium);
+  font-size: 13px;
+}
+
+.items-heading,
+.total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.items-heading {
+  margin-top: 20px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--ion-color-step-150);
+  text-align: left;
+}
+
+td ion-select {
+  min-width: 120px;
+  padding: 0;
+}
+
+td ion-input {
+  width: 62px;
+  --padding-start: 4px;
+}
+
+.empty-items {
+  margin: 20px 0;
+  color: var(--ion-color-medium);
+  text-align: center;
+}
+
+.total-row {
+  padding: 16px 4px;
+  border-top: 1px solid var(--ion-color-step-150);
+  font-size: 17px;
+}
+
+.confirm-toolbar {
+  padding: 8px 16px;
+}

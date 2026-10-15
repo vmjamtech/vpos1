@@ -1,0 +1,108 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-title>Key Bind Settings</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        class="modal-back-button"
+        color="light"
+        aria-label="Back to Select Order"
+        (click)="dismiss()"
+      >
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="settings-content">
+    <ion-item>
+      <ion-label position="stacked">Code Name</ion-label>
+      <ion-input
+        [(ngModel)]="codeName"
+        maxlength="40"
+        placeholder="Morning Delivery"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item button detail="false" (click)="selectCustomer()">
+      <ion-label>
+        <span class="field-label">Customer</span>
+        <strong>{{ customer?.custname || customer?.name || 'Select Customer' }}</strong>
+      </ion-label>
+      <ion-icon slot="end" name="chevron-forward-outline"></ion-icon>
+    </ion-item>
+
+    <div class="items-heading">
+      <h2>Items</h2>
+      <ion-button size="small" (click)="addItems()">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Select Item(s)
+      </ion-button>
+    </div>
+
+    <div class="table-scroll" *ngIf="items.length > 0; else emptyItems">
+      <table>
+        <thead>
+          <tr>
+            <th>Item Code</th>
+            <th>Unit</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{ item.itemcode }}</td>
+            <td>
+              <ion-select
+                [(ngModel)]="item.unit"
+                interface="popover"
+                (ionChange)="onUnitChange(item)"
+              >
+                <ion-select-option value="REFILL">REFILL</ion-select-option>
+                <ion-select-option value="NON-REFILL">NON-REFILL</ion-select-option>
+              </ion-select>
+            </td>
+            <td>
+              <ion-input
+                type="number"
+                min="1"
+                [(ngModel)]="item.qty"
+                (ionChange)="updateAmount(item)"
+              ></ion-input>
+            </td>
+            <td>{{ item.price | number : '1.2-2' }}</td>
+            <td>{{ getLineTotal(item) | number : '1.2-2' }}</td>
+            <td>
+              <ion-button
+                fill="clear"
+                color="danger"
+                aria-label="Remove item"
+                (click)="removeItem(item)"
+              >
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #emptyItems>
+      <p class="empty-items">No items selected.</p>
+    </ng-template>
+
+    <div class="total-row">
+      <span>Total</span>
+      <strong>{{ total | number : '1.2-2' }}</strong>
+    </div>
+  </div>
+</ion-content>
+
+<ion-toolbar class="confirm-toolbar">
+  <ion-button expand="block" color="warning" (click)="confirm()">
+    CONFIRM
+  </ion-button>
+</ion-toolbar>

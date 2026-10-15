@@ -1527,3 +1527,116 @@ Validation: Angular production build, Capacitor Android sync, Gradle debug APK
 build, and adb install passed. Focused Jasmine execution, lint, and on-device
 migration, profit, and legacy-backup acceptance remain outstanding.
 ```
+
+---
+
+## 14. Session Log - 2026-10-15 (POS Shortcut Presets and Direct Checkout)
+
+### 14.1 What changed
+
+- Added a visible star shortcut action to the POS header and wired it to an
+  always-available `SELECT ORDER` modal. The empty preset list no longer exits
+  early, so `+ ADD MORE` is available before the first preset is created.
+- Added local-storage persistence under `vpos_shortcut_presets`, a six-preset
+  limit, preset selection, dual-direction swipe actions (Edit from start,
+  Delete from end), and a confirmation before deletion.
+- Added the Key Bind Settings modal for code name, customer selection, item
+  selection, quantity, unit, and live line/overall totals. Both refill and
+  non-refill prices and costs are retained when changing a line's unit.
+- Added centered SELECT ORDER cards with customer/item-code summaries, larger
+  tap targets, a distinct add card, and visible back controls on both modals.
+- Added full inventory hydration through the existing `SqliteService.query`
+  API and the active `inventorytbl` / `pricelisttbl` schema. Preset checkout
+  uses canonical POS fields (`itemid`, `itemcode`, `itemname`, `Refill`,
+  `Non_Refill`, unit costs, `amount`, and `total`).
+- Added pre-checkout stock validation. Refill orders check `fillqty`; non-refill
+  orders check both `itemqty` and `fillqty`, matching the existing inventory
+  decrement path. A missing or insufficient item aborts before changing the
+  active cart/POS state and shows a warning/danger toast.
+- Successful hydration assigns customer/category/personnel to `posData`,
+  clears any prior discount, recalculates with existing formulas, and opens the
+  existing `PurchaseSummaryComponent` checkout flow.
+- No database schema, inventory pricing formula, or sales calculation formula
+  was changed.
+
+### 14.2 Files modified
+
+- `src/app/drawer/pos-sales/pos-sales.component.html`
+- `src/app/drawer/pos-sales/pos-sales.component.scss`
+- `src/app/drawer/pos-sales/pos-sales.component.ts`
+- `src/app/drawer/pos-sales/shortcut-preset.model.ts` (new)
+- `src/app/drawer/pos-sales/modals/select-order/select-order.modal.html` (new)
+- `src/app/drawer/pos-sales/modals/select-order/select-order.modal.scss` (new)
+- `src/app/drawer/pos-sales/modals/select-order/select-order.modal.ts` (new)
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.html` (new)
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.scss` (new)
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.ts` (new)
+- `src/app/services/inventory.service.ts`
+- `project-history,md` (this entry)
+
+### 14.3 Verification and APK
+
+- Angular production build passed. The build emitted the Stencil empty-glob
+  warning and an Ionic `IonLabel` unused-import warning; neither failed it.
+- `build-debug.bat` completed Angular build, Capacitor sync, Gradle debug APK
+  build, and device installation (`adb install -r` reported `Success`).
+- APK output: `android/app/build/outputs/apk/debug/app-debug.apk`.
+- Focused Jasmine tests and lint were not confirmed passing in this session.
+- The latest APK is installed, but the user has not yet confirmed on-device
+  visibility of both modal back controls and the add action, or completed
+  preset create/edit/delete, six-slot, stock-guard, and payment acceptance.
+
+### 14.4 Remaining open issue queue
+
+- POS shortcuts: confirm on-device back-button and `+ ADD MORE` visibility;
+  test preset create/edit/delete, both swipe directions, six-slot hiding,
+  stale/out-of-stock abort behavior, and direct checkout/payment entry.
+- Database migration: verify version 4 dual-cost initialization on-device with
+  existing data intact; verify refill/non-refill sale costs and dashboard
+  profit, and restore a pre-dual-cost backup with a preserved current backup.
+- Database recovery: retry the existing backup on-device and confirm picker,
+  restore, logout, operational data, and settings. Complete POS queue
+  acceptance for persistence, cancellation, replacement guard, and personnel
+  selection.
+- Tests and lint: focused Jasmine runs still lack a final result; resolve test
+  runner blockers and run lint.
+- Reports: verify the latest physical print has no stray `M`, complete Printed
+  timestamp, configured feed count, and expected iMin font rendering. Confirm
+  report print-options/footer visibility; Reports swipe-to-Print integration
+  remains pending.
+- Printing: Business Contact Number missing on receipts; Purchase logo not
+  printing; Sales Reprint `.reduce()` data-shape error; align iMin address with
+  receipt address fields and preview; physically verify coupon reward box and
+  right-side rails.
+- Petty Cash: separate Cash In and Cash Out totals.
+- User acceptance: test Store Only and per-user permission workflows; test
+  customer import, inactivity, and inactive-customer restore workflows.
+- Development: improve Android testing/live-reload workflow.
+- Versioning: increment app version while preserving SQLite data.
+- Git: verify/configure source control on this machine.
+- Copilot rules: keep VPOS, token, and safety instructions in separate files.
+
+### 14.5 Suggested commit message
+
+```text
+feat(pos): add persistent shortcut presets and guarded checkout
+
+Add a POS star trigger and an always-open SELECT ORDER modal with six local
+preset slots, dual-direction swipe edit/delete actions, and a Key Bind Settings
+editor for code name, customer, items, unit, and quantity. Preserve both
+refill/non-refill prices and costs in saved presets and show customer/item
+summaries in centered, large-tap-target rows.
+
+Hydrate preset items from inventorytbl and pricelisttbl using the existing
+SQLite query API and canonical POS cart fields. Validate fillqty for every
+line and itemqty for non-refill lines before changing the active POS state;
+abort with a warning when an item is missing or stock is insufficient. On
+success, recalculate through the existing totals logic and open
+PurchaseSummaryComponent for payment entry.
+
+Keep the database schema and pricing/calculation formulas unchanged.
+
+Validation: Angular production build, Capacitor sync, Android debug APK build,
+and adb install passed. On-device shortcut workflow acceptance, focused
+Jasmine tests, and lint remain outstanding.
+```

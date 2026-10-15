@@ -31,6 +31,9 @@ import { Router } from '@angular/router';
 import { ItemListComponent } from './modals/item-list/item-list.component';
 import { PurchaseSummaryComponent } from './modals/purchase-summary/purchase-summary.component';
 import { QueueOrdersModalComponent } from './modals/queue-orders/queue-orders.modal';
+import { SelectOrderModalComponent } from './modals/select-order/select-order.modal';
+import { ShortcutPreset } from './shortcut-preset.model';
+import { InventoryService } from 'src/app/services/inventory.service';
 import { StorageService } from 'src/app/services/storage.service';
 
 @Component({
@@ -98,7 +101,8 @@ export class PosSalesComponent implements OnInit {
     private alertController: AlertController,
     private actionSheetCtrl: ActionSheetController,
     private storageService: StorageService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private inventoryService?: InventoryService
   ) {
     this.storageService.get<any>('login-data').then((user) => {
       if (user) {
@@ -677,6 +681,183 @@ export class PosSalesComponent implements OnInit {
       },
     });
     return await modal.present();
+  }
+
+  async openShortcutOrders() {
+    let presets: ShortcutPreset[] = [];
+
+    try {
+      const storedPresets = localStorage.getItem('vpos_shortcut_presets');
+      const parsedPresets = storedPresets ? JSON.parse(storedPresets) : [];
+      if (Array.isArray(parsedPresets)) {
+        presets = parsedPresets
+          .filter(
+            (preset: any) =>
+              preset && preset.codeName && Array.isArray(preset.items)
+          )
+          .slice(0, 6);
+      }
+    } catch (error) {
+      console.error('Failed to load shortcut presets:', error);
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: SelectOrderModalComponent,
+      cssClass: 'select-order-modal',
+      componentProps: { presets },
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.selectedPreset) {
+      await this.promptShortcutCategoryPersonnel(data.selectedPreset);
+    }
+  }
+
+  private async promptShortcutCategoryPersonnel(preset: ShortcutPreset) {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Please Select',
+      buttons: [
+        {
+          text: '1-PICK UP',
+          handler: () => {
+            void this.selectShortcutPersonnel(preset, '1-PICK UP');
+          },
+        },
+        {
+          text: '2-DELIVERY',
+          handler: () => {
+            void this.selectShortcutPersonnel(preset, '2-DELIVERY');
+          },
+        },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await actionSheet.present();
+  }
+
+  private async selectShortcutPersonnel(
+    preset: ShortcutPreset,
+    category: string
+  ) {
+    const modal = await this.modalCtrl.create({
+      component: SelectListComponent,
+      initialBreakpoint: 0.9,
+      breakpoints: [0.9],
+      backdropDismiss: false,
+      expandToScroll: false,
+      componentProps: {
+        title: 'Select Personnel 1',
+        type: 'personnel',
+        excludedIds: [],
+      },
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data) {
+      await this.executeShortcutPresetOrder(preset, category, data);
+    }
+  }
+
+  async executeShortcutPresetOrder(
+    preset: ShortcutPreset,
+    category: string,
+    personnel: any
+  ) {
+    const hydratedCart: any[] = [];
+
+    for (const presetItem of preset.items) {
+      let inventoryItem: any | null = null;
+
+      try {
+        inventoryItem = await this.inventoryService?.getItemForCartHydration(
+          presetItem.itemid
+        );
+      } catch (error) {
+        console.error('Failed to hydrate shortcut preset item:', error);
+      }
+
+      if (!inventoryItem) {
+        hydratedCart.length = 0;
+        const toast = await this.toastController.create({
+          message: `Cannot process preset: Item ${presetItem.itemcode} is no longer active in inventory.`,
+          duration: 3500,
+          position: 'bottom',
+          color: 'warning',
+        });
+        await toast.present();
+        return;
+      }
+
+      const requiredQty = Number(presetItem.qty || 1);
+      const availableFillQty = Number(inventoryItem.fillqty) || 0;
+      const availableItemQty = Number(inventoryItem.itemqty) || 0;
+      const isOutOfStock =
+        !Number.isFinite(requiredQty) ||
+        requiredQty <= 0 ||
+        availableFillQty <= 0 ||
+        availableFillQty < requiredQty ||
+        (presetItem.unit === 'NON-REFILL' &&
+          (availableItemQty <= 0 || availableItemQty < requiredQty));
+
+      if (isOutOfStock) {
+        hydratedCart.length = 0;
+        const toast = await this.toastController.create({
+          message: `Out of Stock: ${inventoryItem.itemname || inventoryItem.itemcode} has insufficient stock (Available: ${inventoryItem.fillqty || 0}, Required: ${presetItem.qty}).`,
+          duration: 3500,
+          position: 'bottom',
+          color: 'danger',
+        });
+        await toast.present();
+        return;
+      }
+
+      const isRefill = presetItem.unit === 'REFILL';
+      const activePrice = Number(
+        isRefill ? inventoryItem.Refill : inventoryItem.Non_Refill
+      );
+      const activeCost = Number(
+        isRefill ? inventoryItem.cost_refill : inventoryItem.cost_non_refill
+      );
+      const qty = requiredQty;
+      const lineTotal = Number((activePrice * qty).toFixed(2));
+
+      hydratedCart.push({
+        ...inventoryItem,
+        itemid: inventoryItem.itemid,
+        itemcode: inventoryItem.itemcode,
+        itemname: inventoryItem.itemname,
+        Refill: Number(inventoryItem.Refill),
+        Non_Refill: Number(inventoryItem.Non_Refill),
+        cost_refill: Number(inventoryItem.cost_refill),
+        cost_non_refill: Number(inventoryItem.cost_non_refill),
+        unit: presetItem.unit,
+        qty,
+        price: activePrice,
+        cost: activeCost,
+        amount: lineTotal,
+        total: lineTotal,
+      });
+    }
+
+    if (hydratedCart.length === 0) return;
+
+    this.posData.customerId =
+      preset.customer?.custid || preset.customer?.id || null;
+    this.posData.customerName =
+      preset.customer?.custname || preset.customer?.name || '';
+    this.posData.customeraddress =
+      preset.customer?.custadd || preset.customer?.address || '';
+    this.posData.category = category;
+    this.posData.personnel1Id = personnel?.pid || personnel?.id || null;
+    this.posData.personnel1Name = personnel?.pname || personnel?.name || '';
+    this.posData.personnel2Id = null;
+    this.posData.personnel2Name = '';
+    this.resetDiscount();
+    this.cart = hydratedCart;
+    this.calculateTotals();
+    await this.openCheckoutModal();
   }
 
   get isResetDisabled(): boolean {

@@ -1,0 +1,146 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.order-header-title {
+  color: #ffc409;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-align: center;
+}
+
+.modal-back-button {
+  --color: #ffffff;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  width: 48px;
+  min-height: 48px;
+}
+
+.centered-content {
+  --background: #1e2024;
+}
+
+.centered-content::part(scroll) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preset-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 80vh;
+  padding: 16px;
+}
+
+.preset-box-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 440px;
+  padding: 0;
+  background: transparent;
+}
+
+.preset-slider {
+  overflow: hidden;
+  border: 1px solid #3c4049;
+  border-radius: 8px;
+}
+
+.preset-item-card {
+  --background: #2b2e35;
+  --color: #ffffff;
+  --min-height: 72px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --inner-border-width: 0;
+}
+
+.index-num {
+  flex: 0 0 auto;
+  min-width: 20px;
+  margin-right: 12px;
+  color: #7d8597;
+  font-size: 0.95rem;
+}
+
+.preset-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.code-name {
+  flex: 0 0 auto;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.meta-details {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: #d1d5db;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.cust-name,
+.item-code-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cust-name {
+  flex: 0 1 auto;
+  font-weight: 500;
+}
+
+.divider-colon {
+  flex: 0 0 auto;
+  color: #6b7280;
+}
+
+.item-code-text {
+  flex: 1 1 auto;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.add-more-container {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 4px;
+  padding: 8px 0;
+  background: #1e2024;
+}
+
+.add-more-btn {
+  display: flex;
+  height: 56px;
+  min-height: 56px;
+  visibility: visible;
+  opacity: 1;
+  --border-color: #ffc409;
+  --color: #ffc409;
+  --border-style: dashed;
+  --border-width: 2px;
+  --border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}

@@ -1,0 +1,71 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-title class="order-header-title">SELECT ORDER</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        class="modal-back-button"
+        color="light"
+        aria-label="Back"
+        (click)="dismiss()"
+      >
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="centered-content">
+  <div class="preset-wrapper">
+    <ion-list lines="none" class="preset-box-list">
+      <ion-item-sliding
+        *ngFor="let preset of presets; let i = index"
+        class="preset-slider"
+      >
+        <ion-item-options side="start">
+          <ion-item-option color="primary" (click)="editPreset(preset)">
+            <ion-icon slot="top" name="create-outline"></ion-icon>
+            Edit
+          </ion-item-option>
+        </ion-item-options>
+
+        <ion-item
+          button
+          detail="false"
+          class="preset-item-card"
+          (click)="choosePreset(preset)"
+        >
+          <span class="index-num">{{ i + 1 }}.</span>
+          <div class="preset-info-row">
+            <span class="code-name">{{ preset.codeName | uppercase }}</span>
+            <span class="meta-details">
+              <span class="cust-name">
+                {{ preset.customer?.custname || preset.customer?.name || 'Customer' }}
+              </span>
+              <span class="divider-colon">:</span>
+              <span class="item-code-text">{{ getItemCodesSummary(preset) }}</span>
+            </span>
+          </div>
+        </ion-item>
+
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deletePreset(preset)">
+            <ion-icon slot="top" name="trash-outline"></ion-icon>
+            Delete
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+
+      <div *ngIf="presets.length < 6" class="add-more-container">
+        <ion-button
+          expand="block"
+          fill="outline"
+          class="add-more-btn"
+          (click)="addNewPreset()"
+        >
+          <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+          ADD MORE
+        </ion-button>
+      </div>
+    </ion-list>
+  </div>
+</ion-content>
