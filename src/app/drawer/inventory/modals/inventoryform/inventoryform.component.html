@@ -156,16 +156,30 @@
       </ion-item>
     </ion-list>
 
-    <!-- ITEM COST -->
-    <ion-item class="stacked-item" *ngIf="canViewCostPrice">
-      <ion-label position="stacked">Item Cost</ion-label>
-      <ion-input
-        type="number"
-        [(ngModel)]="itemCost"
-        name="itemCost"
-        [disabled]="!isEditMode"
-      ></ion-input>
-    </ion-item>
+    <!-- COST PRICES -->
+    <ion-list *ngIf="canViewCostPrice">
+      <ion-item-divider><ion-label>Cost Prices</ion-label></ion-item-divider>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Cost (Refill)</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="refillCost"
+          name="refillCost"
+          [disabled]="!isEditMode"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Cost (Non-Refill)</ion-label>
+        <ion-input
+          type="number"
+          [(ngModel)]="nonRefillCost"
+          name="nonRefillCost"
+          [disabled]="!isEditMode"
+        ></ion-input>
+      </ion-item>
+    </ion-list>
 
     <!-- CRITICAL LEVEL -->
     <ion-item class="stacked-item">

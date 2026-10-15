@@ -76,8 +76,9 @@ export class SalescartService {
       INSERT INTO salescart (
         screfnum, scdate, scitemcode, scitemdesc, scunit, scprice,
         sctotal, scqty, sccashier, scdiscount, scstats, scbrand,
-        scpackage, sccost, totalcost, sclendqty, sclendstats
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        scpackage, sccost, totalcost, sclendqty, sclendstats,
+        cost_snapshot_version
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `;
 
     const params = [
@@ -98,6 +99,7 @@ export class SalescartService {
       data.totalcost,
       data.sclendqty,
       data.sclendstats,
+      data.cost_snapshot_version || 0,
     ];
 
     // Insert row (void return)

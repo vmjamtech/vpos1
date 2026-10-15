@@ -93,7 +93,8 @@ export class InventoryformComponent implements OnInit {
   deliveryCommission = 0;
   pickupCommission = 0;
 
-  itemCost = 0;
+  refillCost = 0;
+  nonRefillCost = 0;
   criticalLevel = 0;
   floorstock = 0;
   isEditMode = false;
@@ -126,7 +127,10 @@ export class InventoryformComponent implements OnInit {
       this.nonRefillPrice = this.itemData.Non_Refill || 0;
       this.deliveryCommission = this.itemData.comdel || 0;
       this.pickupCommission = this.itemData.compickup || 0;
-      this.itemCost = this.itemData.itemcost || 0;
+      this.refillCost =
+        this.itemData.cost_refill ?? this.itemData.itemcost ?? 0;
+      this.nonRefillCost =
+        this.itemData.cost_non_refill ?? this.itemData.itemcost ?? 0;
       this.criticalLevel = this.itemData.alertnum || 0;
       this.floorstock = this.itemData.floorstock || 0;
     }
@@ -179,7 +183,9 @@ export class InventoryformComponent implements OnInit {
       Non_Refill: this.nonRefillPrice,
       comdel: this.deliveryCommission,
       compickup: this.pickupCommission,
-      itemcost: this.itemCost,
+      itemcost: this.refillCost,
+      cost_refill: this.refillCost,
+      cost_non_refill: this.nonRefillCost,
       alertnum: this.criticalLevel,
       floorstock: this.floorstock,
       lendqty: 0,
@@ -215,7 +221,9 @@ export class InventoryformComponent implements OnInit {
         Non_Refill: this.nonRefillPrice,
         comdel: this.deliveryCommission,
         compickup: this.pickupCommission,
-        itemcost: this.itemCost,
+        itemcost: this.refillCost,
+        cost_refill: this.refillCost,
+        cost_non_refill: this.nonRefillCost,
         alertnum: this.criticalLevel,
         floorstock: this.floorstock,
         origfillqty: this.origfillqty,

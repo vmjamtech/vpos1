@@ -87,6 +87,8 @@ export class InventoryService {
       t0.alertnum,
       t0.floorstock,
       t0.itemcost,
+      t0.cost_refill,
+      t0.cost_non_refill,
       t0.itemcategory,
       t2.compickup,
       t2.comdel
@@ -155,6 +157,8 @@ export class InventoryService {
     comdel?: number;
     compickup?: number;
     itemcost?: number;
+    cost_refill?: number;
+    cost_non_refill?: number;
     alertnum?: number;
     floorstock?: number;
   }): Promise<boolean> {
@@ -170,8 +174,8 @@ export class InventoryService {
     const sql = `
     INSERT INTO inventorytbl (
       itemcode, itemname, itemsize, itemcategory, fillqty, emptyqty, itemqty, 
-      itemcost, alertnum, floorstock, itemdate
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      itemcost, alertnum, floorstock, itemdate, cost_refill, cost_non_refill
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     const params = [
@@ -182,10 +186,12 @@ export class InventoryService {
       item.fillqty || 0,
       item.emptyqty || 0,
       item.itemqty || 0,
-      item.itemcost || 0,
+      item.cost_refill ?? item.itemcost ?? 0,
       item.alertnum || 0,
       item.floorstock || 0,
       itemdate,
+      item.cost_refill ?? item.itemcost ?? 0,
+      item.cost_non_refill ?? item.itemcost ?? 0,
     ];
 
     try {
@@ -249,6 +255,8 @@ export class InventoryService {
     comdel?: number;
     compickup?: number;
     itemcost?: number;
+    cost_refill?: number;
+    cost_non_refill?: number;
     alertnum?: number;
     floorstock?: number;
     origfillqty?: number;
@@ -258,7 +266,8 @@ export class InventoryService {
     const sql = `
     UPDATE inventorytbl
     SET itemcode = ?, itemname = ?, itemsize = ?, itemcategory = ?, 
-        fillqty = ?, emptyqty = ?, itemqty = ?, itemcost = ?, alertnum = ?, floorstock = ?
+        fillqty = ?, emptyqty = ?, itemqty = ?, itemcost = ?, alertnum = ?, floorstock = ?,
+        cost_refill = ?, cost_non_refill = ?
     WHERE itemid = ?
   `;
 
@@ -270,9 +279,11 @@ export class InventoryService {
       item.fillqty || 0,
       item.emptyqty || 0,
       item.itemqty || 0,
-      item.itemcost || 0,
+      item.cost_refill ?? item.itemcost ?? 0,
       item.alertnum || 0,
       item.floorstock || 0,
+      item.cost_refill ?? item.itemcost ?? 0,
+      item.cost_non_refill ?? item.itemcost ?? 0,
       item.itemid,
     ];
 

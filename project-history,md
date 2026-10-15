@@ -1461,3 +1461,69 @@ Validation: Angular production build, Capacitor sync, Android debug APK build,
 and adb install passed. Focused Karma tests and post-fix on-device restore
 acceptance remain outstanding.
 ```
+
+---
+
+## 13. Session Log - 2026-10-15 (Unit Costs and Sales Profit Snapshots)
+
+### 13.1 What changed
+
+- Split inventory cost into Refill and Non-Refill values in the inventory form and persistence layer. Existing `itemcost` remains the legacy/default cost, and existing inventory rows initialize both unit costs from that value during database migration version 4.
+- POS cart items now select and retain the cost for their selected unit. Changing between Refill and Non-Refill updates the cost used for the sale.
+- Sales now store the selected unit cost and total cost on each sales-cart row, tagged with `cost_snapshot_version`. Dashboard sales-profit calculations use these sale-time snapshots for new sales and continue using the legacy inventory cost for older sales.
+- Database restore now accepts supported pre-dual-cost backups and fills missing inventory cost columns from legacy `itemcost`; missing snapshot-version data defaults to legacy behavior. Current-format backups remain validated against the live schema.
+- Added focused tests for selecting unit costs, the legacy inventory-cost fallback, migration behavior, and restoration of older backups. No sales prices, stock quantities, or existing database rows are intentionally reset.
+
+### 13.2 Files modified
+
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.html`
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.ts`
+- `src/app/drawer/pos-sales/modals/purchase-summary/purchase-summary.component.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.spec.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.ts`
+- `src/app/services/dashboard.service.ts`
+- `src/app/services/database-backup.service.spec.ts`
+- `src/app/services/database-backup.service.ts`
+- `src/app/services/database-migrations.spec.ts`
+- `src/app/services/database-migrations.ts`
+- `src/app/services/inventory.service.ts`
+- `src/app/services/salescart.service.ts`
+- `project-history,md` (this entry)
+
+The generated debug APK is `android/app/build/outputs/apk/debug/app-debug.apk` and is a build artifact, not a tracked source-file change.
+
+### 13.3 Verification
+
+- `build-debug.bat` completed the Angular production build, Capacitor Android sync, and Gradle debug APK build successfully.
+- The updated APK was installed with `adb install -r`; installation reported `Success`.
+- The build emitted the existing Stencil empty-glob and Gradle deprecation/`flatDir` warnings; none failed the build.
+- Focused Jasmine tests and lint have not been confirmed passing in this session.
+- The migration, profit totals, and older-backup fallback still need acceptance against a preserved real device database and representative sales data.
+
+### 13.4 Remaining open issue queue
+
+- Verify version 4 migration on-device with existing user data intact; confirm both cost fields initialize from the prior `itemcost` and can then be edited independently.
+- Verify new Refill and Non-Refill sales use their matching costs in dashboard profit totals, and that historical sales retain their prior legacy-cost calculation.
+- Restore a pre-dual-cost backup on-device and confirm the restored inventory costs and subsequent sale/profit behavior. Preserve a current backup before testing.
+- Run the focused Jasmine specs and lint; the test runner has previously failed to produce a final focused result, and earlier suite attempts were blocked by unrelated spec constructor errors.
+- All unresolved items in section 12.4 remain open, including POS queue and database-recovery acceptance, report printing and print-preview UI acceptance, receipt printing issues, Petty Cash totals, customer workflows, and development/versioning follow-ups.
+
+### 13.5 Suggested commit message
+
+```text
+feat(inventory): track refill and non-refill costs
+
+Add separate refill and non-refill cost fields to inventory editing and
+persistence, with a versioned SQLite migration that seeds both from the
+existing item cost. Select the matching unit cost in the POS and save a
+sale-time cost snapshot so dashboard profit uses the cost at sale time while
+older sales retain their legacy calculation.
+
+Keep older database backups restorable by accepting the supported legacy
+column sets and filling missing cost fields from itemcost. Add focused tests
+for unit-cost selection, migration, and legacy backup restoration.
+
+Validation: Angular production build, Capacitor Android sync, Gradle debug APK
+build, and adb install passed. Focused Jasmine execution, lint, and on-device
+migration, profit, and legacy-backup acceptance remain outstanding.
+```

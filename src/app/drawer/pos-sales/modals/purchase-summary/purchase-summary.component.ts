@@ -375,6 +375,11 @@ export class PurchaseSummaryComponent implements OnInit {
       console.log('Sales Result', salesresult);
 
       for (const item of this.cart) {
+        const unitCost =
+          item.cost ??
+          (item.unit === 'REFILL'
+            ? item.cost_refill ?? item.itemcost ?? 0
+            : item.cost_non_refill ?? item.itemcost ?? 0);
         const salesitems = {
           screfnum: salesresult.salesrefnum,
           scdate: salesresult.salesdate,
@@ -391,6 +396,9 @@ export class PurchaseSummaryComponent implements OnInit {
           sccashier: this.cashierName,
           scstats: 'PAID',
           scpackage: item.itemsize || '',
+          sccost: unitCost,
+          totalcost: unitCost * item.qty,
+          cost_snapshot_version: 1,
         };
 
         const itemresult = await this.salescartService.addCartItemDb(

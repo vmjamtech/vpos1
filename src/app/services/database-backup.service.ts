@@ -26,6 +26,10 @@ export class DatabaseBackupService {
   private readonly backupFormat = 'vmjamtechdatamobile' as const;
   private readonly backupVersion = 1 as const;
   private readonly databaseName = 'vmjampos' as const;
+  private readonly legacyOptionalColumns: Record<string, string[]> = {
+    inventorytbl: ['cost_refill', 'cost_non_refill'],
+    salescart: ['cost_snapshot_version'],
+  };
 
   constructor(private db: SqliteService) {}
 
@@ -223,11 +227,19 @@ export class DatabaseBackupService {
     for (const table of liveTables) {
       const savedTable = backup.tables[table];
       const liveColumns = await this.getTableColumns(table);
+      const legacyColumns = liveColumns.filter(
+        (column) => !this.legacyOptionalColumns[table]?.includes(column)
+      );
+      const hasCurrentColumns =
+        JSON.stringify(savedTable?.columns) === JSON.stringify(liveColumns);
+      const hasSupportedLegacyColumns =
+        this.legacyOptionalColumns[table]?.length > 0 &&
+        JSON.stringify(savedTable?.columns) === JSON.stringify(legacyColumns);
       if (
         !savedTable ||
         !Array.isArray(savedTable.columns) ||
         !Array.isArray(savedTable.rows) ||
-        JSON.stringify(savedTable.columns) !== JSON.stringify(liveColumns)
+        (!hasCurrentColumns && !hasSupportedLegacyColumns)
       ) {
         throw new Error('INVALID_BACKUP_FILE');
       }
@@ -237,8 +249,8 @@ export class DatabaseBackupService {
           row !== null &&
           typeof row === 'object' &&
           !Array.isArray(row) &&
-          Object.keys(row).length === liveColumns.length &&
-          liveColumns.every((column) =>
+          Object.keys(row).length === savedTable.columns.length &&
+          savedTable.columns.every((column) =>
             Object.prototype.hasOwnProperty.call(row, column)
           )
       );
@@ -256,6 +268,23 @@ export class DatabaseBackupService {
             throw new Error('INVALID_BACKUP_FILE');
           }
         }
+      }
+
+      if (hasSupportedLegacyColumns) {
+        const missingColumns = liveColumns.filter(
+          (column) => !savedTable.columns.includes(column)
+        );
+        savedTable.rows = savedTable.rows.map((row) => {
+          const restoredRow = { ...row };
+          for (const column of missingColumns) {
+            restoredRow[column] =
+              table === 'inventorytbl'
+                ? row['itemcost'] ?? 0
+                : 0;
+          }
+          return restoredRow;
+        });
+        savedTable.columns = liveColumns;
       }
     }
     return backup;

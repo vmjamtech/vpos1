@@ -56,6 +56,70 @@ describe('DatabaseBackupService', () => {
     expect(db.executeInTransaction).not.toHaveBeenCalled();
   });
 
+  it('restores pre-dual-cost backups using legacy cost and profit fallbacks', async () => {
+    db.query.and.callFake(async (sql: string) => {
+      if (sql.includes("name = 'ai_chunk_fts'")) return [] as any;
+      if (sql.includes('sqlite_master')) {
+        return [
+          { name: 'inventorytbl', sql: 'CREATE TABLE inventorytbl' },
+          { name: 'salescart', sql: 'CREATE TABLE salescart' },
+        ] as any;
+      }
+      if (sql.includes('PRAGMA table_info("inventorytbl")')) {
+        return [
+          { name: 'itemid' },
+          { name: 'itemcost' },
+          { name: 'cost_refill' },
+          { name: 'cost_non_refill' },
+        ] as any;
+      }
+      if (sql.includes('PRAGMA table_info("salescart")')) {
+        return [
+          { name: 'scid' },
+          { name: 'sccost' },
+          { name: 'totalcost' },
+          { name: 'cost_snapshot_version' },
+        ] as any;
+      }
+      return [] as any;
+    });
+    const backup = new File(
+      [
+        JSON.stringify({
+          format: 'vmjamtechdatamobile',
+          version: 1,
+          database: 'vmjampos',
+          createdAt: new Date().toISOString(),
+          localSettings: { bir_settings: null, store_only_mode: null },
+          tables: {
+            inventorytbl: {
+              columns: ['itemid', 'itemcost'],
+              rows: [{ itemid: 7, itemcost: 42 }],
+            },
+            salescart: {
+              columns: ['scid', 'sccost', 'totalcost'],
+              rows: [{ scid: 9, sccost: 0, totalcost: 0 }],
+            },
+          },
+        }),
+      ],
+      'older-backup.vmjamtechdatamobile'
+    );
+
+    await service.restoreBackupFromFile(backup);
+
+    expect(db.execute).toHaveBeenCalledWith(
+      'INSERT INTO "inventorytbl" ("itemid", "itemcost", "cost_refill", "cost_non_refill") VALUES (?, ?, ?, ?)',
+      [7, 42, 42, 42],
+      false
+    );
+    expect(db.execute).toHaveBeenCalledWith(
+      'INSERT INTO "salescart" ("scid", "sccost", "totalcost", "cost_snapshot_version") VALUES (?, ?, ?, ?)',
+      [9, 0, 0, 0],
+      false
+    );
+  });
+
   it('restores validated rows inside the database transaction and clears queued carts', async () => {
     db.query.and.callFake(async (sql: string) => {
       if (sql.includes("name = 'ai_chunk_fts'")) return [] as any;

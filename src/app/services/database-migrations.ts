@@ -65,6 +65,41 @@ const migrations: DatabaseMigration[] = [
       `);
     },
   },
+  {
+    version: 4,
+    apply: async (database) => {
+      const inventoryResult = await database.query(
+        'PRAGMA table_info(inventorytbl)'
+      );
+      const inventoryColumns = new Set(
+        (inventoryResult.values ?? []).map((column: { name: string }) => column.name)
+      );
+
+      for (const column of ['cost_refill', 'cost_non_refill']) {
+        if (!inventoryColumns.has(column)) {
+          await database.run(
+            `ALTER TABLE inventorytbl ADD COLUMN ${column} REAL NOT NULL DEFAULT 0`
+          );
+          await database.run(
+            `UPDATE inventorytbl SET ${column} = itemcost`
+          );
+        }
+      }
+
+      const salescartResult = await database.query(
+        'PRAGMA table_info(salescart)'
+      );
+      const salescartColumns = new Set(
+        (salescartResult.values ?? []).map((column: { name: string }) => column.name)
+      );
+
+      if (!salescartColumns.has('cost_snapshot_version')) {
+        await database.run(
+          'ALTER TABLE salescart ADD COLUMN cost_snapshot_version INTEGER NOT NULL DEFAULT 0'
+        );
+      }
+    },
+  },
 ];
 
 export async function runDatabaseMigrations(

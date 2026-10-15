@@ -386,6 +386,7 @@ export class PosSalesComponent implements OnInit {
 
   // Add item to cart
   addCartItem(item: any) {
+    item.cost = this.getItemCost(item);
     item.amount = this.calculateAmount(item.qty, item.price);
     this.cart.push(item);
     this.updateCartTotals();
@@ -407,12 +408,21 @@ export class PosSalesComponent implements OnInit {
     return item.unit === 'REFILL' ? item.Refill : item.Non_Refill;
   }
 
+  getItemCost(item: any): number {
+    const cost =
+      item.unit === 'REFILL'
+        ? item.cost_refill ?? item.itemcost ?? 0
+        : item.cost_non_refill ?? item.itemcost ?? 0;
+    return Number(cost) || 0;
+  }
+
   getTotalQty(): number {
     return this.cart.reduce((sum, item) => sum + item.qty, 0);
   }
 
   onUnitChange(item: any) {
     item.price = this.getItemPrice(item);
+    item.cost = this.getItemCost(item);
     item.amount = item.price * item.qty;
     this.updateCartTotals();
   }

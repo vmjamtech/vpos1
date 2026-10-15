@@ -231,7 +231,13 @@ export class DashboardService {
         0 AS totalsalpaid,
         0 AS totalcashin,
         0 AS totalchange,
-        IFNULL(SUM(t2.scqty * t3.itemcost),0) AS sumcost,
+        IFNULL(SUM(
+          CASE
+            WHEN t2.cost_snapshot_version = 1 THEN
+              COALESCE(t2.totalcost, t2.sccost * t2.scqty, 0)
+            ELSE t2.scqty * COALESCE(t3.itemcost, 0)
+          END
+        ),0) AS sumcost,
         0 AS tender,
         0 AS spcdisc,
         0 AS purchase
