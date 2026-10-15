@@ -62,9 +62,27 @@ export class SqliteService {
   /**
    * Execute SQL (INSERT, UPDATE, DELETE, CREATE TABLE, etc.)
    */
-  async execute(sql: string, params: any[] = []): Promise<void> {
+  async execute(
+    sql: string,
+    params: any[] = [],
+    transaction = true
+  ): Promise<void> {
     await this.ensureDb();
-    await this.dbConn.run(sql, params);
+    await this.dbConn.run(sql, params, transaction);
+  }
+
+  async executeInTransaction<T>(operation: () => Promise<T>): Promise<T> {
+    await this.ensureDb();
+    await this.dbConn.beginTransaction();
+
+    try {
+      const result = await operation();
+      await this.dbConn.commitTransaction();
+      return result;
+    } catch (error) {
+      await this.dbConn.rollbackTransaction();
+      throw error;
+    }
   }
 
   async initializeAiSchema(): Promise<void> {

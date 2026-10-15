@@ -174,6 +174,33 @@
     </ion-card>
     <!-- POS Summary Footer -->
     <div class="pos-footer">
+      <div class="queue-button-row">
+        <ion-button
+          expand="block"
+          color="warning"
+          fill="solid"
+          class="queue-btn"
+          [disabled]="!canAddToQueue"
+          (click)="addToQueue()"
+        >
+          ADD TO QUEUE
+        </ion-button>
+
+        <div class="queue-order-badge-container">
+          <ion-button
+            expand="block"
+            color="warning"
+            fill="solid"
+            class="queue-btn"
+            (click)="openQueueOrdersModal()"
+          >
+            QUEUE ORDERS
+          </ion-button>
+          <span *ngIf="queuedOrders.length > 0" class="queue-badge">
+            {{ queuedOrders.length }}
+          </span>
+        </div>
+      </div>
       <button
         type="button"
         class="footer-row discount-row"

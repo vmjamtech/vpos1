@@ -60,6 +60,33 @@
       ></ion-toggle>
     </ion-item>
 
+    <ion-card *ngIf="isAdmin" class="danger-maintenance-card">
+      <ion-card-header>
+        <ion-card-title color="danger">Database Maintenance</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>
+          Back up, restore, or selectively reset application data.
+        </p>
+        <ion-button
+          expand="block"
+          color="primary"
+          fill="solid"
+          (click)="openDatabaseActions()"
+        >
+          <ion-icon slot="start" name="server-outline"></ion-icon>
+          DATABASE
+        </ion-button>
+        <input
+          #restoreFileInput
+          type="file"
+          accept="*/*"
+          hidden
+          (change)="onRestoreFileSelected($event)"
+        />
+      </ion-card-content>
+    </ion-card>
+
     <ion-button
       expand="block"
       color="secondary"

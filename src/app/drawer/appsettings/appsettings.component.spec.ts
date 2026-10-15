@@ -1,5 +1,10 @@
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import {
+  ActionSheetController,
+  AlertController,
+  ModalController,
+} from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
+import { DatabaseBackupService } from 'src/app/services/database-backup.service';
 import { AppsettingsComponent } from './appsettings.component';
 
 describe('AppsettingsComponent', () => {
@@ -24,8 +29,41 @@ describe('AppsettingsComponent', () => {
     component = new AppsettingsComponent(
       appdateService,
       {} as ModalController,
-      alertController
+      alertController,
+      { get: async () => null } as any,
+      { enabled: false } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { clearCurrentUser: () => undefined } as any,
+      { navigateByUrl: async () => true } as any,
+      { captureCurrentInventory: async () => undefined } as any,
+      {} as ActionSheetController,
+      {} as DatabaseBackupService
     );
+  });
+
+  it('restricts reset access to administrator identities and roles', () => {
+    component.currentUser = { userid: 'cashier1', accnttype: 'Cashier' };
+    expect(component.isAdmin).toBeFalse();
+
+    component.currentUser = { accnttype: 'admin' };
+    expect(component.isAdmin).toBeFalse();
+
+    component.currentUser = { usern: 'VMJAMADMIN' };
+    expect(component.isAdmin).toBeTrue();
+
+    component.currentUser = { accnttype: 'Administrator' };
+    expect(component.isAdmin).toBeTrue();
+  });
+
+  it('describes cross-module reset effects in the impact notes', () => {
+    const notes = component.generateImpactNotes(['sales']);
+
+    expect(notes).toContain('creditpaymenttbl');
+    expect(notes).toContain('customer balances set to 0');
+    expect(notes).toContain('Active lends will be cleared');
+    expect(notes).toContain('queued POS carts removed');
   });
 
   it('loads the persisted receipt logo setting', async () => {

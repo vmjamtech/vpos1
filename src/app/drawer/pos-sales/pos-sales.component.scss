@@ -8,7 +8,7 @@
 .pos-container {
   flex: 1;
   overflow-y: auto; /* allow scrolling for content */
-  padding-bottom: 160px; /* space for sticky footer */
+  padding-bottom: 220px; /* space for the expanded fixed footer */
 }
 
 .pos-header {
@@ -221,6 +221,41 @@
   flex-direction: column;
   gap: 6px;
   z-index: 999;
+
+  .queue-button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .queue-btn {
+    --border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .queue-order-badge-container {
+    position: relative;
+  }
+
+  .queue-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 2;
+    display: flex;
+    min-width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--ion-color-danger);
+    color: var(--ion-color-danger-contrast);
+    font-size: 0.75rem;
+    font-weight: 700;
+    pointer-events: none;
+  }
 
   .footer-row {
     display: flex;

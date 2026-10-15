@@ -1,0 +1,116 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Queue Orders</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="queue-layout">
+    <section class="queue-panel queue-master">
+      <h2>Pending Orders</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Queue No.</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Unit</th>
+              <th>Total Items</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let order of queuedOrders"
+              (click)="selectOrder(order)"
+              [class.selected]="order.queueNo === selectedQueueNo"
+              [attr.aria-selected]="order.queueNo === selectedQueueNo"
+              tabindex="0"
+              (keydown.enter)="selectOrder(order)"
+              (keydown.space)="selectOrder(order); $event.preventDefault()"
+            >
+              <td>{{ order.queueNo }}</td>
+              <td>{{ order.timestamp | date : "MM/dd/yy h:mm a" }}</td>
+              <td>{{ order.customer?.name }}</td>
+              <td>{{ getOrderUnits(order) }}</td>
+              <td>{{ order.totalItems }}</td>
+            </tr>
+            <tr *ngIf="queuedOrders.length === 0">
+              <td colspan="5" class="empty-state">No queued orders.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="queue-panel queue-detail">
+      <h2>Order Details</h2>
+      <ng-container *ngIf="selectedOrder as order; else noSelection">
+        <div class="order-summary">
+          <strong>{{ order.queueNo }}</strong>
+          <span>{{ order.customer?.name }}</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Item Code</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of order.cart">
+                <td>{{ item.itemcode }}</td>
+                <td>{{ item.itemname || item.description }}</td>
+                <td>{{ item.qty }}</td>
+                <td>{{ getItemPrice(item) | number : "1.2-2" }}</td>
+                <td>{{ getItemPrice(item) * item.qty | number : "1.2-2" }}</td>
+              </tr>
+              <tr *ngIf="!order.cart?.length">
+                <td colspan="5" class="empty-state">No items in this order.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="order-total">
+          <span>Discount</span>
+          <strong>{{ order.discountAmount | number : "1.2-2" }}</strong>
+          <span>Total</span>
+          <strong>{{ order.totalAmount | number : "1.2-2" }}</strong>
+        </div>
+      </ng-container>
+      <ng-template #noSelection>
+        <p class="empty-state">Select a queued order to view its items.</p>
+      </ng-template>
+    </section>
+  </div>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="queue-actions">
+      <ion-button
+        color="danger"
+        fill="solid"
+        [disabled]="!selectedOrder"
+        (click)="cancelSelectedOrder()"
+      >
+        CANCEL ORDER
+      </ion-button>
+      <ion-button
+        color="primary"
+        fill="solid"
+        [disabled]="!selectedOrder"
+        (click)="processSelectedOrder()"
+      >
+        PROCESS ORDER
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

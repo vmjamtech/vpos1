@@ -24,11 +24,13 @@ import {
   IonText,
   IonTitle,
   ModalController,
+  ToastController,
 } from '@ionic/angular/standalone';
 import { SelectListComponent } from './modals/select-list/select-list.component';
 import { Router } from '@angular/router';
 import { ItemListComponent } from './modals/item-list/item-list.component';
 import { PurchaseSummaryComponent } from './modals/purchase-summary/purchase-summary.component';
+import { QueueOrdersModalComponent } from './modals/queue-orders/queue-orders.modal';
 import { StorageService } from 'src/app/services/storage.service';
 
 @Component({
@@ -87,6 +89,7 @@ export class PosSalesComponent implements OnInit {
 
   // Cart items
   cart: any[] = [];
+  queuedOrders: any[] = [];
   user: any = null;
 
   constructor(
@@ -94,7 +97,8 @@ export class PosSalesComponent implements OnInit {
     private router: Router,
     private alertController: AlertController,
     private actionSheetCtrl: ActionSheetController,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private toastController: ToastController
   ) {
     this.storageService.get<any>('login-data').then((user) => {
       if (user) {
@@ -127,7 +131,168 @@ export class PosSalesComponent implements OnInit {
     await alert.present();
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.loadQueuedOrders();
+  }
+
+  get canAddToQueue(): boolean {
+    return !!this.posData.customerId && this.cart.length > 0;
+  }
+
+  get hasActiveTransaction(): boolean {
+    return (
+      this.cart.length > 0 ||
+      !!this.posData.customerId ||
+      !!this.posData.personnel1Id ||
+      !!this.posData.personnel2Id ||
+      this.discountType !== 'none'
+    );
+  }
+
+  loadQueuedOrders() {
+    try {
+      const saved = localStorage.getItem('vpos_queued_orders');
+      const parsed = saved ? JSON.parse(saved) : [];
+      this.queuedOrders = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('Failed to load queued orders:', error);
+      this.queuedOrders = [];
+    }
+  }
+
+  private saveQueuedOrders(orders = this.queuedOrders): boolean {
+    try {
+      localStorage.setItem('vpos_queued_orders', JSON.stringify(orders));
+      return true;
+    } catch (error) {
+      console.error('Failed to save queued orders:', error);
+      return false;
+    }
+  }
+
+  private async showQueueToast(message: string, color: 'success' | 'danger') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2500,
+      position: 'bottom',
+      color,
+    });
+    await toast.present();
+  }
+
+  async addToQueue() {
+    if (!this.canAddToQueue) return;
+
+    const now = new Date();
+    const year = String(now.getFullYear());
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateKey = `${year}${month}${day}`;
+    const sequenceKey = `vpos_queue_sequence_${dateKey}`;
+    let sequence: number;
+    try {
+      sequence = (Number(localStorage.getItem(sequenceKey)) || 0) + 1;
+    } catch (error) {
+      console.error('Failed to read queue number:', error);
+      await this.showQueueToast('Unable to save order to queue.', 'danger');
+      return;
+    }
+    const queueNo = `QN${String(sequence).padStart(6, '0')}-${month}${day}${year.slice(-2)}`;
+    const queueEntry = {
+      queueNo,
+      timestamp: now.toISOString(),
+      customer: {
+        id: this.posData.customerId,
+        name: this.posData.customerName,
+        address: this.posData.customeraddress,
+      },
+      category: this.posData.category,
+      personnel1: {
+        id: this.posData.personnel1Id,
+        name: this.posData.personnel1Name,
+      },
+      personnel2: {
+        id: this.posData.personnel2Id,
+        name: this.posData.personnel2Name,
+      },
+      cart: this.cart.map((item) => ({ ...item })),
+      totalItems: this.getTotalQty(),
+      discountType: this.discountType,
+      discountMode: this.discountMode,
+      discountInputVal: this.discountInputVal,
+      discountAmount: this.discountAmount,
+      subTotal: this.getSubTotal(),
+      totalAmount: this.getTotal(),
+    };
+    const updatedOrders = [...this.queuedOrders, queueEntry];
+
+    try {
+      localStorage.setItem(sequenceKey, String(sequence));
+    } catch (error) {
+      console.error('Failed to save queue number:', error);
+      await this.showQueueToast('Unable to save order to queue.', 'danger');
+      return;
+    }
+
+    if (!this.saveQueuedOrders(updatedOrders)) {
+      await this.showQueueToast('Unable to save order to queue.', 'danger');
+      return;
+    }
+
+    this.queuedOrders = updatedOrders;
+    await this.endTransaction();
+    await this.showQueueToast(`Order added to Queue (${queueNo})`, 'success');
+  }
+
+  async openQueueOrdersModal() {
+    const modal = await this.modalCtrl.create({
+      component: QueueOrdersModalComponent,
+      componentProps: {
+        queuedOrders: this.queuedOrders,
+        hasActiveTransaction: this.hasActiveTransaction,
+      },
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+
+    if (Array.isArray(data?.queuedOrders)) {
+      if (this.saveQueuedOrders(data.queuedOrders)) {
+        this.queuedOrders = data.queuedOrders;
+      }
+    }
+
+    if (data?.restoredOrder) {
+      this.restoreOrderToPOS(data.restoredOrder);
+      setTimeout(() => void this.openSelectModal('personnel1'), 300);
+    }
+  }
+
+  private restoreOrderToPOS(order: any) {
+    this.posData = {
+      ...this.posData,
+      category: order.category,
+      customerId: order.customer?.id ?? null,
+      customerName: order.customer?.name ?? '',
+      customeraddress: order.customer?.address ?? '',
+      personnel1Id: order.personnel1?.id ?? null,
+      personnel1Name: order.personnel1?.name ?? '',
+      personnel2Id: order.personnel2?.id ?? null,
+      personnel2Name: order.personnel2?.name ?? '',
+    };
+    this.cart = (order.cart ?? []).map((item: any) => ({ ...item }));
+    this.discountType = order.discountType ?? 'none';
+    this.discountMode = order.discountMode ?? 'fixed';
+    this.discountInputVal = Number(order.discountInputVal) || 0;
+    this.calculateTotals();
+
+    const remainingOrders = this.queuedOrders.filter(
+      (queuedOrder) => queuedOrder.queueNo !== order.queueNo
+    );
+    if (this.saveQueuedOrders(remainingOrders)) {
+      this.queuedOrders = remainingOrders;
+    }
+  }
 
   async openSelectModal(type: 'customer' | 'personnel1' | 'personnel2') {
     // Filter personnel if selecting personnel1 or personnel2

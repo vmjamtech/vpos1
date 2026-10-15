@@ -1290,3 +1290,174 @@ execution and final physical coupon-print verification remain outstanding.
 - Existing open issues remain: sales reprint data-shape `.reduce()` report,
   report-preview print UI confirmation/integration, and physical coupon reward
   box verification. See the prior open-issue sections for full context.
+
+---
+
+## 11. Session Log - 2026-10-15 (Report Alignment Simulator and Thermal Output)
+
+### 11.1 What changed
+
+- Added per-report alignment simulator settings for Summary, Item Sold, Inventory, and Floorstock. Settings persist independently in local storage, use a 32-character default width, and retain compatibility with saved layouts created before the feed-count setting.
+- Bound saved report layout settings to the print preview and thermal report builders. Printed table headings use the configured names, heading widths, and alignments; real report data and totals use configured value widths and alignments. Simulator sample strings remain formatting examples and do not replace database values.
+- Made divider widths follow the saved report line width. Added a per-report paper-feed count setting at the bottom of the simulator, defaulting to the previous three lines and bounded from 0 to 10; configured feed occurs after the Printed timestamp and before cutting.
+- Changed the report timestamp to `Printed: YYYY-MM-DD | HH:mm:ss` and explicitly newline-terminated it before paper feed/cut to keep it visible.
+- Corrected Item Sold and Inventory total labels to print in full with a colon and one space before the value (`Total Item:`, `Total Weight:`, `Total Filled:`, `Total Empty:`), rather than truncating them to table-column widths.
+- A physical print showed a stray `M` glyph from raw ESC/POS bytes passed through the iMin JSON text API. Removed the raw command prefix from report text and used the existing report-scoped iMin typeface control instead. No POS, purchase, reprint, or other non-report print formats were changed.
+- No database schema, tables, transaction values, or calculation formulas were changed.
+
+### 11.2 Files modified
+
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.html`
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.scss`
+- `src/app/drawer/reports/modal/report-print-options/report-print-options.component.ts`
+- `src/app/drawer/reports/modal/report-simulator/report-layout.model.ts`
+- `src/app/drawer/reports/modal/report-simulator/report-simulator.modal.html`
+- `src/app/drawer/reports/modal/report-simulator/report-simulator.modal.scss`
+- `src/app/drawer/reports/modal/report-simulator/report-simulator.modal.ts`
+- `src/app/drawer/reports/reports.component.html`
+- `src/app/drawer/reports/reports.component.ts`
+- `src/app/services/reports-print.service.ts`
+- `src/global.scss`
+- `project-history,md` (this entry)
+
+Unrelated staged Inventory and report-data-service changes were present in the worktree and were not included in this Reports work.
+
+### 11.3 Verification
+
+- `npm run build` passed with the existing Stencil empty-glob warning.
+- `build-debug.bat` completed Angular build, Capacitor Android sync, Gradle debug APK build, and `adb install -r`; installation reported `Success`.
+- The latest updated APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
+- A physical report print exposed the raw ESC/POS command as an `M` glyph; that raw prefix was removed afterward. Reprint the latest installed build to confirm the glyph is gone and verify the complete timestamp and configured trailing feed count on paper.
+
+### 11.4 Remaining open issue queue
+
+- Reports physical print acceptance: verify the latest output has no stray `M`, shows the full `Printed: YYYY-MM-DD | HH:mm:ss` timestamp, and feeds the configured number of lines after the timestamp before cutting. Font A/B rendering through the iMin typeface API also needs physical confirmation.
+- Report print-options modal/footer visibility still needs user confirmation; keep the existing issue open until confirmed.
+- Printing: Business Contact Number not reflected on printed receipt.
+- Printing: Purchase logo enabled but logo not printed.
+- Printing: Sales Reprint `.reduce()` data-shape error.
+- Printing: iMin output should use receipt address fields and match preview.
+- Printing: coupon reward box/right-side rails need physical verification.
+- Petty Cash: separate Cash In and Cash Out totals.
+- Store Only and per-user permission workflows need user acceptance testing across applicable accounts/screens; permissions are device-local UI gating, not backend authorization.
+- Customer import/inactivity/restore workflows still need manual testing; focused Jasmine execution has not produced a final result, and earlier full-suite attempts were blocked by unrelated spec constructor errors. Lint remains unverified.
+- Development: improve Android testing/live-reload workflow.
+- Versioning: increment app version while preserving SQLite data.
+- Git: verify/configure source control on this machine.
+- Copilot rules: keep VPOS/token/safety instructions in separate files.
+- The older notes describing Reports swipe-to-Print as a placeholder are historical; the current Reports cards have Setting and Print swipe actions. The print-preview UI acceptance item remains open as noted above.
+
+### 11.5 Suggested commit message
+
+```text
+feat(reports): bind simulator layouts to thermal output
+
+Add independent alignment settings for Summary, Item Sold, Inventory, and
+Floorstock reports, then apply saved headings, column widths, alignment, and
+32-character default line width to report previews and thermal output. Keep
+sample values as formatting examples and print real report data.
+
+Add configurable per-report paper feed before cutting, preserve the Printed
+timestamp with explicit newline termination, and print full Item Sold and
+Inventory total labels. Remove raw ESC/POS font bytes that appeared as an M
+glyph through the iMin text API; use the existing report-scoped typeface
+control. Leave database schemas, calculations, and non-report print paths
+unchanged.
+
+Validation: Angular production build, Capacitor sync, Android debug APK build,
+and adb install passed. Physical verification of the latest timestamp, feed,
+font rendering, and removal of the M glyph remains outstanding.
+```
+
+---
+
+## 12. Session Log - 2026-10-15 (POS Queue, Admin Data Tools, and Backup Recovery)
+
+### 12.1 What changed
+
+- Added POS queue actions above the sales summary: `ADD TO QUEUE` and `QUEUE ORDERS` with a pending-count badge. Queue tickets use a local-date sequence, persist in local storage, and snapshot customer, category, personnel, discounts, and complete cart item data.
+- Added the Queue Orders modal with master/detail tables, cancel confirmation, restore confirmation when a sale is already active, removal from the pending queue, and automatic opening of the Personnel 1 selector after processing. The pending-order table displays item unit(s) (`Refill` / `Non Refill`) instead of category while retaining category in the ticket for restoration.
+- Added an administrator-only Database Maintenance entry in Business Settings. A single `DATABASE` action sheet provides `BACKUP DATA`, `RESTORE DATA`, and `RESET DATA`.
+- Added module-scoped reset operations against the app's actual SQLite tables, with exact `RESET` confirmation, dynamic impact notes, transaction rollback, queue invalidation where applicable, and logout after success. Returned and soft-deleted lend history is retained during active-lend cleanup.
+- Added versioned `.vmjamtechdatamobile` JSON backups covering all live non-internal SQLite tables, BLOB fields, BIR settings, and Store Only Mode. Native backup files are saved to Documents and offered through the Android share sheet; web builds download the custom-extension file.
+- Restore validates archive identity, table set, column set, row shapes, and BLOB encoding before asking for overwrite confirmation. It restores rows into existing schema inside a single transaction, rebuilds the derived AI FTS index, restores local settings, clears queued POS carts, then logs out. It does not use the SQLite full JSON importer, which drops and recreates schema.
+- Fixed a nested-transaction failure shared by restore and reset. `SqliteService.execute()` now forwards an optional transaction flag; statements inside `executeInTransaction()` pass `false` so the plugin does not open a nested transaction. The Android file picker now accepts all files so custom-extension backups are selectable; content validation remains strict.
+- Inspected the failing on-device backup without changing device data. It had the expected version-1 envelope and current application table/column metadata. The failing restore was traced to nested SQLite transactions, not malformed backup content.
+
+### 12.2 Files modified
+
+- `android/app/capacitor.build.gradle`
+- `android/capacitor.settings.gradle`
+- `package.json`
+- `package-lock.json`
+- `project-history,md` (this entry)
+- `src/app/drawer/appsettings/appsettings.component.html`
+- `src/app/drawer/appsettings/appsettings.component.spec.ts`
+- `src/app/drawer/appsettings/appsettings.component.ts`
+- `src/app/drawer/pos-sales/modals/queue-orders/queue-orders.modal.html`
+- `src/app/drawer/pos-sales/modals/queue-orders/queue-orders.modal.scss`
+- `src/app/drawer/pos-sales/modals/queue-orders/queue-orders.modal.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.html`
+- `src/app/drawer/pos-sales/pos-sales.component.scss`
+- `src/app/drawer/pos-sales/pos-sales.component.ts`
+- `src/app/services/database-backup.service.spec.ts`
+- `src/app/services/database-backup.service.ts`
+- `src/app/services/database-reset.service.spec.ts`
+- `src/app/services/database-reset.service.ts`
+- `src/app/services/sqlite.service.ts`
+
+### 12.3 Verification
+
+- Angular production build passed with the existing Stencil empty-glob warning.
+- Capacitor Android sync registered `@capacitor/share@7.0.0` successfully.
+- Android Gradle debug APK build passed; `build-debug.bat` installed it with `adb install -r`, which preserved application data.
+- Focused editor diagnostics passed for the changed TypeScript and templates.
+- Focused Karma commands did not return a final Jasmine pass/fail summary; the new specs remain unverified by the test runner.
+- The captured backup archive was inspected structurally without exposing record values or modifying the device database. The corrected restore flow has not yet been manually retried against the live device database.
+
+### 12.4 Remaining open issue queue
+
+- Retry the existing database backup on-device with the fixed build; confirm the picker lists it, restore completes, app logs out, and restored operational data/settings are present. Do not treat the prior failed restore attempt as a successful test.
+- Complete on-device POS queue acceptance: adding multiple tickets, persistence after relaunch, mixed Refill/Non Refill display, cancel confirmation, active-sale replacement guard, and Personnel 1 auto-selection.
+- Run the focused backup/reset Jasmine specs and resolve any test-environment blockers; lint remains unverified.
+- Reports physical print acceptance: verify there is no stray `M`, the full `Printed: YYYY-MM-DD | HH:mm:ss` timestamp appears, configured feed count is honored before cutting, and iMin font rendering is correct.
+- Report print-options modal/footer visibility still needs user confirmation.
+- Printing: Business Contact Number not reflected on printed receipt.
+- Printing: Purchase logo enabled but logo not printed.
+- Printing: Sales Reprint `.reduce()` data-shape error.
+- Printing: iMin output should use receipt address fields and match preview.
+- Printing: coupon reward box/right-side rails need physical verification.
+- Petty Cash: separate Cash In and Cash Out totals.
+- Store Only and per-user permission workflows need user acceptance testing across applicable accounts/screens; permissions are device-local UI gating, not backend authorization.
+- Customer import/inactivity/restore workflows still need manual testing.
+- Development: improve Android testing/live-reload workflow.
+- Versioning: increment app version while preserving SQLite data.
+- Git: verify/configure source control on this machine.
+- Copilot rules: keep VPOS/token/safety instructions in separate files.
+
+### 12.5 Suggested commit message
+
+```text
+feat(pos): add queueing and admin database recovery tools
+
+Add persistent POS order queueing with ticket sequencing, order details,
+cancellation, guarded restore, unit display, and automatic Personnel 1
+selection. Consolidate queue-independent backup, restore, and scoped reset
+actions under the admin-only DATABASE menu in Business Settings.
+
+Add versioned .vmjamtechdatamobile backups for live SQLite tables, BLOB data,
+BIR settings, and Store Only Mode. Validate the full data envelope before
+restore, keep the existing database schema, restore rows transactionally,
+rebuild the derived FTS index, invalidate queued carts, and log out after
+success. Add native file sharing through Capacitor Share and retain web
+downloads.
+
+Forward the SQLite per-statement transaction flag through SqliteService and
+disable nested transactions inside explicit reset/restore transactions, fixing
+the Android restore rollback. Allow Android's picker to show custom-extension
+files while keeping strict content and schema validation.
+
+Validation: Angular production build, Capacitor sync, Android debug APK build,
+and adb install passed. Focused Karma tests and post-fix on-device restore
+acceptance remain outstanding.
+```
