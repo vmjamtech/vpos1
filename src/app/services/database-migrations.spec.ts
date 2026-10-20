@@ -18,7 +18,8 @@ describe('runDatabaseMigrations', () => {
           }),
           Promise.resolve({ values: [{ name: 'itemid' }, { name: 'alertnum' }] }),
           Promise.resolve({ values: [{ name: 'itemid' }, { name: 'itemcost' }, { name: 'alertnum' }] }),
-          Promise.resolve({ values: [{ name: 'scid' }, { name: 'sccost' }, { name: 'totalcost' }] })
+          Promise.resolve({ values: [{ name: 'scid' }, { name: 'sccost' }, { name: 'totalcost' }] }),
+          Promise.resolve({ values: [] })
         ),
       run: jasmine.createSpy().and.resolveTo({}),
     } as unknown as SQLiteDBConnection;
@@ -49,6 +50,10 @@ describe('runDatabaseMigrations', () => {
       'ALTER TABLE salescart ADD COLUMN cost_snapshot_version INTEGER NOT NULL DEFAULT 0'
     );
     expect(database.run).toHaveBeenCalledWith('PRAGMA user_version = 4');
+    expect(database.run).toHaveBeenCalledWith(
+      jasmine.stringMatching(/CREATE TABLE IF NOT EXISTS shortcut_presets/)
+    );
+    expect(database.run).toHaveBeenCalledWith('PRAGMA user_version = 5');
   });
 
   it('does not add floorstock again when the column already exists', async () => {
@@ -59,7 +64,8 @@ describe('runDatabaseMigrations', () => {
           Promise.resolve({ values: [{ user_version: 1 }] }),
           Promise.resolve({ values: [{ name: 'itemid' }, { name: 'floorstock' }] }),
           Promise.resolve({ values: [{ name: 'itemid' }, { name: 'itemcost' }, { name: 'floorstock' }] }),
-          Promise.resolve({ values: [{ name: 'scid' }, { name: 'sccost' }, { name: 'totalcost' }] })
+          Promise.resolve({ values: [{ name: 'scid' }, { name: 'sccost' }, { name: 'totalcost' }] }),
+          Promise.resolve({ values: [] })
         ),
       run: jasmine.createSpy().and.resolveTo({}),
     } as unknown as SQLiteDBConnection;
@@ -72,7 +78,7 @@ describe('runDatabaseMigrations', () => {
     expect(database.run).toHaveBeenCalledWith(
       jasmine.stringMatching(/CREATE TABLE IF NOT EXISTS daily_inventory_snapshots/)
     );
-    expect(database.run).toHaveBeenCalledWith('PRAGMA user_version = 4');
+    expect(database.run).toHaveBeenCalledWith('PRAGMA user_version = 5');
   });
 
   it('rejects a database missing required business tables', async () => {
@@ -92,11 +98,40 @@ describe('runDatabaseMigrations', () => {
     expect(database.run).not.toHaveBeenCalled();
   });
 
+  it('adds dual refill costs to an existing price list with legacy fallback', async () => {
+    const database = {
+      query: jasmine
+        .createSpy()
+        .and.returnValues(
+          Promise.resolve({ values: [{ user_version: 4 }] }),
+          Promise.resolve({ values: [{ name: 'pricelisttbl' }] }),
+          Promise.resolve({ values: [{ name: 'itemcost' }] })
+        ),
+      run: jasmine.createSpy().and.resolveTo({}),
+    } as unknown as SQLiteDBConnection;
+
+    await runDatabaseMigrations(database);
+
+    expect(database.run).toHaveBeenCalledWith(
+      'ALTER TABLE pricelisttbl ADD COLUMN cost_refill REAL NOT NULL DEFAULT 0'
+    );
+    expect(database.run).toHaveBeenCalledWith(
+      'UPDATE pricelisttbl SET cost_refill = itemcost'
+    );
+    expect(database.run).toHaveBeenCalledWith(
+      'ALTER TABLE pricelisttbl ADD COLUMN cost_non_refill REAL NOT NULL DEFAULT 0'
+    );
+    expect(database.run).toHaveBeenCalledWith(
+      'UPDATE pricelisttbl SET cost_non_refill = itemcost'
+    );
+    expect(database.run).toHaveBeenCalledWith('PRAGMA user_version = 5');
+  });
+
   it('refuses database versions newer than the app supports', async () => {
     const database = {
       query: jasmine
         .createSpy()
-          .and.resolveTo({ values: [{ user_version: 5 }] }),
+          .and.resolveTo({ values: [{ user_version: 6 }] }),
       run: jasmine.createSpy().and.resolveTo({}),
     } as unknown as SQLiteDBConnection;
 

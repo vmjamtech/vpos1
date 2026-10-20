@@ -100,6 +100,44 @@ const migrations: DatabaseMigration[] = [
       }
     },
   },
+  {
+    version: 5,
+    apply: async (database) => {
+      await database.run(`
+        CREATE TABLE IF NOT EXISTS shortcut_presets (
+          preset_id TEXT PRIMARY KEY,
+          position INTEGER NOT NULL,
+          preset_json TEXT NOT NULL
+        )
+      `);
+
+      const priceListResult = await database.query(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pricelisttbl'"
+      );
+      if ((priceListResult.values ?? []).length > 0) {
+        const columnsResult = await database.query(
+          'PRAGMA table_info(pricelisttbl)'
+        );
+        const columns = new Set(
+          (columnsResult.values ?? []).map(
+            (column: { name: string }) => column.name
+          )
+        );
+        for (const column of ['cost_refill', 'cost_non_refill']) {
+          if (!columns.has(column)) {
+            await database.run(
+              `ALTER TABLE pricelisttbl ADD COLUMN ${column} REAL NOT NULL DEFAULT 0`
+            );
+            if (columns.has('itemcost')) {
+              await database.run(
+                `UPDATE pricelisttbl SET ${column} = itemcost`
+              );
+            }
+          }
+        }
+      }
+    },
+  },
 ];
 
 export async function runDatabaseMigrations(

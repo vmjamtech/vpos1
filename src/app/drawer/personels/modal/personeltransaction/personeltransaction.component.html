@@ -70,7 +70,7 @@
             <strong>Category :</strong> {{ item.salescat }}
           </div>
           <div class="meta">
-            <strong>Size:</strong> {{ item.itemsize }}
+            <strong>Size:</strong> {{ item.itemsize | itemSize }}
             <strong>Quantity :</strong> ₱{{ item.scqty || 0 }}
             <strong>Commission :</strong> ₱{{ item.salary | number : "1.2-2" }}
           </div> </ion-label

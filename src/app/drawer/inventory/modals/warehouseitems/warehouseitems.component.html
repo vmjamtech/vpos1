@@ -81,7 +81,7 @@
           <ion-label>
             <h2 class="desc">{{ item.itemcode }} ({{ item.itemname }})</h2>
             <div class="meta">
-              <span><strong>Size:</strong> {{ item.itemsize || "" }}</span>
+              <span><strong>Size:</strong> {{ item.itemsize | itemSize }}</span>
             </div>
             <div class="meta">
               <span><strong>Fill:</strong> {{ item.whfill }}</span>

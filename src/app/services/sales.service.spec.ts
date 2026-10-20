@@ -4,6 +4,41 @@ import { StorageService } from './storage.service';
 import { SalesService } from './sales.service';
 
 describe('SalesService date range queries', () => {
+  it('loads a 50-row sales page and counts using the active filters', async () => {
+    const query = jasmine.createSpy('query').and.callFake(async (sql: string) => {
+      if (sql.includes('COUNT(*)')) return [{ total: 118 }];
+      return [{ salesid: 51 }];
+    });
+    const service = new SalesService(
+      {} as HttpClient,
+      {} as StorageService,
+      { query } as unknown as SqliteService
+    );
+
+    const result = await service.getSalesPage(
+      2,
+      50,
+      '2026-09-01',
+      '2026-09-30',
+      'AB12',
+      'salesrefnum'
+    );
+
+    expect(result).toEqual({
+      rows: [{ salesid: 51 }],
+      totalCount: 118,
+      currentPage: 2,
+    });
+    const [countSql, countParams] = query.calls.argsFor(0);
+    expect(countSql).toContain('date(s.salesdate) >= date(?)');
+    expect(countSql).toContain('date(s.salesdate) <= date(?)');
+    expect(countSql).toContain("s.salesrefnum LIKE '%' || ? || '%'");
+    expect(countParams).toEqual(['2026-09-01', '2026-09-30', 'AB12']);
+    const [pageSql, pageParams] = query.calls.argsFor(1);
+    expect(pageSql).toContain('ORDER BY s.salesdate DESC LIMIT ? OFFSET ?');
+    expect(pageParams).toEqual(['2026-09-01', '2026-09-30', 'AB12', 50, 50]);
+  });
+
   it('includes the entire selected calendar day in sales totals', async () => {
     const query = jasmine.createSpy('query').and.resolveTo([{ total: 0 }]);
     const service = new SalesService(

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
+import { normalizeSalesCategory } from 'src/app/utils/sales-category';
 import {
   AlertController,
   IonButton,
@@ -62,6 +63,10 @@ export class QueueOrdersModalComponent implements OnInit {
     return [...new Set(units)]
       .map((unit) => (unit === 'REFILL' ? 'Refill' : 'Non Refill'))
       .join(', ') || '—';
+  }
+
+  getOrderCategory(order: any): string {
+    return normalizeSalesCategory(order?.category);
   }
 
   getItemPrice(item: any): number {

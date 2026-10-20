@@ -120,14 +120,14 @@
       <p>No Customers found.</p>
     </div>
   </div>
-  <!-- Infinite Scroll -->
-  <ion-infinite-scroll threshold="150px" (ionInfinite)="loadMore($event)">
-    <ion-infinite-scroll-content
-      loadingSpinner="bubbles"
-      loadingText="Loading more data..."
-    ></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
 </ion-content>
+<ion-footer>
+  <app-pagination
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    (pageChange)="loadPage($event)"
+  ></app-pagination>
+</ion-footer>
 <ion-fab
   *ngIf="permissionService.has('customer.addCustomer')"
   vertical="bottom"

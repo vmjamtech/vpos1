@@ -34,6 +34,13 @@ export interface UserPermissions {
   warehouse: {
     updateWarehouseItem: boolean;
   };
+  pos: {
+    shortcut_edit: boolean;
+    shortcut_delete: boolean;
+  };
+  report: {
+    simulation_settings: boolean;
+  };
 }
 
 export type PermissionPath =
@@ -59,7 +66,10 @@ export type PermissionPath =
   | 'personnel.viewRateSettings'
   | 'personnel.paySalary'
   | 'transferItems.supplier'
-  | 'warehouse.updateWarehouseItem';
+  | 'warehouse.updateWarehouseItem'
+  | 'pos.shortcut_edit'
+  | 'pos.shortcut_delete'
+  | 'report.simulation_settings';
 
 export const DEFAULT_PERMISSIONS: UserPermissions = {
   sidePanel: { personnel: true, userAccount: true, settings: true },
@@ -89,4 +99,6 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
   },
   transferItems: { supplier: true },
   warehouse: { updateWarehouseItem: true },
+  pos: { shortcut_edit: true, shortcut_delete: true },
+  report: { simulation_settings: true },
 };

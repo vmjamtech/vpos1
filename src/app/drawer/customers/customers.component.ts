@@ -4,14 +4,12 @@ import { FormsModule } from '@angular/forms';
 import {
   ActionSheetController,
   AlertController,
-  InfiniteScrollCustomEvent,
   IonButton,
   IonContent,
+  IonFooter,
   IonFab,
   IonFabButton,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonItem,
   IonItemOption,
   IonItemOptions,
@@ -35,6 +33,7 @@ import { LendhistoryComponent } from './modal/lendhistory/lendhistory.component'
 import { CustomertransactionsComponent } from './modal/customertransactions/customertransactions.component';
 import * as XLSX from 'xlsx';
 import { PermissionService } from 'src/app/services/permission.service';
+import { PaginationComponent } from 'src/app/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-customers',
@@ -50,8 +49,7 @@ import { PermissionService } from 'src/app/services/permission.service';
     IonItem,
     IonList,
     IonSearchbar,
-    IonInfiniteScrollContent,
-    IonInfiniteScroll,
+    IonFooter,
     IonButton,
     IonSkeletonText,
     IonFab,
@@ -61,6 +59,7 @@ import { PermissionService } from 'src/app/services/permission.service';
     IonItemSliding,
     IonRefresher,
     IonRefresherContent,
+    PaginationComponent,
   ],
 })
 export class CustomersComponent implements OnInit {
@@ -68,13 +67,14 @@ export class CustomersComponent implements OnInit {
   filteredItems: any[] = [];
 
   searchValue: string = '';
-  offset: number = 0;
-  limit: number = 30;
-  allLoaded: boolean = false;
+  currentPage = 1;
+  readonly pageSize = 50;
+  totalCount = 0;
+  totalPages = 1;
 
   isLoading = false;
-  isFetching = false; // <-- prevents double triggers
   skeletonArray = Array(10);
+  private loadRequestId = 0;
 
   searchField: 'custname' | 'custadd' = 'custname';
   searchFieldLabels: any = {
@@ -82,7 +82,6 @@ export class CustomersComponent implements OnInit {
     custadd: 'Customer Address',
   };
 
-  @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   constructor(
@@ -284,41 +283,9 @@ export class CustomersComponent implements OnInit {
   }
 
   async doRefresh(event: any) {
-    if (this.isFetching) {
-      event.target.complete();
-      return;
-    }
-
-    this.isFetching = true;
-
     try {
-      // reset pagination
-      this.items = [];
-      this.filteredItems = [];
-      this.offset = 0;
-      this.allLoaded = false;
-      this.isLoading = true;
-
-      const newItems = await this.customerService.getCustomersdb(
-        this.limit,
-        this.offset
-      );
-
-      this.items = [...newItems];
-      this.offset += this.limit;
-
-      // Mark allLoaded if fewer items returned
-      if (newItems.length < this.limit) {
-        this.allLoaded = true;
-      }
-
-      // Apply search filter if any
-      this.applySearch();
-    } catch (err) {
-      console.error('Error refreshing customers:', err);
+      await this.loadPage(1);
     } finally {
-      this.isFetching = false;
-      this.isLoading = false;
       event.target.complete();
     }
   }
@@ -358,87 +325,39 @@ export class CustomersComponent implements OnInit {
     await alert.present();
   }
 
-  // 🔹 Reset infinite scroll data
   async resetAndLoad() {
-    this.items = [];
-    this.filteredItems = [];
-    this.offset = 0;
-    this.allLoaded = false;
-    this.isLoading = true;
-
-    // Disable infinite scroll during refresh
-    if (this.infiniteScroll) this.infiniteScroll.disabled = true;
-
-    await this.loadMore(); // Load first batch
-
-    this.isLoading = false;
-    if (this.infiniteScroll) this.infiniteScroll.disabled = false;
+    await this.loadPage(1);
   }
 
-  async loadMore(event?: InfiniteScrollCustomEvent) {
-    if (this.isFetching || this.allLoaded) {
-      event?.target.complete();
-      return;
-    }
-
-    this.isFetching = true;
-
+  async loadPage(page: number): Promise<void> {
+    const requestId = ++this.loadRequestId;
+    this.isLoading = true;
     try {
-      const newItems = await this.customerService.getCustomersdb(
-        this.limit,
-        this.offset
+      const result = await this.customerService.getCustomerPage(
+        page,
+        this.pageSize,
+        this.searchValue,
+        this.searchField
       );
-
-      // Append new items
-      this.items.push(...newItems);
-
-      // Increment offset by actual fetched items
-      this.offset += newItems.length;
-
-      // Mark allLoaded if no more items
-      if (newItems.length < this.limit) {
-        this.allLoaded = true;
-        if (this.infiniteScroll) this.infiniteScroll.disabled = true;
+      if (requestId !== this.loadRequestId) return;
+      this.currentPage = result.currentPage;
+      this.totalCount = result.totalCount;
+      this.totalPages = Math.ceil(this.totalCount / this.pageSize) || 1;
+      this.items = result.rows;
+      this.filteredItems = result.rows;
+    } catch (error) {
+      console.error('Failed to load customer page:', error);
+      if (requestId === this.loadRequestId) {
+        this.items = [];
+        this.filteredItems = [];
       }
-
-      this.applySearch();
-    } catch (err) {
-      console.error('Load more failed', err);
     } finally {
-      this.isFetching = false;
-      event?.target.complete();
+      if (requestId === this.loadRequestId) this.isLoading = false;
     }
   }
 
   onSearchChange() {
-    this.applySearch();
-  }
-
-  async applySearch() {
-    const query = this.searchValue.trim();
-
-    if (!query) {
-      this.filteredItems = [...this.items];
-      return;
-    }
-
-    try {
-      // Include the field prefix based on the selected searchField
-      let searchQuery = query;
-
-      if (this.searchField === 'custname') {
-        searchQuery = `custname:${query}`;
-      } else if (this.searchField === 'custadd') {
-        searchQuery = `custadd:${query}`;
-      }
-      // if this.searchField is undefined or 'all', just use query as is
-
-      this.filteredItems =
-        await this.customerService.searchCustomersOfflineSpecific(searchQuery);
-    } catch (err) {
-      console.error('Customer search failed', err);
-      this.filteredItems = [];
-    }
+    void this.loadPage(1);
   }
 
   /** Open Add Item Modal */
@@ -456,9 +375,7 @@ export class CustomersComponent implements OnInit {
 
     modal.onDidDismiss().then(async (res) => {
       if (res.data) {
-        // this.items.push(res.data);
         this.resetAndLoad();
-        // this.applySearch();
       }
     });
 
@@ -479,16 +396,7 @@ export class CustomersComponent implements OnInit {
 
     modal.onDidDismiss().then((res) => {
       if (res.data) {
-        const index = this.filteredItems.findIndex(
-          (i) => i.custid === item.custid
-        );
-        if (index > -1) {
-          this.filteredItems[index] = {
-            ...this.filteredItems[index],
-            ...res.data,
-          };
-          this.applySearch();
-        }
+        void this.loadPage(this.currentPage);
       }
     });
 
@@ -517,9 +425,7 @@ export class CustomersComponent implements OnInit {
               // Delete from database
               await this.customerService.delete(item.custid);
 
-              // Remove from local array
-              this.items = this.items.filter((i) => i.custid !== item.custid);
-              this.applySearch();
+              await this.loadPage(this.currentPage);
 
               // Toast success
               await this.appdateService.showToastjs(

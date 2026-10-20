@@ -21,7 +21,7 @@
       <ion-input
         [(ngModel)]="codeName"
         maxlength="40"
-        placeholder="Morning Delivery"
+        placeholder="Promo Package"
       ></ion-input>
     </ion-item>
 
@@ -98,6 +98,26 @@
       <span>Total</span>
       <strong>{{ total | number : '1.2-2' }}</strong>
     </div>
+
+    <section class="preset-discount-section">
+      <div class="discount-label">Discount (Optional)</div>
+      <div class="discount-controls">
+        <ion-segment [(ngModel)]="discountType" mode="ios">
+          <ion-segment-button value="none">None</ion-segment-button>
+          <ion-segment-button value="fixed">₱ Fixed</ion-segment-button>
+          <ion-segment-button value="percentage">% Percent</ion-segment-button>
+        </ion-segment>
+        <ion-input
+          type="number"
+          min="0"
+          [max]="discountType === 'percentage' ? 100 : null"
+          [(ngModel)]="discountValue"
+          [disabled]="discountType === 'none'"
+          placeholder="0.00"
+          class="discount-number-input"
+        ></ion-input>
+      </div>
+    </section>
   </div>
 </ion-content>
 

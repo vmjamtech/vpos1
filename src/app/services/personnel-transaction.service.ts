@@ -6,6 +6,7 @@ import { SqliteService } from './sqlite.service';
 import moment from 'moment';
 import { apiBaseUrl } from './api-url';
 import { sqliteInclusiveDateRange } from '../utils/date-range';
+import { normalizeSalesCategory } from '../utils/sales-category';
 
 @Injectable({
   providedIn: 'root',
@@ -83,7 +84,10 @@ export class PersonnelTransactionService {
     } = params;
 
     const status = paymentType;
-    const col = customerCat === '1-PICK UP' ? 'compickup' : 'comdel';
+    const col =
+      normalizeSalesCategory(customerCat) === 'PICK UP'
+        ? 'compickup'
+        : 'comdel';
 
     for (const item of cart) {
       // 1. Get commission rate for item

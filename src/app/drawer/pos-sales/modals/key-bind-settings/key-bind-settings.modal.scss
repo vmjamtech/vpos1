@@ -81,6 +81,31 @@ td ion-input {
   font-size: 17px;
 }
 
+.preset-discount-section {
+  padding: 12px 4px 20px;
+  border-top: 1px solid var(--ion-color-step-150);
+}
+
+.discount-label {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.discount-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  ion-segment {
+    flex: 1;
+  }
+}
+
+.discount-number-input {
+  max-width: 100px;
+  text-align: right;
+}
+
 .confirm-toolbar {
   padding: 8px 16px;
 }

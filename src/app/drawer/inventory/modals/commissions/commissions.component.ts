@@ -26,6 +26,7 @@ import {
 import { CategoryService } from 'src/app/services/category.service';
 import { CommissionsService } from 'src/app/services/commissions.service';
 import { CommissionformComponent } from './modal/commissionform/commissionform.component';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-commissions',
@@ -52,6 +53,7 @@ import { CommissionformComponent } from './modal/commissionform/commissionform.c
     IonToolbar,
     IonTitle,
     IonButtons,
+    ItemSizePipe,
   ],
 })
 export class CommissionsComponent implements OnInit {

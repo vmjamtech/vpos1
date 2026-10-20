@@ -39,6 +39,7 @@ import { PermissionPath } from 'src/app/models/user-permissions.model';
 import { PermissionService } from 'src/app/services/permission.service';
 import { DisposeitemsComponent } from './modals/disposeitems/disposeitems.component';
 import { ItemhistoryComponent } from './modals/itemhistory/itemhistory.component';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-inventory',
@@ -67,6 +68,7 @@ import { ItemhistoryComponent } from './modals/itemhistory/itemhistory.component
     IonItemOption,
     IonItemOptions,
     IonBadge,
+    ItemSizePipe,
   ],
 })
 export class InventoryComponent implements OnInit {

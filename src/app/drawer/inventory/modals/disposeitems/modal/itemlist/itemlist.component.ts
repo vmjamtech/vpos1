@@ -26,6 +26,7 @@ import { CategoryService } from 'src/app/services/category.service';
 import { DisposeService } from 'src/app/services/dispose.service';
 import { StorageService } from 'src/app/services/storage.service';
 import { WarehouseService } from 'src/app/services/warehouse.service';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-itemlist',
@@ -50,6 +51,7 @@ import { WarehouseService } from 'src/app/services/warehouse.service';
     IonToolbar,
     IonHeader,
     IonBadge,
+    ItemSizePipe,
   ],
 })
 export class ItemlistComponent implements OnInit {

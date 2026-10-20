@@ -3,14 +3,11 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   AlertController,
-  InfiniteScrollCustomEvent,
   IonBadge,
   IonButton,
   IonContent,
   IonFooter,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
   IonList,
@@ -28,6 +25,7 @@ import {
 } from 'src/app/utils/date-range';
 import { SalesdetailsComponent } from './modal/salesdetails/salesdetails.component';
 import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
+import { PaginationComponent } from 'src/app/shared/pagination/pagination.component';
 
 @Component({
   selector: 'app-sales',
@@ -43,14 +41,13 @@ import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/dat
     IonItem,
     IonList,
     IonSearchbar,
-    IonInfiniteScrollContent,
-    IonInfiniteScroll,
     IonButton,
     IonSkeletonText,
     IonSpinner,
     IonBadge,
     IonFooter,
     DateRangeDisplayComponent,
+    PaginationComponent,
   ],
 })
 export class SalesComponent implements OnInit {
@@ -58,19 +55,19 @@ export class SalesComponent implements OnInit {
   filteredItems: any[] = [];
 
   searchValue: string = '';
-  isSearching: boolean = false;
-  offset: number = 0;
-  limit: number = 30;
-  allLoaded: boolean = false;
+  currentPage = 1;
+  readonly pageSize = 50;
+  totalCount = 0;
+  totalPages = 1;
 
   isLoading = false;
-  isFetching = false; // <-- prevents double triggers
   isRefreshing = false;
   skeletonArray = Array(10);
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
   total: number = 0;
   private hasEnteredView = false;
+  private loadRequestId = 0;
 
   searchField: 'salesrefnum' | 'salescust' = 'salesrefnum';
   searchFieldLabels: any = {
@@ -116,127 +113,8 @@ export class SalesComponent implements OnInit {
     }
   }
 
-  /** 📡 Fetch items from database safely */
-  private async fetchItems(): Promise<any[]> {
-    // 🔒 Prevent fetching if already loaded
-    if (this.allLoaded) return [];
-
-    let items: any[] = [];
-
-    items =
-      this.currentDateFrom && this.currentDateTo
-        ? await this.salesService.getSalesFilterdb(
-            this.limit,
-            this.offset,
-            this.currentDateFrom,
-            this.currentDateTo
-          )
-        : await this.salesService.getSalesdb(this.limit, this.offset);
-
-    console.log(items);
-    await this.loadtotals();
-
-    // Mark allLoaded if fewer items returned than limit
-    if (items.length < this.limit) this.allLoaded = true;
-
-    // Increment offset by actual fetched items
-    this.offset += items.length;
-
-    return items;
-  }
-
-  /** 🔽 Infinite Scroll Loader */
-  async loadMore(event: InfiniteScrollCustomEvent) {
-    // Prevent multiple triggers
-    if (this.allLoaded || this.isFetching) {
-      event.target.complete();
-      return;
-    }
-
-    this.isFetching = true; // 🔒 lock immediately
-
-    try {
-      const newItems = await this.fetchItems();
-      if (newItems.length > 0) {
-        this.items.push(...newItems);
-        this.applySearch();
-      }
-    } catch (err) {
-      console.error('Load more failed:', err);
-    } finally {
-      this.isFetching = false;
-      event.target.complete();
-    }
-  }
-
-  /** 🔃 Reset + load first page */
-  // async resetAndLoad(fromRefresh = false) {
-  //   this.isLoading = true;
-  //   this.offset = 0;
-  //   this.allLoaded = false;
-  //   this.isFetching = false;
-
-  //   // Disable infinite scroll during reset
-  //   const infinite = document.querySelector('ion-infinite-scroll') as any;
-  //   if (infinite) infinite.disabled = true;
-
-  //   const newItems = await this.fetchItems();
-  //   this.items = newItems;
-  //   this.applySearch();
-
-  //   this.isLoading = false;
-
-  //   // Re-enable infinite scroll
-  //   if (infinite) infinite.disabled = false;
-  // }
-
-  async applySearch(reset: boolean = false) {
-    const query = this.searchValue.trim();
-
-    // When typing starts or resets → reset offset and list
-    if (reset) {
-      this.offset = 0;
-      this.filteredItems = [];
-    }
-
-    // If query empty → load original list
-    if (!query) {
-      this.filteredItems = [...this.items];
-      return;
-    }
-
-    // Add prefix
-    let searchQuery = query;
-
-    if (this.searchField === 'salesrefnum') {
-      searchQuery = `salesrefnum:${query}`;
-    } else if (this.searchField === 'salescust') {
-      searchQuery = `salescust:${query}`;
-    }
-
-    try {
-      const rows = await this.salesService.searchOfflineSpecific(
-        searchQuery,
-        this.limit,
-        this.offset
-      );
-
-      if (reset) {
-        this.filteredItems = rows; // replace
-      } else {
-        this.filteredItems.push(...rows); // append (infinite scroll)
-      }
-
-      // Update offset
-      this.offset += this.limit;
-    } catch (err) {
-      console.error('sales search failed', err);
-      this.filteredItems = []; // ensure clear on error
-    }
-  }
-
   onSearchChange() {
-    this.applySearch(true); // always reset when typing
+    void this.loadPage(1);
   }
 
   async openFilter() {
@@ -286,35 +164,42 @@ export class SalesComponent implements OnInit {
   async applyFilter(dateFrom: string, dateTo: string) {
     this.currentDateFrom = dateFrom || null;
     this.currentDateTo = dateTo || null;
-    this.isLoading = true;
-    this.offset = 0;
-    this.allLoaded = false;
+    this.currentPage = 1;
     this.items = [];
     this.filteredItems = [];
     try {
-      const dateFrom = this.currentDateFrom ?? '';
-      const dateTo = this.currentDateTo ?? '';
+      await Promise.all([this.loadPage(1), this.loadtotals()]);
+    } catch (error) {
+      console.error('Failed to refresh sales list:', error);
+    }
+  }
 
-      let fetchFn;
-
-      fetchFn = this.salesService.getSalesFilterdb;
-
-      const data: any[] = await fetchFn.call(
-        this.salesService,
-        this.limit,
-        this.offset,
-        dateFrom,
-        dateTo
+  async loadPage(page: number): Promise<void> {
+    const requestId = ++this.loadRequestId;
+    this.isLoading = true;
+    try {
+      const result = await this.salesService.getSalesPage(
+        page,
+        this.pageSize,
+        this.currentDateFrom,
+        this.currentDateTo,
+        this.searchValue,
+        this.searchField
       );
-      await this.loadtotals();
-      this.items = data;
-      this.filteredItems = [...this.items];
-      this.offset += this.limit;
-      if (data.length < this.limit) this.allLoaded = true;
-    } catch (err) {
-      console.error('Filter load error:', err);
+      if (requestId !== this.loadRequestId) return;
+      this.currentPage = result.currentPage;
+      this.totalCount = result.totalCount;
+      this.totalPages = Math.ceil(this.totalCount / this.pageSize) || 1;
+      this.items = result.rows;
+      this.filteredItems = result.rows;
+    } catch (error) {
+      console.error('Failed to load sales page:', error);
+      if (requestId === this.loadRequestId) {
+        this.items = [];
+        this.filteredItems = [];
+      }
     } finally {
-      this.isLoading = false;
+      if (requestId === this.loadRequestId) this.isLoading = false;
     }
   }
 
@@ -356,7 +241,7 @@ export class SalesComponent implements OnInit {
           text: 'OK',
           handler: async (value) => {
             this.searchField = value;
-            this.applySearch();
+            void this.loadPage(1);
           },
         },
       ],
@@ -396,7 +281,7 @@ export class SalesComponent implements OnInit {
             ...this.items[index],
             ...result.data,
           };
-          this.applySearch();
+          void this.loadPage(this.currentPage);
         }
       }
     });

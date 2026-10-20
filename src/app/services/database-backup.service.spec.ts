@@ -164,4 +164,63 @@ describe('DatabaseBackupService', () => {
     );
     expect(localStorage.getItem('vpos_queued_orders')).toBeNull();
   });
+
+  it('restores legacy price-list costs and accepts backups without shortcut presets', async () => {
+    db.query.and.callFake(async (sql: string) => {
+      if (sql.includes("name = 'ai_chunk_fts'")) return [] as any;
+      if (sql.includes('sqlite_master')) {
+        return [
+          { name: 'pricelisttbl', sql: 'CREATE TABLE pricelisttbl' },
+          { name: 'shortcut_presets', sql: 'CREATE TABLE shortcut_presets' },
+        ] as any;
+      }
+      if (sql.includes('PRAGMA table_info("pricelisttbl")')) {
+        return [
+          { name: 'itemid' },
+          { name: 'itemcost' },
+          { name: 'cost_refill' },
+          { name: 'cost_non_refill' },
+        ] as any;
+      }
+      if (sql.includes('PRAGMA table_info("shortcut_presets")')) {
+        return [
+          { name: 'preset_id' },
+          { name: 'position' },
+          { name: 'preset_json' },
+        ] as any;
+      }
+      return [] as any;
+    });
+    const backup = new File(
+      [
+        JSON.stringify({
+          format: 'vmjamtechdatamobile',
+          version: 1,
+          database: 'vmjampos',
+          createdAt: new Date().toISOString(),
+          localSettings: { bir_settings: null, store_only_mode: null },
+          tables: {
+            pricelisttbl: {
+              columns: ['itemid', 'itemcost'],
+              rows: [{ itemid: 7, itemcost: 42 }],
+            },
+          },
+        }),
+      ],
+      'legacy-backup.vmjamtechdatamobile'
+    );
+
+    await service.restoreBackupFromFile(backup);
+
+    expect(db.execute).toHaveBeenCalledWith(
+      'INSERT INTO "pricelisttbl" ("itemid", "itemcost", "cost_refill", "cost_non_refill") VALUES (?, ?, ?, ?)',
+      [7, 42, 42, 42],
+      false
+    );
+    expect(db.execute).toHaveBeenCalledWith(
+      'DELETE FROM "shortcut_presets"',
+      [],
+      false
+    );
+  });
 });

@@ -125,6 +125,42 @@ export class CustomersService {
     }
   }
 
+  async getCustomerPage(
+    page: number,
+    pageSize: number,
+    searchTerm: string,
+    searchField: 'custname' | 'custadd'
+  ): Promise<{ rows: any[]; totalCount: number; currentPage: number }> {
+    const where = ["custstatus <> 'inactive'"];
+    const params: string[] = [];
+    const term = searchTerm.trim();
+
+    if (term) {
+      where.push(`${searchField} LIKE '%' || ? || '%'`);
+      params.push(term);
+    }
+
+    const filterClause = `WHERE ${where.join(' AND ')}`;
+    try {
+      const countRows = await this.db.query<{ total: number }>(
+        `SELECT COUNT(*) AS total FROM custinfo ${filterClause}`,
+        params
+      );
+      const totalCount = Number(countRows[0]?.total ?? 0);
+      const totalPages = Math.ceil(totalCount / pageSize) || 1;
+      const currentPage = Math.min(Math.max(1, page), totalPages);
+      const offset = (currentPage - 1) * pageSize;
+      const rows = await this.db.query(
+        `SELECT * FROM custinfo ${filterClause} ORDER BY custname ASC LIMIT ? OFFSET ?`,
+        [...params, pageSize, offset]
+      );
+      return { rows, totalCount, currentPage };
+    } catch (error) {
+      console.error('Error loading customer page:', error);
+      throw new Error('Failed to load customers.');
+    }
+  }
+
   async getCustomersBalancedb(
     limit: number = 20,
     offset: number = 0

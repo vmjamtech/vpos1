@@ -1,0 +1,20 @@
+<div class="pagination-footer-bar">
+  <div class="page-indicator">
+    <span>Page {{ currentPage }} of {{ totalPages }}</span>
+  </div>
+
+  <div class="page-nav-buttons">
+    <ion-button size="small" fill="clear" [disabled]="currentPage <= 1" (click)="goToPage(1)">
+      |FIRST|
+    </ion-button>
+    <ion-button size="small" fill="clear" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">
+      PREVIOUS
+    </ion-button>
+    <ion-button size="small" fill="clear" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+      NEXT
+    </ion-button>
+    <ion-button size="small" fill="clear" [disabled]="currentPage >= totalPages" (click)="goToPage(totalPages)">
+      LAST|
+    </ion-button>
+  </div>
+</div>

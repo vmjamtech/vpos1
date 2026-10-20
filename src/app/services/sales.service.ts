@@ -154,6 +154,55 @@ export class SalesService {
     }
   }
 
+  async getSalesPage(
+    page: number,
+    pageSize: number,
+    dateFrom: string | null,
+    dateTo: string | null,
+    searchTerm: string,
+    searchField: 'salesrefnum' | 'salescust'
+  ): Promise<{ rows: any[]; totalCount: number; currentPage: number }> {
+    const filters = ['1 = 1'];
+    const params: string[] = [];
+
+    if (dateFrom) {
+      filters.push('date(s.salesdate) >= date(?)');
+      params.push(dateFrom);
+    }
+    if (dateTo) {
+      filters.push('date(s.salesdate) <= date(?)');
+      params.push(dateTo);
+    }
+    const term = searchTerm.trim();
+    if (term) {
+      filters.push(`s.${searchField} LIKE '%' || ? || '%'`);
+      params.push(term);
+    }
+
+    const whereClause = `WHERE ${filters.join(' AND ')}`;
+    try {
+      const countRows = await this.db.query<{ total: number }>(
+        `SELECT COUNT(*) AS total FROM salestbl s ${whereClause}`,
+        params
+      );
+      const totalCount = Number(countRows[0]?.total ?? 0);
+      const totalPages = Math.ceil(totalCount / pageSize) || 1;
+      const currentPage = Math.min(Math.max(1, page), totalPages);
+      const offset = (currentPage - 1) * pageSize;
+      const rows = await this.db.query(
+        `SELECT s.*, c.custadd FROM salestbl s
+         LEFT JOIN custinfo c ON s.salescustid = c.custid
+         ${whereClause}
+         ORDER BY s.salesdate DESC LIMIT ? OFFSET ?`,
+        [...params, pageSize, offset]
+      );
+      return { rows, totalCount, currentPage };
+    } catch (error) {
+      console.error('Error loading sales page:', error);
+      throw new Error('Failed to load sales.');
+    }
+  }
+
   async getTotalSales(datefrom?: string, dateto?: string): Promise<number> {
     let sql = `
     SELECT 

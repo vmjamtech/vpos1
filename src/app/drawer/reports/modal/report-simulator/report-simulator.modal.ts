@@ -28,6 +28,7 @@ import {
   ReportTextAlignment,
   getDefaultReportLayoutConfig,
 } from './report-layout.model';
+import { PermissionService } from 'src/app/services/permission.service';
 
 type SimulatorView = 'both' | 'heading' | 'values' | 'positions';
 
@@ -66,7 +67,10 @@ export class ReportSimulatorModalComponent implements OnInit {
   toastMessage = '';
   toastOpen = false;
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(
+    private modalCtrl: ModalController,
+    private permissionService: PermissionService
+  ) {}
 
   ngOnInit(): void {
     this.loadTabConfig();
@@ -174,6 +178,11 @@ export class ReportSimulatorModalComponent implements OnInit {
   }
 
   async saveConfig(): Promise<void> {
+    if (!this.permissionService.has('report.simulation_settings')) {
+      this.toastMessage = 'You do not have permission to modify report settings.';
+      this.toastOpen = true;
+      return;
+    }
     try {
       localStorage.setItem(
         `report_layout_${this.reportTab}`,

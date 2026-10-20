@@ -32,6 +32,7 @@ import {
 } from 'src/app/utils/date-range';
 import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 import { PermissionService } from 'src/app/services/permission.service';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-personeltransaction',
@@ -60,6 +61,7 @@ import { PermissionService } from 'src/app/services/permission.service';
     IonFab,
     IonFabButton,
     DateRangeDisplayComponent,
+    ItemSizePipe,
   ],
 })
 export class PersoneltransactionComponent implements OnInit {

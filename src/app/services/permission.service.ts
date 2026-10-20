@@ -99,6 +99,8 @@ export class PermissionService {
       personnel: mergeGroup('personnel'),
       transferItems: mergeGroup('transferItems'),
       warehouse: mergeGroup('warehouse'),
+      pos: mergeGroup('pos'),
+      report: mergeGroup('report'),
     };
   }
 }

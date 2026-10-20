@@ -35,6 +35,8 @@ import { SelectOrderModalComponent } from './modals/select-order/select-order.mo
 import { ShortcutPreset } from './shortcut-preset.model';
 import { InventoryService } from 'src/app/services/inventory.service';
 import { StorageService } from 'src/app/services/storage.service';
+import { ShortcutPresetService } from 'src/app/services/shortcut-preset.service';
+import { normalizeSalesCategory } from 'src/app/utils/sales-category';
 
 @Component({
   selector: 'app-pos-sales',
@@ -67,13 +69,13 @@ import { StorageService } from 'src/app/services/storage.service';
 })
 export class PosSalesComponent implements OnInit {
   categories = [
-    { label: '1-PICK UP', value: '1-PICK UP' },
-    { label: '2-DELIVERY', value: '2-DELIVERY' },
+    { label: 'PICK UP', value: 'PICK UP' },
+    { label: 'DELIVERY', value: 'DELIVERY' },
   ];
 
   // Selected POS inputs
   posData: any = {
-    category: '1-PICK UP',
+    category: 'PICK UP',
     customerId: null,
     customerName: '',
     customeraddress: '',
@@ -102,6 +104,7 @@ export class PosSalesComponent implements OnInit {
     private actionSheetCtrl: ActionSheetController,
     private storageService: StorageService,
     private toastController: ToastController,
+    private shortcutPresetService?: ShortcutPresetService,
     private inventoryService?: InventoryService
   ) {
     this.storageService.get<any>('login-data').then((user) => {
@@ -275,7 +278,7 @@ export class PosSalesComponent implements OnInit {
   private restoreOrderToPOS(order: any) {
     this.posData = {
       ...this.posData,
-      category: order.category,
+      category: normalizeSalesCategory(order.category),
       customerId: order.customer?.id ?? null,
       customerName: order.customer?.name ?? '',
       customeraddress: order.customer?.address ?? '',
@@ -684,23 +687,23 @@ export class PosSalesComponent implements OnInit {
   }
 
   async openShortcutOrders() {
-    let presets: ShortcutPreset[] = [];
-
     try {
-      const storedPresets = localStorage.getItem('vpos_shortcut_presets');
-      const parsedPresets = storedPresets ? JSON.parse(storedPresets) : [];
-      if (Array.isArray(parsedPresets)) {
-        presets = parsedPresets
-          .filter(
-            (preset: any) =>
-              preset && preset.codeName && Array.isArray(preset.items)
-          )
-          .slice(0, 6);
-      }
+      const presets: ShortcutPreset[] =
+        await this.shortcutPresetService?.getAll() ?? [];
+      await this.presentShortcutOrders(presets);
     } catch (error) {
       console.error('Failed to load shortcut presets:', error);
+      const toast = await this.toastController.create({
+        message: 'Unable to load shortcut presets.',
+        duration: 3000,
+        position: 'bottom',
+        color: 'danger',
+      });
+      await toast.present();
     }
+  }
 
+  private async presentShortcutOrders(presets: ShortcutPreset[]): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: SelectOrderModalComponent,
       cssClass: 'select-order-modal',
@@ -719,15 +722,15 @@ export class PosSalesComponent implements OnInit {
       header: 'Please Select',
       buttons: [
         {
-          text: '1-PICK UP',
+          text: 'PICK UP',
           handler: () => {
-            void this.selectShortcutPersonnel(preset, '1-PICK UP');
+            void this.selectShortcutPersonnel(preset, 'PICK UP');
           },
         },
         {
-          text: '2-DELIVERY',
+          text: 'DELIVERY',
           handler: () => {
-            void this.selectShortcutPersonnel(preset, '2-DELIVERY');
+            void this.selectShortcutPersonnel(preset, 'DELIVERY');
           },
         },
         { text: 'Cancel', role: 'cancel' },
@@ -854,9 +857,24 @@ export class PosSalesComponent implements OnInit {
     this.posData.personnel1Name = personnel?.pname || personnel?.name || '';
     this.posData.personnel2Id = null;
     this.posData.personnel2Name = '';
-    this.resetDiscount();
+    const presetDiscountType = preset.discountType ?? 'none';
+    const requestedDiscount = Number(preset.discountValue);
+    const presetDiscountValue =
+      presetDiscountType !== 'none' &&
+      Number.isFinite(requestedDiscount) &&
+      requestedDiscount > 0
+        ? presetDiscountType === 'percentage'
+          ? Math.min(requestedDiscount, 100)
+          : requestedDiscount
+        : 0;
+    this.discountType = presetDiscountValue > 0 ? 'regular' : 'none';
+    this.discountMode =
+      presetDiscountType === 'percentage' ? 'percent' : 'fixed';
+    this.discountInputVal = presetDiscountValue;
     this.cart = hydratedCart;
     this.calculateTotals();
+    this.posData.presetDiscountType = presetDiscountType;
+    this.posData.discountValue = presetDiscountValue;
     await this.openCheckoutModal();
   }
 
@@ -872,7 +890,7 @@ export class PosSalesComponent implements OnInit {
   async endTransaction() {
     this.resetDiscount();
     this.posData = {
-      category: '1-PICK UP',
+      category: 'PICK UP',
       customerId: null,
       customerName: '',
       customeraddress: '',
@@ -902,7 +920,7 @@ export class PosSalesComponent implements OnInit {
             // Reset POS data
             this.resetDiscount();
             this.posData = {
-              category: '1-PICK UP',
+              category: 'PICK UP',
               customerId: null,
               customerName: '',
               customeraddress: '',

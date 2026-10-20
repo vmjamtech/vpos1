@@ -108,6 +108,19 @@ export class UserpermissionsComponent implements OnInit {
         { label: 'Update/Edit Warehouse Item', path: 'warehouse.updateWarehouseItem', enabled: true },
       ],
     },
+    {
+      title: 'POS Sales',
+      options: [
+        { label: 'Edit Shortcut Presets', path: 'pos.shortcut_edit', enabled: true },
+        { label: 'Delete Shortcut Presets', path: 'pos.shortcut_delete', enabled: true },
+      ],
+    },
+    {
+      title: 'Reports',
+      options: [
+        { label: 'Simulation Settings', path: 'report.simulation_settings', enabled: true },
+      ],
+    },
   ];
 
   constructor(

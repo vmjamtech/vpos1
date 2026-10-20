@@ -32,6 +32,8 @@ import {
 import { ReportLayoutTab } from './modal/report-simulator/report-layout.model';
 import { readReportLayoutConfig } from './modal/report-simulator/report-layout.model';
 import { ReportSimulatorModalComponent } from './modal/report-simulator/report-simulator.modal';
+import { PermissionService } from 'src/app/services/permission.service';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
 
@@ -55,11 +57,13 @@ type ReportView = 'summary' | 'item-sold' | 'inventory' | 'floorstock';
     IonList,
     IonNote,
     IonSpinner,
+    ItemSizePipe,
   ],
 })
 export class ReportsComponent {
   readonly reportPageSize = 30;
   readonly today = this.localDate();
+  readonly maxFilterYear = `${new Date().getFullYear() + 10}-12-31`;
 
   activeView: ReportView | null = null;
   date = this.today;
@@ -172,7 +176,8 @@ export class ReportsComponent {
     private alertController: AlertController,
     private ngZone: NgZone,
     private changeDetector: ChangeDetectorRef,
-    public storeOnly: StoreOnlyService
+    public storeOnly: StoreOnlyService,
+    public permissionService: PermissionService
   ) {}
 
   async onSelectReport(value: ReportView): Promise<void> {
@@ -238,6 +243,10 @@ export class ReportsComponent {
     report: ReportLayoutTab,
     slidingItem: IonItemSliding
   ): Promise<void> {
+    if (!this.permissionService.has('report.simulation_settings')) {
+      await slidingItem.close();
+      return;
+    }
     try {
       const modal = await this.modalController.create({
         component: ReportSimulatorModalComponent,

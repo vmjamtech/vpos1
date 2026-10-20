@@ -17,9 +17,21 @@ interface DatabaseBackup {
   localSettings: {
     bir_settings: string | null;
     store_only_mode: string | null;
+    vpos_shortcut_presets?: string | null;
+    report_layout_summary?: string | null;
+    report_layout_item_sold?: string | null;
+    report_layout_inventory?: string | null;
+    report_layout_floorstock?: string | null;
   };
   tables: Record<string, BackupTable>;
 }
+
+const REPORT_LAYOUT_KEYS = [
+  'report_layout_summary',
+  'report_layout_item-sold',
+  'report_layout_inventory',
+  'report_layout_floorstock',
+] as const;
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseBackupService {
@@ -28,8 +40,10 @@ export class DatabaseBackupService {
   private readonly databaseName = 'vmjampos' as const;
   private readonly legacyOptionalColumns: Record<string, string[]> = {
     inventorytbl: ['cost_refill', 'cost_non_refill'],
+    pricelisttbl: ['cost_refill', 'cost_non_refill'],
     salescart: ['cost_snapshot_version'],
   };
+  private readonly legacyOptionalTables = ['shortcut_presets'];
 
   constructor(private db: SqliteService) {}
 
@@ -73,6 +87,11 @@ export class DatabaseBackupService {
       localSettings: {
         bir_settings: localStorage.getItem('bir_settings'),
         store_only_mode: localStorage.getItem('store_only_mode'),
+        vpos_shortcut_presets: localStorage.getItem('vpos_shortcut_presets'),
+        report_layout_summary: localStorage.getItem('report_layout_summary'),
+        report_layout_item_sold: localStorage.getItem('report_layout_item-sold'),
+        report_layout_inventory: localStorage.getItem('report_layout_inventory'),
+        report_layout_floorstock: localStorage.getItem('report_layout_floorstock'),
       },
       tables: tableData,
     };
@@ -177,6 +196,21 @@ export class DatabaseBackupService {
           backup.localSettings.store_only_mode
         );
       }
+      if (backup.tables['shortcut_presets']?.rows.length) {
+        localStorage.removeItem('vpos_shortcut_presets');
+      } else {
+        this.restoreLocalSetting(
+          'vpos_shortcut_presets',
+          backup.localSettings.vpos_shortcut_presets ?? null
+        );
+      }
+      for (const key of REPORT_LAYOUT_KEYS) {
+        const settingKey = key === 'report_layout_item-sold'
+          ? 'report_layout_item_sold'
+          : key;
+        const value = backup.localSettings[settingKey];
+        if (value !== undefined) this.restoreLocalSetting(key, value);
+      }
       localStorage.removeItem('vpos_queued_orders');
     } catch (error) {
       console.warn('Unable to restore or clear local settings after database restore:', error);
@@ -218,23 +252,57 @@ export class DatabaseBackupService {
       throw new Error('INVALID_BACKUP_FILE');
     }
 
+    for (const settingKey of [
+      'vpos_shortcut_presets',
+      'report_layout_summary',
+      'report_layout_item_sold',
+      'report_layout_inventory',
+      'report_layout_floorstock',
+    ] as const) {
+      const value = backup.localSettings[settingKey];
+      if (value !== undefined && value !== null && typeof value !== 'string') {
+        throw new Error('INVALID_BACKUP_FILE');
+      }
+    }
+
     const liveTables = await this.getApplicationTableNames();
-    const backupTables = Object.keys(backup.tables).sort();
-    if (JSON.stringify(backupTables) !== JSON.stringify([...liveTables].sort())) {
+    const backupTableNames = Object.keys(backup.tables);
+    const expectedTableNames = liveTables.filter(
+      (table) =>
+        !this.legacyOptionalTables.includes(table) ||
+        backupTableNames.includes(table)
+    );
+    if (
+      JSON.stringify(backupTableNames.sort()) !==
+      JSON.stringify([...expectedTableNames].sort())
+    ) {
       throw new Error('INVALID_BACKUP_FILE');
     }
 
     for (const table of liveTables) {
-      const savedTable = backup.tables[table];
       const liveColumns = await this.getTableColumns(table);
+      if (!backup.tables[table] && this.legacyOptionalTables.includes(table)) {
+        backup.tables[table] = { columns: liveColumns, rows: [] };
+        continue;
+      }
+      const savedTable = backup.tables[table];
+      const optionalColumns = this.legacyOptionalColumns[table] ?? [];
       const legacyColumns = liveColumns.filter(
-        (column) => !this.legacyOptionalColumns[table]?.includes(column)
+        (column) => !optionalColumns.includes(column)
       );
       const hasCurrentColumns =
         JSON.stringify(savedTable?.columns) === JSON.stringify(liveColumns);
+      const missingColumns = liveColumns.filter(
+        (column) => !savedTable?.columns?.includes(column)
+      );
       const hasSupportedLegacyColumns =
-        this.legacyOptionalColumns[table]?.length > 0 &&
-        JSON.stringify(savedTable?.columns) === JSON.stringify(legacyColumns);
+        missingColumns.length > 0 &&
+        missingColumns.every((column) =>
+          this.legacyOptionalColumns[table]?.includes(column)
+        ) &&
+        savedTable?.columns?.every((column) => liveColumns.includes(column)) &&
+        (JSON.stringify(savedTable?.columns) === JSON.stringify(legacyColumns) ||
+          missingColumns.length < optionalColumns.length);
       if (
         !savedTable ||
         !Array.isArray(savedTable.columns) ||
@@ -271,14 +339,11 @@ export class DatabaseBackupService {
       }
 
       if (hasSupportedLegacyColumns) {
-        const missingColumns = liveColumns.filter(
-          (column) => !savedTable.columns.includes(column)
-        );
         savedTable.rows = savedTable.rows.map((row) => {
           const restoredRow = { ...row };
           for (const column of missingColumns) {
             restoredRow[column] =
-              table === 'inventorytbl'
+              table === 'inventorytbl' || table === 'pricelisttbl'
                 ? row['itemcost'] ?? 0
                 : 0;
           }
@@ -291,6 +356,13 @@ export class DatabaseBackupService {
   }
 
   private async getApplicationTableNames(): Promise<string[]> {
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS shortcut_presets (
+        preset_id TEXT PRIMARY KEY,
+        position INTEGER NOT NULL,
+        preset_json TEXT NOT NULL
+      )
+    `, [], false);
     const rows = await this.db.query<{ name: string; sql: string | null }>(`
       SELECT name, sql
       FROM sqlite_master
@@ -350,5 +422,13 @@ export class DatabaseBackupService {
 
   private isByte(value: unknown): value is number {
     return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 255;
+  }
+
+  private restoreLocalSetting(key: string, value: string | null): void {
+    if (value === null) {
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, value);
+    }
   }
 }

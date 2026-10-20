@@ -13,6 +13,7 @@ import {
   ReportLayoutConfig,
   readReportLayoutConfig,
 } from 'src/app/drawer/reports/modal/report-simulator/report-layout.model';
+import { normalizeItemSize } from '../shared/item-size/item-size.pipe';
 
 export interface InventoryPrintSection {
   location: 'STORE' | 'WAREHOUSE';
@@ -110,7 +111,7 @@ export class ReportsPrintService {
       body.push(this.formatLine('No items found.', lineWidth));
     } else {
       for (const row of report.rows) {
-        const size = String(row.size ?? '').trim() || 'no size';
+        const size = normalizeItemSize(row.size);
         body.push(
           this.formatConfiguredRow([row.itemCode, size, row.totalItems], layout)
         );

@@ -49,11 +49,11 @@
         interface="popover"
         [disabled]="!isEditMode"
       >
-        <ion-select-option [value]="null" disabled selected hidden>
+        <ion-select-option value="" disabled selected hidden>
           Select Size
         </ion-select-option>
         <ion-select-option *ngFor="let size of sizes" [value]="size">{{
-          size
+          size || 'No Size'
         }}</ion-select-option>
       </ion-select>
     </ion-item>

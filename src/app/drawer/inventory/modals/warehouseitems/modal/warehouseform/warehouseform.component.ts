@@ -58,7 +58,7 @@ export class WarehouseformComponent implements OnInit {
   itemid?: number;
 
   sizes = ['', '250grams', '2.7kg', '3kg', '5kg', '7kg', '11kg', '22kg', '50kg'];
-  selectedSize: string | null = null;
+  selectedSize = '';
 
   categories: any[] = [];
   selectedCategory: string | null = null;
@@ -97,7 +97,7 @@ export class WarehouseformComponent implements OnInit {
       this.itemid = this.itemData.itemid;
       this.itemcode = this.itemData.itemcode;
       this.description = this.itemData.itemname;
-      this.selectedSize = this.itemData.itemsize || null;
+      this.selectedSize = this.cleanSelectedSize(this.itemData.itemsize);
       this.selectedCategory = this.itemData.itemcategory || null;
       this.fillqty = this.itemData.whfill || 0;
       this.emptyqty = this.itemData.whempty || 0;
@@ -141,6 +141,11 @@ export class WarehouseformComponent implements OnInit {
     this.modalCtrl.dismiss();
   }
 
+  private cleanSelectedSize(size: string | null | undefined): string {
+    const clean = size?.trim() ?? '';
+    return clean.toLowerCase() === 'select size' ? '' : clean;
+  }
+
   beginEdit(): void {
     if (!this.canEdit) return;
     this.mode = 'edit';
@@ -153,7 +158,7 @@ export class WarehouseformComponent implements OnInit {
     const itemData = {
       itemcode: this.itemcode,
       itemname: this.description,
-      itemsize: this.selectedSize ?? '',
+      itemsize: this.cleanSelectedSize(this.selectedSize),
       itemcategory: this.selectedCategory ?? '',
       whfill: this.fillqty,
       whempty: this.emptyqty,
@@ -192,7 +197,7 @@ export class WarehouseformComponent implements OnInit {
         itemid: this.itemid,
         itemcode: this.itemcode,
         itemname: this.description,
-        itemsize: this.selectedSize ?? '',
+        itemsize: this.cleanSelectedSize(this.selectedSize),
         itemcategory: this.selectedCategory ?? '',
         whfill: this.fillqty,
         whempty: this.emptyqty,

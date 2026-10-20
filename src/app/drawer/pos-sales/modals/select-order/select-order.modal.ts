@@ -19,6 +19,8 @@ import {
 } from '@ionic/angular/standalone';
 import { ShortcutPreset } from '../../shortcut-preset.model';
 import { KeyBindSettingsModalComponent } from '../key-bind-settings/key-bind-settings.modal';
+import { PermissionService } from 'src/app/services/permission.service';
+import { ShortcutPresetService } from 'src/app/services/shortcut-preset.service';
 
 @Component({
   selector: 'app-select-order-modal',
@@ -47,7 +49,9 @@ export class SelectOrderModalComponent {
 
   constructor(
     private modalCtrl: ModalController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    public permissionService: PermissionService,
+    private shortcutPresetService: ShortcutPresetService
   ) {}
 
   dismiss() {
@@ -72,10 +76,12 @@ export class SelectOrderModalComponent {
   }
 
   async editPreset(preset: ShortcutPreset) {
+    if (!this.permissionService.has('pos.shortcut_edit')) return;
     await this.openPresetSettings('edit', preset);
   }
 
   async deletePreset(preset: ShortcutPreset) {
+    if (!this.permissionService.has('pos.shortcut_delete')) return;
     const alert = await this.alertCtrl.create({
       header: 'Delete shortcut?',
       message: `Delete ${preset.codeName}?`,
@@ -88,8 +94,18 @@ export class SelectOrderModalComponent {
     const { role } = await alert.onDidDismiss();
     if (role !== 'confirm') return;
 
-    this.presets = this.presets.filter((item) => item.id !== preset.id);
-    this.persistPresets();
+    try {
+      await this.shortcutPresetService.delete(preset.id);
+      this.presets = this.presets.filter((item) => item.id !== preset.id);
+    } catch (error) {
+      console.error('Failed to delete shortcut preset:', error);
+      const failure = await this.alertCtrl.create({
+        header: 'Unable to Delete Shortcut',
+        message: 'Please try again.',
+        buttons: ['OK'],
+      });
+      await failure.present();
+    }
   }
 
   private async openPresetSettings(
@@ -104,26 +120,7 @@ export class SelectOrderModalComponent {
     await modal.present();
     const { data } = await modal.onDidDismiss();
     if (data?.savedPreset) {
-      this.presets = this.readPresets();
-    }
-  }
-
-  private readPresets(): ShortcutPreset[] {
-    try {
-      const saved = localStorage.getItem('vpos_shortcut_presets');
-      const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed.slice(0, 6) : [];
-    } catch (error) {
-      console.error('Failed to reload shortcut presets:', error);
-      return this.presets;
-    }
-  }
-
-  private persistPresets() {
-    try {
-      localStorage.setItem('vpos_shortcut_presets', JSON.stringify(this.presets));
-    } catch (error) {
-      console.error('Failed to save shortcut presets:', error);
+      this.presets = await this.shortcutPresetService.getAll();
     }
   }
 }

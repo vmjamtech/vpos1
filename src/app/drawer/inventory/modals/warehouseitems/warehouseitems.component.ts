@@ -33,6 +33,7 @@ import { CategoryService } from 'src/app/services/category.service';
 import { WarehouseService } from 'src/app/services/warehouse.service';
 import { WarehouseformComponent } from './modal/warehouseform/warehouseform.component';
 import { PermissionService } from 'src/app/services/permission.service';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-warehouseitems',
@@ -63,6 +64,7 @@ import { PermissionService } from 'src/app/services/permission.service';
     IonFab,
     IonFabButton,
     IonItemSliding,
+    ItemSizePipe,
   ],
 })
 export class WarehouseitemsComponent implements OnInit {

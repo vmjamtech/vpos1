@@ -139,20 +139,14 @@
       <p>No data found.</p>
     </div>
   </div>
-  <!-- Infinite Scroll -->
-  <ion-infinite-scroll
-    threshold="150px"
-    (ionInfinite)="loadMore($event)"
-    [disabled]="allLoaded || isSearching"
-  >
-    <ion-infinite-scroll-content
-      loadingSpinner="bubbles"
-      loadingText="Loading more data..."
-    ></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
 </ion-content>
 
 <ion-footer class="total-footer">
+  <app-pagination
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    (pageChange)="loadPage($event)"
+  ></app-pagination>
   <div class="total-container">
     <strong>Total Sales:</strong>
     <span>₱{{ total | number : "1.2-2" }}</span>

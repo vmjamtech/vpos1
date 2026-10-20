@@ -74,7 +74,7 @@ export class InventoryformComponent implements OnInit {
     '22kg',
     '50kg',
   ];
-  selectedSize: string | null = null;
+  selectedSize = '';
 
   categories: any[] = [];
   selectedCategory: string | null = null;
@@ -115,7 +115,7 @@ export class InventoryformComponent implements OnInit {
       this.itemid = this.itemData.itemid;
       this.itemcode = this.itemData.itemcode;
       this.description = this.itemData.itemname;
-      this.selectedSize = (this.itemData.itemsize ?? '').trim() || null;
+      this.selectedSize = this.cleanSelectedSize(this.itemData.itemsize);
       this.selectedCategory = this.itemData.itemcategory || null;
       this.fillqty = this.itemData.fillqty || 0;
       this.emptyqty = this.itemData.emptyqty || 0;
@@ -162,6 +162,11 @@ export class InventoryformComponent implements OnInit {
     this.modalCtrl.dismiss();
   }
 
+  private cleanSelectedSize(size: string | null | undefined): string {
+    const clean = size?.trim() ?? '';
+    return clean.toLowerCase() === 'select size' ? '' : clean;
+  }
+
   beginEdit(): void {
     if (!this.canEdit) return;
     this.mode = 'edit';
@@ -174,7 +179,7 @@ export class InventoryformComponent implements OnInit {
     const itemData = {
       itemcode: this.itemcode,
       itemname: this.description,
-      itemsize: this.selectedSize ?? '',
+      itemsize: this.cleanSelectedSize(this.selectedSize),
       itemcategory: this.selectedCategory ?? '',
       fillqty: this.fillqty,
       emptyqty: this.emptyqty,
@@ -212,7 +217,7 @@ export class InventoryformComponent implements OnInit {
         itemid: this.itemid,
         itemcode: this.itemcode,
         itemname: this.description,
-        itemsize: this.selectedSize ?? '',
+        itemsize: this.cleanSelectedSize(this.selectedSize),
         itemcategory: this.selectedCategory ?? '',
         fillqty: this.fillqty,
         emptyqty: this.emptyqty,

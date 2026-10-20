@@ -34,6 +34,7 @@ import {
   ],
 })
 export class FiltermodalComponent {
+  readonly maxFilterDate = `${new Date().getFullYear() + 10}-12-31`;
   dateFrom: string | null = null;
   dateTo: string | null = null;
 

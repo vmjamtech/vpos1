@@ -21,7 +21,7 @@
         *ngFor="let preset of presets; let i = index"
         class="preset-slider"
       >
-        <ion-item-options side="start">
+        <ion-item-options side="start" *ngIf="permissionService.has('pos.shortcut_edit')">
           <ion-item-option color="primary" (click)="editPreset(preset)">
             <ion-icon slot="top" name="create-outline"></ion-icon>
             Edit
@@ -47,7 +47,7 @@
           </div>
         </ion-item>
 
-        <ion-item-options side="end">
+        <ion-item-options side="end" *ngIf="permissionService.has('pos.shortcut_delete')">
           <ion-item-option color="danger" (click)="deletePreset(preset)">
             <ion-icon slot="top" name="trash-outline"></ion-icon>
             Delete

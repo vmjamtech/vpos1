@@ -52,6 +52,7 @@
         <div class="order-summary">
           <strong>{{ order.queueNo }}</strong>
           <span>{{ order.customer?.name }}</span>
+          <span>{{ getOrderCategory(order) }}</span>
         </div>
         <div class="table-scroll">
           <table>

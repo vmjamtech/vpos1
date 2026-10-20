@@ -18,7 +18,7 @@
     <section class="filters" *ngIf="activeView === 'summary'">
       <label class="filter-control">
         <span>Date</span>
-        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+        <input type="date" [max]="maxFilterYear" [(ngModel)]="date" (change)="loadActiveReport()" />
       </label>
       <label class="filter-control">
         <span>Cashier</span>
@@ -32,7 +32,7 @@
     <section class="filters" *ngIf="activeView === 'floorstock'">
       <label class="filter-control">
         <span>Date</span>
-        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+        <input type="date" [max]="maxFilterYear" [(ngModel)]="date" (change)="loadActiveReport()" />
       </label>
       <div class="cashier-indicator">
         <span>Cashier in Charge</span>
@@ -43,18 +43,18 @@
     <section class="filters date-range-filters" *ngIf="activeView === 'item-sold'">
       <label class="filter-control">
         <span>Date From</span>
-        <input type="date" [(ngModel)]="fromDate" (change)="loadActiveReport()" />
+        <input type="date" [max]="maxFilterYear" [(ngModel)]="fromDate" (change)="loadActiveReport()" />
       </label>
       <label class="filter-control">
         <span>Date To</span>
-        <input type="date" [(ngModel)]="toDate" (change)="loadActiveReport()" />
+        <input type="date" [max]="maxFilterYear" [(ngModel)]="toDate" (change)="loadActiveReport()" />
       </label>
     </section>
 
     <section class="filters" *ngIf="activeView === 'inventory'">
       <label class="filter-control">
         <span>As of</span>
-        <input type="date" [(ngModel)]="date" (change)="loadActiveReport()" />
+        <input type="date" [max]="maxFilterYear" [(ngModel)]="date" (change)="loadActiveReport()" />
       </label>
     </section>
 
@@ -68,7 +68,7 @@
       <div *ngIf="!activeView" class="reports-container product-list-container">
       <ion-list class="product-list card-list reports-card-list" lines="none">
         <ion-item-sliding #summarySlide class="report-slider-card">
-          <ion-item-options side="start">
+          <ion-item-options side="start" *ngIf="permissionService.has('report.simulation_settings')">
             <ion-item-option color="tertiary" (click)="openReportSimulator('summary', summarySlide)">
               <ion-icon slot="top" name="options-outline"></ion-icon>
               Setting
@@ -96,7 +96,7 @@
         </ion-item-sliding>
 
         <ion-item-sliding #itemSoldSlide class="report-slider-card">
-          <ion-item-options side="start">
+          <ion-item-options side="start" *ngIf="permissionService.has('report.simulation_settings')">
             <ion-item-option color="tertiary" (click)="openReportSimulator('item-sold', itemSoldSlide)">
               <ion-icon slot="top" name="options-outline"></ion-icon>
               Setting
@@ -124,7 +124,7 @@
         </ion-item-sliding>
 
         <ion-item-sliding #inventorySlide class="report-slider-card">
-          <ion-item-options side="start">
+          <ion-item-options side="start" *ngIf="permissionService.has('report.simulation_settings')">
             <ion-item-option color="tertiary" (click)="openReportSimulator('inventory', inventorySlide)">
               <ion-icon slot="top" name="options-outline"></ion-icon>
               Setting
@@ -152,7 +152,7 @@
         </ion-item-sliding>
 
         <ion-item-sliding #floorstockSlide class="report-slider-card">
-          <ion-item-options side="start">
+          <ion-item-options side="start" *ngIf="permissionService.has('report.simulation_settings')">
             <ion-item-option color="tertiary" (click)="openReportSimulator('floorstock', floorstockSlide)">
               <ion-icon slot="top" name="options-outline"></ion-icon>
               Setting
@@ -199,7 +199,7 @@
             <ion-label>
               <div class="report-item-row item-sold-grid">
                 <span>{{ item.itemCode }}</span>
-                <span>{{ item.size }}</span>
+                <span>{{ item.size | itemSize }}</span>
                 <strong>{{ item.totalItems }}</strong>
               </div>
             </ion-label>

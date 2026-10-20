@@ -22,6 +22,7 @@ import {
 import { CategoryService } from 'src/app/services/category.service';
 import { InventoryService } from 'src/app/services/inventory.service';
 import { PermissionService } from 'src/app/services/permission.service';
+import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
 
 @Component({
   selector: 'app-itemlists',
@@ -45,6 +46,7 @@ import { PermissionService } from 'src/app/services/permission.service';
     IonTitle,
     IonToolbar,
     IonHeader,
+    ItemSizePipe,
   ],
 })
 export class ItemlistsComponent implements OnInit {

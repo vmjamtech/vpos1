@@ -9,6 +9,7 @@
         <ion-datetime
           id="partialDate"
           presentation="date"
+          [max]="maxFilterDate"
           [preferWheel]="true"
           [(ngModel)]="dateFrom"
         ></ion-datetime>
@@ -25,6 +26,7 @@
         <ion-datetime
           id="dateToDate"
           presentation="date"
+          [max]="maxFilterDate"
           [preferWheel]="true"
           [(ngModel)]="dateTo"
         ></ion-datetime>

@@ -21,6 +21,9 @@ describe('PermissionService', () => {
 
     expect(service.has('inventory.addItem')).toBeTrue();
     expect(service.has('customer.deleteCustomer')).toBeTrue();
+    expect(service.has('pos.shortcut_edit')).toBeTrue();
+    expect(service.has('pos.shortcut_delete')).toBeTrue();
+    expect(service.has('report.simulation_settings')).toBeTrue();
   });
 
   it('allows only administrator accounts to assign permissions', () => {

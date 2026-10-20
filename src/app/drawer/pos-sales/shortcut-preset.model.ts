@@ -18,4 +18,6 @@ export interface ShortcutPreset {
   codeName: string;
   customer: any;
   items: ShortcutItem[];
+  discountType?: 'fixed' | 'percentage' | 'none';
+  discountValue?: number;
 }

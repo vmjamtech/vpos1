@@ -12,6 +12,8 @@ import {
   IonLabel,
   IonSelect,
   IonSelectOption,
+  IonSegment,
+  IonSegmentButton,
   IonTitle,
   IonToolbar,
   ModalController,
@@ -20,6 +22,7 @@ import {
 import { ItemListComponent } from '../item-list/item-list.component';
 import { SelectListComponent } from '../select-list/select-list.component';
 import { ShortcutItem, ShortcutPreset } from '../../shortcut-preset.model';
+import { ShortcutPresetService } from 'src/app/services/shortcut-preset.service';
 
 @Component({
   selector: 'app-key-bind-settings-modal',
@@ -39,6 +42,8 @@ import { ShortcutItem, ShortcutPreset } from '../../shortcut-preset.model';
     IonLabel,
     IonSelect,
     IonSelectOption,
+    IonSegment,
+    IonSegmentButton,
     IonTitle,
     IonToolbar,
   ],
@@ -48,17 +53,22 @@ export class KeyBindSettingsModalComponent implements OnInit {
   @Input() preset?: ShortcutPreset;
 
   codeName = '';
+  discountType: 'fixed' | 'percentage' | 'none' = 'none';
+  discountValue: number | null = 0;
   customer: any = null;
   items: ShortcutItem[] = [];
 
   constructor(
     private modalCtrl: ModalController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private shortcutPresetService: ShortcutPresetService
   ) {}
 
   ngOnInit() {
     if (!this.preset) return;
     this.codeName = this.preset.codeName;
+    this.discountType = this.preset.discountType ?? 'none';
+    this.discountValue = this.preset.discountValue ?? 0;
     this.customer = { ...this.preset.customer };
     this.items = this.preset.items.map((item) => ({ ...item }));
   }
@@ -154,9 +164,28 @@ export class KeyBindSettingsModalComponent implements OnInit {
       return;
     }
 
+    const discountValue =
+      this.discountType === 'none' ? 0 : Number(this.discountValue);
+    if (
+      !Number.isFinite(discountValue) ||
+      discountValue < 0 ||
+      (this.discountType === 'percentage' && discountValue > 100)
+    ) {
+      const toast = await this.toastCtrl.create({
+        message: 'Enter a valid discount (percentage must be 100 or less).',
+        duration: 3000,
+        position: 'bottom',
+        color: 'warning',
+      });
+      await toast.present();
+      return;
+    }
+
     const savedPreset: ShortcutPreset = {
       id: this.preset?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       codeName: normalizedCodeName,
+      discountType: discountValue > 0 ? this.discountType : 'none',
+      discountValue,
       customer: this.customer,
       items: this.items.map((item) => ({
         ...item,
@@ -165,32 +194,22 @@ export class KeyBindSettingsModalComponent implements OnInit {
     };
 
     try {
-      const stored = localStorage.getItem('vpos_shortcut_presets');
-      const parsed = stored ? JSON.parse(stored) : [];
-      const presets: ShortcutPreset[] = Array.isArray(parsed) ? parsed : [];
-      const existingIndex = presets.findIndex(
-        (item) => item.id === savedPreset.id
-      );
-
-      if (existingIndex >= 0) {
-        presets[existingIndex] = savedPreset;
-      } else {
-        if (presets.length >= 6) {
-          const toast = await this.toastCtrl.create({
-            message: 'All 6 shortcut slots are in use.',
-            duration: 2500,
-            position: 'bottom',
-            color: 'warning',
-          });
-          await toast.present();
-          return;
-        }
-        presets.push(savedPreset);
-      }
-
-      localStorage.setItem('vpos_shortcut_presets', JSON.stringify(presets));
+      await this.shortcutPresetService.save(savedPreset);
       await this.modalCtrl.dismiss({ savedPreset });
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'All 6 shortcut slots are in use.'
+      ) {
+        const toast = await this.toastCtrl.create({
+          message: error.message,
+          duration: 2500,
+          position: 'bottom',
+          color: 'warning',
+        });
+        await toast.present();
+        return;
+      }
       console.error('Failed to save shortcut preset:', error);
       const toast = await this.toastCtrl.create({
         message: 'Unable to save this shortcut preset.',
