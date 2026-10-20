@@ -4,24 +4,18 @@ import { FormsModule } from '@angular/forms';
 import {
   AlertController,
   IonButton,
-  IonButtons,
   IonContent,
-  IonHeader,
   IonIcon,
   IonInput,
-  IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
-  IonText,
-  IonTitle,
-  IonToolbar,
   LoadingController,
   ModalController,
 } from '@ionic/angular/standalone';
 import moment from 'moment';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { PersonnelTransactionService } from 'src/app/services/personnel-transaction.service';
+import { PersonnelIncentiveService } from 'src/app/services/personnel-incentive.service';
 import { PrinterService } from 'src/app/services/printer.service';
 import { StorageService } from 'src/app/services/storage.service';
 
@@ -34,13 +28,7 @@ import { StorageService } from 'src/app/services/storage.service';
     IonContent,
     CommonModule,
     FormsModule,
-    IonLabel,
-    IonItem,
     IonButton,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
     IonInput,
     IonSelect,
     IonSelectOption,
@@ -52,23 +40,28 @@ export class PaysalaryComponent implements OnInit {
   Data?: any;
 
   pid?: number;
+  linkedUserid: number | null = null;
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
   pname: string = '';
-  prole = ['Driver', 'Rider', 'StoreKeeper'];
   selectedRole: string = '';
-  isHave: boolean = false;
-  totalsalary: number = 0;
-  dailyrate: number = 0;
+  daysCount: number = 0;
+  baseSalary: number = 0;
+  dailyRate: number = 0;
+  commission: number = 0;
   incentive: number = 0;
-  additional: number | null = null;
-  lesspay: number | null = null;
+  additional: number | null = 0;
+  lesspay: number | null = 0;
   paymentMethod: string = '';
-  tenderedAmount: number | null = null;
+  tenderedAmount: number | null = 0;
+  isLoading = true;
+  loadError = false;
+  totalPay = 0;
 
   constructor(
     private modalCtrl: ModalController,
     private personelTransactionService: PersonnelTransactionService,
+    private personnelIncentiveService: PersonnelIncentiveService,
     private appdateService: AppdateService,
     private storageService: StorageService,
     private alertCtrl: AlertController,
@@ -78,35 +71,85 @@ export class PaysalaryComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    console.log('data', this.Data);
     if (this.Data) {
       this.pid = this.Data.pid;
       this.pname = this.Data.pname;
       this.selectedRole = this.Data.prole;
       this.currentDateFrom = this.Data.datefrom;
       this.currentDateTo = this.Data.dateto;
-      this.incentive = this.Data.incentive;
+      this.linkedUserid = this.Data.linked_userid ?? null;
+      this.commission = Number(this.Data.commission) || 0;
     }
-    this.dailyrate = await this.personelTransactionService.getDailyRate(
-      this.pid ?? 0
-    );
-    this.totalsalary = await this.personelTransactionService.computeTotalSalary(
-      this.selectedRole,
-      this.pname,
-      this.pid ?? 0,
-      this.currentDateFrom ?? '',
-      this.currentDateTo ?? '',
-      false
-    );
+    if (!this.pid || !this.currentDateFrom || !this.currentDateTo) {
+      this.loadError = true;
+      this.isLoading = false;
+      return;
+    }
+
+    try {
+      this.dailyRate = await this.personelTransactionService.getDailyRate(
+        this.pid
+      );
+      this.daysCount = await this.personelTransactionService.getSalaryDays(
+        this.selectedRole,
+        this.pname,
+        this.pid,
+        this.currentDateFrom,
+        this.currentDateTo,
+        false,
+        this.linkedUserid
+      );
+      this.baseSalary = this.daysCount * this.dailyRate;
+
+      if (
+        this.selectedRole === 'Cashier' ||
+        this.selectedRole === 'StoreKeeper'
+      ) {
+        if (this.linkedUserid == null) {
+          throw new Error('Cashier has no linked user account.');
+        }
+        const result = await this.personnelIncentiveService.getCashierIncentive(
+          this.pid,
+          this.linkedUserid,
+          this.currentDateFrom,
+          this.currentDateTo
+        );
+        this.incentive = result.totalIncentive;
+      } else if (this.selectedRole === 'Rider') {
+        const result = await this.personnelIncentiveService.getRiderIncentive(
+          this.pid,
+          this.currentDateFrom,
+          this.currentDateTo
+        );
+        this.incentive = result.totalIncentive;
+      } else if (this.selectedRole === 'Driver') {
+        const result = await this.personnelIncentiveService.getDriverIncentive(
+          this.pid,
+          this.currentDateFrom,
+          this.currentDateTo
+        );
+        this.incentive = result.totalIncentive;
+      }
+      this.recalculateTotals();
+    } catch (error) {
+      console.error('Failed to load salary calculation:', error);
+      this.loadError = true;
+      await this.appdateService.showToastjs(
+        'Unable to calculate salary. Please try again.',
+        'danger'
+      );
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  get totalPay(): number {
-    return (
-      (this.totalsalary || 0) +
+  recalculateTotals() {
+    this.totalPay =
+      this.baseSalary +
+      this.commission +
       (this.incentive || 0) +
-      (this.additional || 0) -
-      (this.lesspay || 0)
-    );
+      (Number(this.additional) || 0) -
+      (Number(this.lesspay) || 0);
   }
 
   checkTenderedAmount() {
@@ -114,7 +157,7 @@ export class PaysalaryComponent implements OnInit {
       this.tenderedAmount = 0;
     }
 
-    if (this.tenderedAmount > this.totalPay) {
+    if ((this.tenderedAmount ?? 0) > this.totalPay) {
       this.tenderedAmount = this.totalPay;
     }
   }
@@ -128,6 +171,15 @@ export class PaysalaryComponent implements OnInit {
   }
 
   async paysalary() {
+    this.recalculateTotals();
+    if (this.loadError || this.isLoading || this.totalPay <= 0) {
+      await this.appdateService.showToastjs(
+        'Salary details are incomplete or invalid.',
+        'warning'
+      );
+      return;
+    }
+
     // Validate
     if (!this.paymentMethod) {
       await this.appdateService.showToastjs(
@@ -184,7 +236,14 @@ export class PaysalaryComponent implements OnInit {
                 pid: this.pid ?? 0,
                 tendered: this.tenderedAmount ?? 0,
                 totalPay: this.totalPay,
-                dailyRate: this.dailyrate,
+                dailyRate: this.dailyRate,
+                days: this.daysCount,
+                salary: this.baseSalary,
+                commission: this.commission,
+                commissionPaid: Math.min(
+                  this.commission,
+                  this.tenderedAmount ?? 0
+                ),
                 additional: this.additional ?? 0,
                 lessPay: this.lesspay ?? 0,
                 incentive: this.incentive,
@@ -195,7 +254,7 @@ export class PaysalaryComponent implements OnInit {
                 paymentMethod: this.paymentMethod,
               });
 
-              this.printSalary(this.tenderedAmount ?? 0);
+              await this.printSalary(this.tenderedAmount ?? 0);
 
               await this.appdateService.showToastjs(
                 'Salary paid successfully!',
@@ -225,6 +284,8 @@ export class PaysalaryComponent implements OnInit {
 
     try {
       await this.printService.printSalary(datestr, tenderedAmount, this.pname);
-    } catch (error) {}
+    } catch (error) {
+      console.error('Failed to print salary receipt:', error);
+    }
   }
 }

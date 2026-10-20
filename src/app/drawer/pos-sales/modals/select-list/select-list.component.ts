@@ -51,6 +51,7 @@ export class SelectListComponent implements OnInit {
   @Input() title!: string;
   @Input() type!: 'customer' | 'personnel';
   @Input() excludedIds: number[] = [];
+  @Input() commissionEligibleOnly = false;
 
   searchText: string = '';
   list: any[] = [];
@@ -87,10 +88,15 @@ export class SelectListComponent implements OnInit {
           this.offset
         );
       } else {
-        newItems = await this.personnelService.getPersonelsdb(
-          this.limit,
-          this.offset
-        );
+        newItems = this.commissionEligibleOnly
+          ? await this.personnelService.getCommissionEligiblePersonnel(
+              this.limit,
+              this.offset
+            )
+          : await this.personnelService.getPersonelsdb(
+              this.limit,
+              this.offset
+            );
 
         // Remove already selected personnel
         if (this.excludedIds && this.excludedIds.length) {

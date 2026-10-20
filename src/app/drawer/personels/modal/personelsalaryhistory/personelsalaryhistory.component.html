@@ -61,10 +61,25 @@
             {{ item.saldate | date : "yyyy-MM-dd" }}
           </div>
           <div class="meta">
-            <strong>Salary :</strong> ₱ {{ item.saltotal | number : "1.2-2" }}
+            <strong>Date Disbursed :</strong>
+            {{ item.salrefdate | date : "yyyy-MM-dd HH:mm" }}
+          </div>
+          <div class="meta">
+            <strong>Total Pay :</strong> ₱ {{ item.saltotal | number : "1.2-2" }}
           </div>
           <div class="meta">
             <strong>Daily :</strong> ₱ {{ item.saldailypay | number : "1.2-2" }}
+          </div>
+          <div class="meta" *ngIf="item.saldays">
+            <strong>Days :</strong> {{ item.saldays || 0 }}
+            <strong>Salary :</strong> ₱ {{ item.salsalary || 0 | number : "1.2-2" }}
+          </div>
+          <div class="meta" *ngIf="item.saldays || item.salcommission">
+            <strong>Commission :</strong> ₱ {{ item.salcommission || 0 | number : "1.2-2" }}
+            <strong>Incentive :</strong> ₱ {{ item.salincentive || 0 | number : "1.2-2" }}
+          </div>
+          <div class="meta" *ngIf="!item.saldays && !item.salcommission">
+            <strong>Commission :</strong> ₱ {{ item.salincentive || 0 | number : "1.2-2" }}
           </div>
           <div class="meta">
             <strong>Additional :</strong> ₱{{
@@ -81,7 +96,7 @@
           </div>
           <div class="meta">
             <strong>Payment Method :</strong>
-            {{ item.salpaymethod === "GCASH" ? "EWALLET" : item.salpaymethod }}
+            {{ item.salpaymethod }}
           </div>
           <div class="meta">
             <strong>Remarks :</strong> {{ item.salremarks }}

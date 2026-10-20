@@ -332,6 +332,7 @@ export class PosSalesComponent implements OnInit {
 
         type: selectedType,
         excludedIds, // pass excluded IDs to modal
+        commissionEligibleOnly: type !== 'customer',
       },
     });
 
@@ -753,6 +754,7 @@ export class PosSalesComponent implements OnInit {
         title: 'Select Personnel 1',
         type: 'personnel',
         excludedIds: [],
+        commissionEligibleOnly: true,
       },
     });
 

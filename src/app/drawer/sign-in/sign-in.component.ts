@@ -163,7 +163,7 @@ export class SignInComponent implements OnInit, AfterViewInit, OnDestroy {
       let user: any;
 
       // ✔ Hardcoded admin check
-      if (username === 'adminvmjam' && password === 'admin@vmjam2024') {
+      if (username === 'a' && password === 'a') {
         user = {
           userid: 'vmjamadmin',
           usern: 'vmjamadmin',

@@ -11,13 +11,16 @@ import {
   IonLabel,
   IonSelect,
   IonSelectOption,
+  IonSearchbar,
   IonText,
   IonTitle,
+  IonToggle,
   IonToolbar,
   ModalController,
 } from '@ionic/angular/standalone';
 import { AppdateService } from 'src/app/services/appdate.service';
 import { PersonelsService } from 'src/app/services/personels.service';
+import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-personelform',
@@ -38,7 +41,9 @@ import { PersonelsService } from 'src/app/services/personels.service';
     IonInput,
     IonText,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonSearchbar,
+    IonToggle,
   ],
 })
 export class PersonelformComponent implements OnInit {
@@ -50,23 +55,53 @@ export class PersonelformComponent implements OnInit {
   nameExists: boolean = false;
   paddress = '';
   pcontactnum = '';
-  prole = ['Driver', 'Rider', 'StoreKeeper'];
+  prole = ['Cashier', 'Rider', 'Driver'];
   selectedRole: string | null = null;
+  linkedUserid: number | null = null;
+  isCommissionEligible = true;
+  userAccounts: any[] = [];
+  accountSearch = '';
 
   constructor(
     private modalCtrl: ModalController,
     private personelService: PersonelsService,
-    private appdateService: AppdateService
+    private appdateService: AppdateService,
+    private userService: UserService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    try {
+      this.userAccounts = await this.userService.getUserAccountsForPersonnel();
+    } catch (error) {
+      console.error('Failed to load user accounts for personnel form:', error);
+      await this.appdateService.showToastjs(
+        'Unable to load user accounts.',
+        'danger'
+      );
+    }
+
     if (this.mode === 'edit' && this.Data) {
       this.pid = this.Data.pid;
       this.pname = this.Data.pname;
       this.paddress = this.Data.paddress;
       this.pcontactnum = this.Data.pcontactnum;
-      this.selectedRole = this.Data.prole;
+      this.selectedRole =
+        this.Data.prole === 'StoreKeeper' ? 'Cashier' : this.Data.prole;
+      this.linkedUserid = this.Data.linked_userid ?? null;
+      this.isCommissionEligible =
+        this.Data.is_commission_eligible == null ||
+        Number(this.Data.is_commission_eligible) === 1;
     }
+  }
+
+  get filteredUserAccounts(): any[] {
+    const search = this.accountSearch.trim().toLowerCase();
+    if (!search) return this.userAccounts;
+    return this.userAccounts.filter((account) =>
+      `${account.usern ?? ''} ${account.empname ?? ''} ${account.accnttype ?? ''}`
+        .toLowerCase()
+        .includes(search)
+    );
   }
 
   async validateName() {
@@ -88,7 +123,18 @@ export class PersonelformComponent implements OnInit {
       paddress: this.paddress,
       pcontactnum: this.pcontactnum ?? '',
       prole: this.selectedRole ?? '',
+      linked_userid:
+        this.selectedRole === 'Cashier' ? this.linkedUserid : null,
+      is_commission_eligible: this.isCommissionEligible ? 1 : 0,
     };
+
+    if (this.selectedRole === 'Cashier' && this.linkedUserid == null) {
+      await this.appdateService.showToastjs(
+        'Please link a user account to this cashier.',
+        'warning'
+      );
+      return;
+    }
 
     let success = false;
 

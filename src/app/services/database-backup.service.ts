@@ -42,6 +42,15 @@ export class DatabaseBackupService {
     inventorytbl: ['cost_refill', 'cost_non_refill'],
     pricelisttbl: ['cost_refill', 'cost_non_refill'],
     salescart: ['cost_snapshot_version'],
+    personeltbl: ['linked_userid', 'is_commission_eligible'],
+    salsettings: [
+      'salriderquota',
+      'salriderrate',
+      'salnosize',
+      'sal3kg',
+      'sal15kg',
+    ],
+    salhistory: ['saldays', 'salsalary', 'salcommission'],
   };
   private readonly legacyOptionalTables = ['shortcut_presets'];
 
@@ -345,7 +354,11 @@ export class DatabaseBackupService {
             restoredRow[column] =
               table === 'inventorytbl' || table === 'pricelisttbl'
                 ? row['itemcost'] ?? 0
-                : 0;
+                : column === 'is_commission_eligible'
+                  ? 1
+                : column === 'linked_userid'
+                  ? null
+                  : 0;
           }
           return restoredRow;
         });

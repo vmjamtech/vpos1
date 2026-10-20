@@ -138,6 +138,79 @@ const migrations: DatabaseMigration[] = [
       }
     },
   },
+  {
+    version: 6,
+    apply: async (database) => {
+      const additions: Record<string, Record<string, string>> = {
+        personeltbl: {
+          linked_userid: 'INTEGER',
+        },
+        salsettings: {
+          salriderquota: 'REAL NOT NULL DEFAULT 0',
+          salriderrate: 'REAL NOT NULL DEFAULT 0',
+        },
+        salhistory: {
+          saldays: 'INTEGER NOT NULL DEFAULT 0',
+          salsalary: 'REAL NOT NULL DEFAULT 0',
+          salcommission: 'REAL NOT NULL DEFAULT 0',
+        },
+      };
+
+      for (const [table, columnsToAdd] of Object.entries(additions)) {
+        const result = await database.query(`PRAGMA table_info(${table})`);
+        const availableColumns = new Set(
+          (result.values ?? []).map((column: { name: string }) => column.name)
+        );
+        if (availableColumns.size === 0) {
+          throw new Error(`Cannot migrate personnel data: missing ${table}.`);
+        }
+
+        for (const [column, definition] of Object.entries(columnsToAdd)) {
+          if (!availableColumns.has(column)) {
+            await database.run(
+              `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
+            );
+          }
+        }
+      }
+    },
+  },
+  {
+    version: 7,
+    apply: async (database) => {
+      const result = await database.query('PRAGMA table_info(personeltbl)');
+      const columns = new Set(
+        (result.values ?? []).map((column: { name: string }) => column.name)
+      );
+      if (columns.size === 0) {
+        throw new Error('Cannot migrate personnel data: missing personeltbl.');
+      }
+      if (!columns.has('is_commission_eligible')) {
+        await database.run(
+          'ALTER TABLE personeltbl ADD COLUMN is_commission_eligible INTEGER NOT NULL DEFAULT 1'
+        );
+      }
+    },
+  },
+  {
+    version: 8,
+    apply: async (database) => {
+      const result = await database.query('PRAGMA table_info(salsettings)');
+      const columns = new Set(
+        (result.values ?? []).map((column: { name: string }) => column.name)
+      );
+      if (columns.size === 0) {
+        throw new Error('Cannot migrate incentive rates: missing salsettings.');
+      }
+      for (const column of ['salnosize', 'sal3kg', 'sal15kg']) {
+        if (!columns.has(column)) {
+          await database.run(
+            `ALTER TABLE salsettings ADD COLUMN ${column} REAL NOT NULL DEFAULT 0`
+          );
+        }
+      }
+    },
+  },
 ];
 
 export async function runDatabaseMigrations(

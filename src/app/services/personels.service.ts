@@ -48,6 +48,26 @@ export class PersonelsService {
     }
   }
 
+  async getCommissionEligiblePersonnel(
+    limit: number = 30,
+    offset: number = 0
+  ): Promise<any[]> {
+    const sql = `
+      SELECT * FROM personeltbl
+      WHERE COALESCE(is_commission_eligible, 1) = 1
+      ORDER BY pname ASC
+      LIMIT ?
+      OFFSET ?
+    `;
+
+    try {
+      return await this.db.query(sql, [limit, offset]);
+    } catch (error) {
+      console.error('Error fetching commission-eligible personnel:', error);
+      throw new Error('Failed to load commission-eligible personnel.');
+    }
+  }
+
   async checknameExists(pname: string): Promise<boolean> {
     const sql = `SELECT 1 FROM personeltbl WHERE pname = ? LIMIT 1`;
 
@@ -67,6 +87,8 @@ export class PersonelsService {
     paddress: string;
     pcontactnum?: string;
     prole?: string;
+    linked_userid?: number | null;
+    is_commission_eligible?: number;
   }): Promise<boolean> {
     // Current timestamp in "YYYY-MM-DD HH:mm:ss"
     const now = new Date();
@@ -78,8 +100,10 @@ export class PersonelsService {
     )}`;
 
     const sql = `
-    INSERT INTO personeltbl (pname, paddress, pcontactnum, prole, pcreatedate)
-     VALUES (?, ?, ?, ?, ?)
+    INSERT INTO personeltbl
+      (pname, paddress, pcontactnum, prole, pcreatedate, linked_userid,
+       is_commission_eligible)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
     const params = [
@@ -88,6 +112,8 @@ export class PersonelsService {
       data.pcontactnum || '',
       data.prole || '',
       date,
+      data.linked_userid ?? null,
+      data.is_commission_eligible ?? 1,
     ];
 
     try {
@@ -106,15 +132,22 @@ export class PersonelsService {
     paddress: string;
     pcontactnum?: string;
     prole?: string;
+    linked_userid?: number | null;
+    is_commission_eligible?: number;
   }): Promise<boolean> {
     const sql = `
-    UPDATE personeltbl SET pname= ?, paddress= ?, pcontactnum= ?, prole= ? WHERE pid= ?`;
+    UPDATE personeltbl
+    SET pname = ?, paddress = ?, pcontactnum = ?, prole = ?, linked_userid = ?,
+        is_commission_eligible = ?
+    WHERE pid = ?`;
 
     const params = [
       data.pname,
       data.paddress,
       data.pcontactnum || '',
       data.prole || '',
+      data.linked_userid ?? null,
+      data.is_commission_eligible ?? 1,
       data.pid,
     ];
 
@@ -151,12 +184,17 @@ export class PersonelsService {
     pid: number;
     saldaily: number; 
     saldiv: number;
+    salnosize: number;
     sal2kg: number;
+    sal3kg: number;
     sal5kg: number;
     sal7kg: number;
     sal11kg: number;
+    sal15kg: number;
     sal22kg: number;
     sal50kg: number;
+    salriderquota: number;
+    salriderrate: number;
     isHave: boolean;
   }): Promise<boolean> {
     try {
@@ -167,39 +205,50 @@ export class PersonelsService {
         // UPDATE
         sql = `
         UPDATE salsettings
-        SET saldaily = ?, saldiv = ?, sal2kg = ?, sal5kg = ?, 
-            sal7kg = ?, sal11kg = ?, sal22kg = ?, sal50kg = ?
+        SET saldaily = ?, saldiv = ?, salnosize = ?, sal2kg = ?, sal3kg = ?, sal5kg = ?,
+            sal7kg = ?, sal11kg = ?, sal15kg = ?, sal22kg = ?, sal50kg = ?,
+            salriderquota = ?, salriderrate = ?
         WHERE salpid = ?
       `;
         params = [
           data.saldaily,
           data.saldiv,
+          data.salnosize,
           data.sal2kg,
+          data.sal3kg,
           data.sal5kg,
           data.sal7kg,
           data.sal11kg,
+          data.sal15kg,
           data.sal22kg,
           data.sal50kg,
+          data.salriderquota,
+          data.salriderrate,
           data.pid,
         ];
       } else {
         // INSERT
         sql = `
         INSERT INTO salsettings 
-        (salpid, saldaily, saldiv, sal2kg, sal5kg, 
-         sal7kg, sal11kg, sal22kg, sal50kg)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (salpid, saldaily, saldiv, salnosize, sal2kg, sal3kg, sal5kg,
+         sal7kg, sal11kg, sal15kg, sal22kg, sal50kg, salriderquota, salriderrate)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
         params = [
           data.pid,
           data.saldaily,
           data.saldiv,
+          data.salnosize,
           data.sal2kg,
+          data.sal3kg,
           data.sal5kg,
           data.sal7kg,
           data.sal11kg,
+          data.sal15kg,
           data.sal22kg,
           data.sal50kg,
+          data.salriderquota,
+          data.salriderrate,
         ];
       }
 

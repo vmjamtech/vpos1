@@ -19,13 +19,40 @@
       ></ion-input>
     </ion-item>
 
-    <ion-item-divider *ngIf="selectedRole === 'Driver'"
+    <ion-item-divider
+      *ngIf="selectedRole === 'Cashier' || selectedRole === 'Driver' || selectedRole === 'Rider'"
       ><ion-label>Incentives</ion-label></ion-item-divider
     >
-    <ion-item class="stacked-item" *ngIf="selectedRole !== 'Rider'">
+    <ion-item
+      class="stacked-item"
+      *ngIf="selectedRole === 'Cashier' || selectedRole === 'StoreKeeper'"
+    >
       <ion-label position="stacked">
-        {{ selectedRole === "StoreKeeper" ? "Rate :" : "2.7 KG :" }}
+        {{ selectedRole === "StoreKeeper" ? "Dividend :" : "Commission Divisor :" }}
       </ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="saldiv"
+        name="saldiv"
+        step="0.01"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Rider'">
+      <ion-label position="stacked">Quota (Cylinders per Selected Period) :</ion-label>
+      <ion-input
+        type="number"
+        [(ngModel)]="salriderquota"
+        name="salriderquota"
+        min="0"
+        step="1"
+      ></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">No Size Incentive Rate :</ion-label>
+      <ion-input type="number" [(ngModel)]="salnosize" name="salnosize" step="0.01"></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">2.7kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal2kg"
@@ -33,8 +60,12 @@
         step="0.01"
       ></ion-input>
     </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
-      <ion-label position="stacked">5 KG :</ion-label>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">3kg Incentive Rate :</ion-label>
+      <ion-input type="number" [(ngModel)]="sal3kg" name="sal3kg" step="0.01"></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">5kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal5kg"
@@ -42,8 +73,8 @@
         step="0.01"
       ></ion-input>
     </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
-      <ion-label position="stacked">7 KG :</ion-label>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">7kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal7kg"
@@ -51,8 +82,8 @@
         step="0.01"
       ></ion-input>
     </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
-      <ion-label position="stacked">11 KG :</ion-label>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">11kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal11kg"
@@ -60,8 +91,12 @@
         step="0.01"
       ></ion-input>
     </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
-      <ion-label position="stacked">22 KG :</ion-label>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">15kg Incentive Rate :</ion-label>
+      <ion-input type="number" [(ngModel)]="sal15kg" name="sal15kg" step="0.01"></ion-input>
+    </ion-item>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">22kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal22kg"
@@ -69,21 +104,12 @@
         step="0.01"
       ></ion-input>
     </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver'">
-      <ion-label position="stacked">50 KG :</ion-label>
+    <ion-item class="stacked-item" *ngIf="selectedRole === 'Driver' || selectedRole === 'Cashier' || selectedRole === 'Rider'">
+      <ion-label position="stacked">50kg Incentive Rate :</ion-label>
       <ion-input
         type="number"
         [(ngModel)]="sal50kg"
         name="sal50kg"
-        step="0.01"
-      ></ion-input>
-    </ion-item>
-    <ion-item class="stacked-item" *ngIf="selectedRole === 'StoreKeeper'">
-      <ion-label position="stacked">Dividend :</ion-label>
-      <ion-input
-        type="number"
-        [(ngModel)]="saldiv"
-        name="saldiv"
         step="0.01"
       ></ion-input>
     </ion-item>

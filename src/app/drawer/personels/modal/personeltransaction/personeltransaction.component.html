@@ -24,8 +24,24 @@
   ></app-date-range-display>
 
   <div class="search-container">
-    <div class="total-balance" *ngIf="!isLoading">
-      <strong>Incentive:</strong> ₱{{ totalsalary | number : "1.2-2" }}
+    <div class="transactions-summary-bar" *ngIf="!isLoading">
+      <div class="earnings-group">
+        <span class="commission-text">
+          Commission: <strong>₱{{ totalCommission | number : "1.2-2" }}</strong>
+        </span>
+        <span class="divider">|</span>
+        <button
+          type="button"
+          class="incentive-pill"
+          (click)="openIncentiveInfoModal()"
+        >
+          <span>Incentive: <strong>₱{{ totalIncentive | number : "1.2-2" }}</strong></span>
+          <ion-icon name="information-circle-outline" class="info-icon"></ion-icon>
+        </button>
+      </div>
+      <ion-button fill="clear" size="small" class="filter-btn" (click)="openFilter()">
+        <ion-icon slot="icon-only" name="options-outline"></ion-icon>
+      </ion-button>
     </div>
     <!-- <div class="total-balance" *ngIf="!isLoading">
       <strong>Total Transaction(s):</strong> ₱{{
@@ -72,7 +88,8 @@
           <div class="meta">
             <strong>Size:</strong> {{ item.itemsize | itemSize }}
             <strong>Quantity :</strong> ₱{{ item.scqty || 0 }}
-            <strong>Commission :</strong> ₱{{ item.salary | number : "1.2-2" }}
+            <strong>{{ isRestockCategory(item.salescat) ? "Incentive" : "Commission" }} :</strong>
+            ₱{{ item.salary | number : "1.2-2" }}
           </div> </ion-label
         ><ion-badge
           class="status-badge"

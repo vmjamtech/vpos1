@@ -151,8 +151,10 @@ export class PersonelsComponent implements OnInit {
     let breakpoints = 0.4;
     if (item.prole === 'Driver') {
       breakpoints = 0.8;
+    } else if (item.prole === 'Cashier') {
+      breakpoints = 0.8;
     } else if (item.prole === 'Rider') {
-      breakpoints = 0.25;
+      breakpoints = 0.5;
     }
     const modal = await this.modalCtrl.create({
       component: RatesettingsComponent,
@@ -179,7 +181,12 @@ export class PersonelsComponent implements OnInit {
       component: PersoneltransactionComponent,
       backdropDismiss: false,
       expandToScroll: false,
-      componentProps: { pid: item.pid, pname: item.pname, prole: item.prole },
+      componentProps: {
+        pid: item.pid,
+        pname: item.pname,
+        prole: item.prole,
+        linked_userid: item.linked_userid ?? null,
+      },
     });
 
     modal.onDidDismiss().then(async (res) => {

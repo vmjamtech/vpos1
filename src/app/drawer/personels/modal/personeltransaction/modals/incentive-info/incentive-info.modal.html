@@ -1,0 +1,99 @@
+<ion-content class="incentive-info-content">
+  <div class="incentive-info-sheet">
+    <div class="modal-header">
+      <h3>Incentive Info</h3>
+      <ion-button fill="clear" aria-label="Close" (click)="dismiss()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </div>
+
+    <div *ngIf="role === 'Rider'" class="quota-summary-banner">
+      <span>Quota: <strong>{{ riderQuota }}</strong></span>
+      <span>Total Cylinders: <strong>{{ totalSoldCylinders }}</strong></span>
+      <span>Excess: <strong>{{ totalExcessCylinders }}</strong></span>
+    </div>
+
+    <div *ngIf="role === 'Rider'" class="table-container">
+      <table class="incentive-table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Sold</th>
+            <th>Excess</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{ item.size }}</td>
+            <td>{{ item.soldQty }}</td>
+            <td>{{ item.excessQty }}</td>
+            <td>₱{{ item.rate | number : "1.2-2" }}</td>
+            <td class="bold-amt">₱{{ item.amount | number : "1.2-2" }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="total-label">Total Incentive:</td>
+            <td class="total-amt">₱{{ totalIncentive | number : "1.2-2" }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div *ngIf="role === 'Cashier'" class="table-container">
+      <table class="incentive-table">
+        <thead>
+          <tr>
+            <th>ItemSold</th>
+            <th>QTY</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{ item.size }}</td>
+            <td>{{ item.qty }}</td>
+            <td>{{ item.rate | number : "1.2-2" }}</td>
+            <td class="bold-amt">₱{{ item.amount | number : "1.2-2" }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="total-label">Total Incentive:</td>
+            <td class="total-amt">₱{{ totalIncentive | number : "1.2-2" }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div *ngIf="role === 'Driver'" class="table-container">
+      <table class="incentive-table">
+        <thead>
+          <tr>
+            <th>ItemRestock</th>
+            <th>QTY</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{ item.size }}</td>
+            <td>{{ item.qty }}</td>
+            <td>{{ item.rate | number : "1.2-2" }}</td>
+            <td class="bold-amt">₱{{ item.amount | number : "1.2-2" }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="total-label">Total Incentive:</td>
+            <td class="total-amt">₱{{ totalIncentive | number : "1.2-2" }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</ion-content>

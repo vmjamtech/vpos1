@@ -59,13 +59,47 @@
         }}</ion-select-option>
       </ion-select>
     </ion-item>
+
+    <ion-item lines="full">
+      <ion-label>Eligible for Commission</ion-label>
+      <ion-toggle
+        [(ngModel)]="isCommissionEligible"
+        name="isCommissionEligible"
+        slot="end"
+        color="warning"
+      ></ion-toggle>
+    </ion-item>
+
+    <ng-container *ngIf="selectedRole === 'Cashier'">
+      <ion-searchbar
+        [(ngModel)]="accountSearch"
+        name="accountSearch"
+        placeholder="Search user accounts"
+      ></ion-searchbar>
+      <ion-item class="stacked-item">
+        <ion-label position="stacked">Linked User Account</ion-label>
+        <ion-select
+          [(ngModel)]="linkedUserid"
+          name="linkedUserid"
+          interface="popover"
+          placeholder="Select User Account"
+        >
+          <ion-select-option
+            *ngFor="let user of filteredUserAccounts"
+            [value]="user.userid"
+          >
+            {{ user.usern }} ({{ user.empname || user.accnttype }})
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+    </ng-container>
   </div>
   <ion-button
     class="sticky-btn"
     expand="block"
     color="primary"
     (click)="saveItem()"
-    [disabled]="!pname || nameExists"
+    [disabled]="!pname || nameExists || (selectedRole === 'Cashier' && linkedUserid === null)"
   >
     {{ mode === "edit" ? "Update Personnel" : "Add Personnel" }}
   </ion-button>

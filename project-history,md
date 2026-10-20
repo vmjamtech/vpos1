@@ -1640,3 +1640,388 @@ Validation: Angular production build, Capacitor sync, Android debug APK build,
 and adb install passed. On-device shortcut workflow acceptance, focused
 Jasmine tests, and lint remain outstanding.
 ```
+
+---
+
+## 15. Session Log - 2026-10-20 (Permissions, Backup, Pagination, POS, and Item Display)
+
+### 15.1 What was fixed
+
+- Added `pos.shortcut_edit`, `pos.shortcut_delete`, and
+  `report.simulation_settings` to the permissions model/defaults and wired the
+  relevant preset actions and report simulator access to permission checks.
+- Extended database backup/restore coverage for price-list cost fields,
+  shortcut presets, and report simulation layout settings. Added migration and
+  legacy-cost fallback coverage without changing historical transaction rows.
+- Replaced full-array Customer and Sales list loads with indexed 50-row SQL
+  pagination, filtered counts, and shared FIRST/PREVIOUS/NEXT/LAST controls.
+- Persisted shortcut presets in SQLite with legacy localStorage migration and
+  backup integration.
+- Added canonical `PICK UP` / `DELIVERY` choices while normalizing existing
+  `1-PICK UP` / `2-DELIVERY` values during queued-order restoration and
+  commission selection.
+- Added future date limits through ten years ahead to the Sales filter and
+  Reports date controls.
+- Added optional fixed/percentage discounts to shortcut presets. Preset
+  discounts are mapped into the existing POS discount calculation before
+  checkout; core revenue formulas were not changed.
+- Standardized item-size display to `No Size` across inventory, warehouse,
+  commissions, dispose, POS item selection, transfers, personnel transactions,
+  reports, and report printing. Size form placeholders are disabled empty
+  values, and saves normalize the old literal `Select Size` to empty.
+- Built and installed the updated debug APK on the connected Android device
+  using `adb install -r`, preserving app data.
+
+### 15.2 Files modified
+
+- `package.json`
+- `android/app/build.gradle`
+- `project-history,md` (this entry)
+- `src/app/drawer/customers/customers.component.html`
+- `src/app/drawer/customers/customers.component.scss`
+- `src/app/drawer/customers/customers.component.ts`
+- `src/app/drawer/customers/modal/customertransactions/modals/filtermodal/filtermodal.component.html`
+- `src/app/drawer/customers/modal/customertransactions/modals/filtermodal/filtermodal.component.ts`
+- `src/app/drawer/inventory/inventory.component.html`
+- `src/app/drawer/inventory/inventory.component.ts`
+- `src/app/drawer/inventory/modals/commissions/commissions.component.html`
+- `src/app/drawer/inventory/modals/commissions/commissions.component.ts`
+- `src/app/drawer/inventory/modals/disposeitems/modal/itemlist/itemlist.component.html`
+- `src/app/drawer/inventory/modals/disposeitems/modal/itemlist/itemlist.component.ts`
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.html`
+- `src/app/drawer/inventory/modals/inventoryform/inventoryform.component.ts`
+- `src/app/drawer/inventory/modals/warehouseitems/modal/warehouseform/warehouseform.component.html`
+- `src/app/drawer/inventory/modals/warehouseitems/modal/warehouseform/warehouseform.component.ts`
+- `src/app/drawer/inventory/modals/warehouseitems/warehouseitems.component.html`
+- `src/app/drawer/inventory/modals/warehouseitems/warehouseitems.component.ts`
+- `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.html`
+- `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.ts`
+- `src/app/drawer/pos-sales/modals/item-list/item-list.component.html`
+- `src/app/drawer/pos-sales/modals/item-list/item-list.component.ts`
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.html`
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.scss`
+- `src/app/drawer/pos-sales/modals/key-bind-settings/key-bind-settings.modal.ts`
+- `src/app/drawer/pos-sales/modals/queue-orders/queue-orders.modal.html`
+- `src/app/drawer/pos-sales/modals/queue-orders/queue-orders.modal.ts`
+- `src/app/drawer/pos-sales/modals/select-order/select-order.modal.html`
+- `src/app/drawer/pos-sales/modals/select-order/select-order.modal.ts`
+- `src/app/drawer/pos-sales/pos-sales.component.html`
+- `src/app/drawer/pos-sales/pos-sales.component.ts`
+- `src/app/drawer/pos-sales/shortcut-preset.model.ts`
+- `src/app/drawer/reports/modal/report-simulator/report-simulator.modal.ts`
+- `src/app/drawer/reports/reports.component.html`
+- `src/app/drawer/reports/reports.component.ts`
+- `src/app/drawer/sales/sales.component.html`
+- `src/app/drawer/sales/sales.component.ts`
+- `src/app/drawer/transfers/modals/itemconvertform/modal/itemlists/itemlists.component.html`
+- `src/app/drawer/transfers/modals/itemconvertform/modal/itemlists/itemlists.component.ts`
+- `src/app/drawer/users/modal/userpermissions/userpermissions.component.ts`
+- `src/app/models/user-permissions.model.ts`
+- `src/app/services/customers.service.spec.ts`
+- `src/app/services/customers.service.ts`
+- `src/app/services/database-backup.service.spec.ts`
+- `src/app/services/database-backup.service.ts`
+- `src/app/services/database-migrations.spec.ts`
+- `src/app/services/database-migrations.ts`
+- `src/app/services/permission.service.spec.ts`
+- `src/app/services/permission.service.ts`
+- `src/app/services/personnel-transaction.service.ts`
+- `src/app/services/reports-print.service.ts`
+- `src/app/services/sales.service.spec.ts`
+- `src/app/services/sales.service.ts`
+- `src/app/services/shortcut-preset.service.spec.ts`
+- `src/app/services/shortcut-preset.service.ts`
+- `src/app/shared/item-size/item-size.pipe.spec.ts`
+- `src/app/shared/item-size/item-size.pipe.ts`
+- `src/app/shared/pagination/pagination.component.html`
+- `src/app/shared/pagination/pagination.component.scss`
+- `src/app/shared/pagination/pagination.component.ts`
+- `src/app/utils/sales-category.spec.ts`
+- `src/app/utils/sales-category.ts`
+
+### 15.3 Verification and APK
+
+- Angular production build passed.
+- Ten focused Jasmine specs passed using a temporary focused test config, which
+  was removed after the run.
+- The standard test build remains blocked by the unrelated Petty Cash spec
+  constructor error: its component construction does not supply the required
+  `ChangeDetectorRef`.
+- `git diff --check` passed before this history/version update.
+- `build-debug.bat` completed Angular build, Capacitor sync, Gradle debug APK
+  build, and device installation successfully. The connected device now reports
+  package `com.vmjamtech.posandroid`, version `1.0.2` / code `102`.
+- `npm run sync:version` synchronized the package version with Android
+  `versionName` and `versionCode`. Reinstallation used `adb install -r` so the
+  existing application data was preserved.
+- APK output: `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### 15.4 Remaining open issue queue
+
+- On-device acceptance remains for Customer and Sales paging/search/filter
+  behavior, preset permission guards and discount checkout, old/new fulfillment
+  labels, report simulation permissions, future date selection, and No Size
+  rendering/saving. Preserve a current backup before any restore testing.
+- Verify the dual-cost schema migration with existing data, Refill and
+  Non-Refill profit calculations, and restoration of a pre-migration backup.
+- Complete POS queue and admin data recovery acceptance: persistence after
+  relaunch, cancellation, active-sale replacement guard, personnel selection,
+  backup/restore, and scoped reset behavior.
+- Existing print issues remain open: Business Contact Number on receipts,
+  Purchase logo output, Sales Reprint `.reduce()` data-shape error, iMin
+  address/preview consistency, physical coupon output, report Print UI
+  acceptance, and Reports swipe-to-Print integration.
+- Petty Cash Cash In/Cash Out totals and the Android development/live-reload
+  workflow remain outstanding.
+- Resolve the unrelated Petty Cash spec constructor mismatch and run the full
+  test suite and lint.
+- Verify the upgraded `1.0.2` installation preserves existing SQLite data and
+  confirm the updated workflows on-device.
+
+### 15.5 Suggested commit message
+
+```text
+feat(pos): add granular permissions, pagination, and preset discounts
+
+Add shortcut edit/delete and report simulation permissions, persist shortcut
+presets in SQLite, and extend backup/restore coverage for presets, report
+layouts, and split refill/non-refill costs. Replace full Customer and Sales
+list loads with 50-row SQL pagination and shared navigation controls.
+
+Standardize fulfillment labels while keeping legacy transaction labels
+readable, add future date bounds, support optional fixed/percentage shortcut
+discounts through the existing POS totals logic, and normalize missing item
+sizes to "No Size" across lists, reports, and print output. Advance the Android
+app to 1.0.2 and preserve application data during upgrade.
+
+Validation: production build and 10 focused Jasmine specs passed; debug APK
+build and install succeeded. Full tests remain blocked by the unrelated Petty
+Cash spec constructor error. Manual on-device acceptance remains open.
+```
+
+---
+
+## 16. Session Log - 2026-10-20 (Personnel Earnings and Salary Payout)
+
+### 16.1 What changed
+
+- Replaced `StoreKeeper` with `Cashier` for new personnel and added searchable
+  linking to a local `useraccounts.userid`. Existing `StoreKeeper` records keep
+  their transaction/rate compatibility and are mapped to Cashier when edited.
+- Kept POS transaction writing and `deltransacttbl` unchanged. Cashier sales
+  queries resolve the linked account ID to its existing `empname` stored by
+  POS in `salescashier`.
+- Added per-size Cashier and Driver incentives and initially introduced a
+  fixed-period Rider quota/rate. The Rider quota model was subsequently
+  replaced by delivery-item size rates in section 16.6.
+- Separated transaction commission from role incentive in the personnel
+  transaction summary and Pay Salary form. The payout shows rate, counted
+  salary days, base salary, commission, incentive, additions, deductions,
+  total, payment method, and tendered amount.
+- Added additive SQLite migration fields for the linked account, Rider rates,
+  and salary-history breakdown. Existing `salhistory` columns and the full
+  `deltransacttbl` schema remain intact. Payout history and the paid commission
+  balance adjustment run in one SQLite transaction.
+- Kept pre-migration database backups restorable by defaulting the new fields
+  where absent.
+
+### 16.2 Validation
+
+- Angular production build passed.
+- ESLint passed for the changed personnel and service files.
+- Focused service-test TypeScript check passed.
+- Angular test execution remains blocked by an unrelated existing
+  `PettycashlogsComponent` spec constructor mismatch. Full lint also reports
+  pre-existing violations outside the changed files; changed files pass the
+  targeted lint run.
+- No on-device/manual acceptance was performed.
+
+### 16.3 Driver Commission and Restock Incentive Separation
+
+- Driver Commission totals now sum only non-cancelled PICK UP/DELIVERY
+  transactions in `deltransacttbl`; restock rows are excluded from commission.
+- Driver restock rows remain visible in personnel transaction history and are
+  labeled Incentive. The existing per-size Driver incentive calculation now
+  includes warehouse restock categories as well as store restocks.
+- Pay Salary now loads the Driver restock incentive into the Incentive
+  component. Existing salary-history commission/incentive fields and the
+  commission-only `ptotalpay` deduction remain unchanged.
+- No POS writer or restock/delivery table schema was changed.
+
+### 16.4 Cashier Item-Sold Incentive Account Matching
+
+- POS checkout writes the logged-in user's `empname` to the existing
+  `salestbl.salescashier` column; it does not store a `salesuser` identifier.
+  Cashier incentive calculations therefore resolve `personeltbl.linked_userid`
+  through `useraccounts.userid` and match the corresponding `empname`.
+- Cashier sales name matching now trims surrounding whitespace and ignores
+  case consistently in incentive, transaction, commission-total, and salary-day
+  queries. Item sizes continue to come from `inventorytbl.itemsize`, with
+  normalized kilogram values matched to the saved per-size rates.
+- Legacy `StoreKeeper` personnel with a linked user account now load Cashier
+  item-sold incentives in both Personnel Transactions and Pay Salary.
+- Cashier incentive matching supports historical values for the tagged account
+  (employee name, username, or user ID). Sold item size falls back to the size
+  saved on the sales-cart row when the current inventory item has no size.
+
+### 16.5 Enforce Tagged Cashier Account Matching
+
+- Removed personnel-name fallback matching from Cashier item-sold incentives,
+  transaction rows, commission totals, and salary-day calculations.
+- Cashier sales now match only the account linked by `personeltbl.linked_userid`,
+  using that `useraccounts` record's employee name, username, or user ID.
+- Unlinked Cashier records intentionally do not match POS sales. Confirm the
+  active Cashier has a valid linked account in the app's database.
+
+### 16.6 Standardize Incentive Sizes and Rider Delivery Rates
+
+- Standardized Cashier, Rider, and Driver incentive breakdowns to `No Size`,
+  `2.7kg`, `3kg`, `5kg`, `7kg`, `11kg`, `15kg`, `22kg`, and `50kg`. The 250g
+  item size is excluded from incentive calculations.
+- Rider incentive initially changed to per-delivered-item size rates without a
+  quota. The quota was restored and applied to cylinder quantities in
+  section 16.7.
+- Added additive `salsettings` rate columns with a default of zero for No Size,
+  3kg, and 15kg using migration version 8. Existing Rider quota columns remain
+  untouched for backup/schema compatibility.
+- Removed SQL `SUBSTR(deltype, 3)` projections. Transaction categories now pass
+  through the shared normalizer so both plain and prefixed `PICK UP` and
+  `DELIVERY` values display correctly.
+- Driver restock transaction rows use the same nine size rates as the summary
+  and salary incentive calculation.
+- Angular production build passed. Focused Jasmine execution remains blocked
+  by the existing `PettycashlogsComponent` spec constructor error (missing
+  `ChangeDetectorRef`); `git diff --check` passed.
+
+### 16.7 Rider Quota Allocation by Delivered Cylinder
+
+- Rider total sold now counts delivered cylinder quantity (`SUM(delitemqty)`),
+  not delivery references. The selected-period quota is allocated against
+  size-grouped deliveries in earliest-delivery order; only the remaining units
+  earn the configured rate for their cylinder size.
+- The Rider Incentive Info modal displays quota, total cylinders, total excess,
+  and per-size sold/excess/rate/amount. Rate Settings again exposes the Rider
+  selected-period cylinder quota.
+- Rider incentive SQL excludes any cylinder size containing `250`, while all
+  displayed sizes continue to use the shared canonical size list.
+- Angular production build and `git diff --check` passed. The focused Karma run
+  remains blocked by the existing Petty Cash spec constructor mismatch.
+
+### 16.8 Salary Payout Transaction Failure
+
+- Diagnosed the on-device `Failed to pay salary` error from Android console logs:
+  `Failed in beginTransactionAlready in transaction`.
+- `insertPaySalaryHistory` already opens a transaction, but the nested salary
+  INSERT and commission-balance UPDATE used `SqliteService.execute` with its
+  default transaction flag, which attempted to begin another transaction.
+  Both statements now execute with transaction management disabled so they
+  participate in the enclosing transaction. This preserves atomic history
+  recording and commission-balance deduction without changing table schemas.
+- Added regression assertions for the transaction flag. Production build and
+  `git diff --check` passed; Jasmine remains blocked by the unrelated
+  Pettycashlogs component spec constructor mismatch.
+
+### 16.9 Payout Regression Verification and Android Install
+
+- Fixed the Petty Cash spec setup to use a plain async `beforeEach` and the
+  standalone component imports; the ChangeDetectorRef mock remains in place.
+- Updated stale cashier query expectations and added a SQLite transaction
+  regression test proving that a failed balance update rolls back the preceding
+  salary-history insert.
+- All 13 focused Petty Cash, personnel payout, and SQLite transaction tests
+  passed. Angular production build and `git diff --check` passed.
+- `npx cap sync android` and the Android debug build succeeded. Version 1.0.2
+  was installed on device `0123456789ABCDEF` and the MainActivity launched.
+- The actual salary-payment/print flow still requires manual confirmation on
+  the device; automated validation did not create a real payout record.
+
+### 16.10 Updated APK, Modified Files, and Open Issue Queue
+
+- Rebuilt the Android debug APK on 2026-10-20 after the salary payout and test
+  setup fixes. The generated APK is
+  `android/app/build/outputs/apk/debug/app-debug.apk` (package
+  `com.vmjamtech.posandroid`, version 1.0.2 / code 102). The connected device
+  has this build installed and the app launches.
+- Today’s focused regression checks passed: 13 Petty Cash, personnel payout,
+  and SQLite transaction tests. Angular production build, Capacitor Android
+  sync, Gradle debug build/install, and `git diff --check` also passed.
+- The Petty Cash test setup mismatch is resolved. Payout rollback is covered
+  by a test simulating failure of the balance update after the history insert.
+  Actual salary payment and printer output still need manual on-device
+  acceptance; no real payout was created as part of verification.
+- Files in the current worktree’s personnel earnings, payout, and supporting
+  changes:
+  - `android/app/build.gradle`
+  - `package.json`
+  - `src/app/drawer/personels/modal/personelform/personelform.component.html`
+  - `src/app/drawer/personels/modal/personelform/personelform.component.ts`
+  - `src/app/drawer/personels/modal/personelsalaryhistory/personelsalaryhistory.component.html`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/incentive-info/incentive-info.modal.html`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/incentive-info/incentive-info.modal.scss`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/incentive-info/incentive-info.modal.ts`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/paysalary/paysalary.component.html`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/paysalary/paysalary.component.scss`
+  - `src/app/drawer/personels/modal/personeltransaction/modals/paysalary/paysalary.component.ts`
+  - `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.html`
+  - `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.scss`
+  - `src/app/drawer/personels/modal/personeltransaction/personeltransaction.component.ts`
+  - `src/app/drawer/personels/modal/ratesettings/ratesettings.component.html`
+  - `src/app/drawer/personels/modal/ratesettings/ratesettings.component.ts`
+  - `src/app/drawer/personels/personels.component.ts`
+  - `src/app/drawer/pettycashlogs/pettycashlogs.component.spec.ts`
+  - `src/app/drawer/pos-sales/modals/select-list/select-list.component.ts`
+  - `src/app/drawer/pos-sales/pos-sales.component.ts`
+  - `src/app/drawer/sign-in/sign-in.component.ts`
+  - `src/app/services/database-backup.service.ts`
+  - `src/app/services/database-migrations.spec.ts`
+  - `src/app/services/database-migrations.ts`
+  - `src/app/services/personels.service.ts`
+  - `src/app/services/personnel-incentive.service.spec.ts`
+  - `src/app/services/personnel-incentive.service.ts`
+  - `src/app/services/personnel-transaction.service.spec.ts`
+  - `src/app/services/personnel-transaction.service.ts`
+  - `src/app/services/sqlite.service.spec.ts`
+  - `src/app/services/user.service.ts`
+  - `src/app/utils/personnel-rates.constants.spec.ts`
+  - `src/app/utils/personnel-rates.constants.ts`
+  - `project-history,md`
+- Open issue queue:
+  - Manually complete salary payout and receipt-print acceptance on the device,
+    confirming successful dismissal and no nested-transaction error.
+  - Continue the existing print investigations: Business Contact Number on
+    receipts, Purchase logo output, Sales Reprint `.reduce()` data-shape error,
+    iMin address/preview consistency, physical coupon output, report Print UI,
+    and Reports swipe-to-Print integration.
+  - Complete on-device acceptance for Customer/Sales paging, search, and
+    filtering; preset permission guards and discount checkout; fulfillment
+    labels; report simulation permissions; future date selection; and No Size
+    rendering/saving.
+  - Verify dual-cost migration behavior with existing data, Refill and
+    Non-Refill profit calculations, and restoration of a pre-migration backup.
+  - Complete POS queue and admin data recovery acceptance: persistence after
+    relaunch, cancellation, active-sale replacement guard, personnel selection,
+    backup/restore, and scoped reset behavior.
+  - Verify Petty Cash Cash In/Cash Out totals and the Android
+    development/live-reload workflow.
+  - Run the full test suite and lint; only the focused 13-test suite has been
+    confirmed passing in this session.
+- Suggested commit title:
+  `feat(personnel): separate commissions and incentives; make salary payouts atomic`
+- Suggested commit body:
+  ```text
+  Link Cashiers to user accounts and calculate Cashier, Rider, and Driver
+  incentives using the standardized cylinder sizes. Apply Rider quota to
+  delivered cylinder quantities and keep Driver restock earnings separate
+  from POS commissions.
+
+  Expand salary breakdown and history while preserving existing transaction
+  schemas. Execute payout history writes and commission balance updates in one
+  SQLite transaction, and add regression coverage for rollback behavior.
+  Correct the Petty Cash spec setup and refresh cashier query expectations.
+
+  Validation: 13 focused tests, production build, Capacitor sync, Android
+  debug build/install, and git diff --check passed. Manual salary payment and
+  print acceptance remain open.
+
+  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+  ```

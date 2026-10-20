@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  AlertController,
   IonBadge,
   IonButton,
   IonButtons,
@@ -33,6 +32,17 @@ import {
 import { DateRangeDisplayComponent } from 'src/app/shared/date-range-display/date-range-display.component';
 import { PermissionService } from 'src/app/services/permission.service';
 import { ItemSizePipe } from 'src/app/shared/item-size/item-size.pipe';
+import { PersonnelIncentiveService } from 'src/app/services/personnel-incentive.service';
+import { IncentiveInfoModalComponent } from './modals/incentive-info/incentive-info.modal';
+
+interface IncentiveInfoRow {
+  size: string;
+  qty: number;
+  rate: number;
+  amount: number;
+  soldQty?: number;
+  excessQty?: number;
+}
 
 @Component({
   selector: 'app-personeltransaction',
@@ -68,6 +78,7 @@ export class PersoneltransactionComponent implements OnInit {
   pid?: number;
   pname?: string;
   prole?: string;
+  linked_userid?: number | null;
   items: any[] = []; // all loaded items
   filteredItems: any[] = []; // filtered by search
   searchValue: string = '';
@@ -78,15 +89,20 @@ export class PersoneltransactionComponent implements OnInit {
   isLoading = true; // skeleton loader for first load
   isFetching = false; // prevent double triggers
   skeletonArray = Array(10);
-  totalsalary: number = 0;
+  totalCommission: number = 0;
+  totalIncentive: number = 0;
+  incentiveInfoRows: IncentiveInfoRow[] = [];
+  riderQuota = 0;
+  totalSoldCylinders = 0;
+  totalExcessCylinders = 0;
   totalamount: number = 0;
   currentDateFrom: string | null = null;
   currentDateTo: string | null = null;
 
   constructor(
     private modalCtrl: ModalController,
-    private alertController: AlertController,
     private personelTransactionService: PersonnelTransactionService,
+    private personnelIncentiveService: PersonnelIncentiveService,
     private cdr: ChangeDetectorRef,
     public permissionService: PermissionService
   ) {}
@@ -158,6 +174,7 @@ export class PersoneltransactionComponent implements OnInit {
 
       // Pick function based on role
       switch (this.prole) {
+        case 'Cashier':
         case 'StoreKeeper':
           fetchFn =
             this.personelTransactionService.getCashierTransactionByIdAndDate;
@@ -180,7 +197,8 @@ export class PersoneltransactionComponent implements OnInit {
         pid,
         this.limit,
         this.offset,
-        loadingAll
+        loadingAll,
+        this.linked_userid ?? null
       );
       await this.loadtotals();
       this.items = data;
@@ -222,6 +240,7 @@ export class PersoneltransactionComponent implements OnInit {
     let fetchFn;
 
     switch (this.prole) {
+      case 'Cashier':
       case 'StoreKeeper':
         fetchFn = this.personelTransactionService.getCashierSumSalary;
         break;
@@ -233,14 +252,96 @@ export class PersoneltransactionComponent implements OnInit {
         break;
     }
 
-    this.totalsalary = await fetchFn.call(
+    this.totalCommission = await fetchFn.call(
       this.personelTransactionService,
       dateFrom,
       dateTo,
       pname,
       pid,
-      loadingAll
+      loadingAll,
+      this.linked_userid ?? null
     );
+
+    this.riderQuota = 0;
+    this.totalSoldCylinders = 0;
+    this.totalExcessCylinders = 0;
+    const incentiveFrom = this.currentDateFrom;
+    const incentiveTo = this.currentDateTo;
+    if (
+      (this.prole === 'Cashier' || this.prole === 'StoreKeeper') &&
+      this.linked_userid != null
+    ) {
+      const result = await this.personnelIncentiveService.getCashierIncentive(
+        pid,
+        this.linked_userid,
+        incentiveFrom,
+        incentiveTo
+      );
+      this.totalIncentive = result.totalIncentive;
+      this.incentiveInfoRows = result.breakdown.map((line) => ({
+        size: line.size,
+        qty: line.qty,
+        rate: line.rate,
+        amount: line.amount,
+      }));
+    } else if (this.prole === 'Rider') {
+      const result = await this.personnelIncentiveService.getRiderIncentive(
+        pid,
+        incentiveFrom,
+        incentiveTo
+      );
+      this.totalIncentive = result.totalIncentive;
+      this.riderQuota = result.quota;
+      this.totalSoldCylinders = result.totalSoldCylinders;
+      this.totalExcessCylinders = result.totalExcessCylinders;
+      this.incentiveInfoRows = result.breakdown.map((line) => ({
+        size: line.size,
+        qty: line.soldQty,
+        soldQty: line.soldQty,
+        excessQty: line.excessQty,
+        rate: line.rate,
+        amount: line.amount,
+      }));
+    } else if (this.prole === 'Driver') {
+      const result = await this.personnelIncentiveService.getDriverIncentive(
+        pid,
+        incentiveFrom,
+        incentiveTo
+      );
+      this.totalIncentive = result.totalIncentive;
+      this.incentiveInfoRows = result.breakdown.map((line) => ({
+        size: line.size,
+        qty: line.qty,
+        rate: line.rate,
+        amount: line.amount,
+      }));
+    } else {
+      this.totalIncentive = 0;
+      this.incentiveInfoRows = [];
+    }
+  }
+
+  async openIncentiveInfoModal() {
+    const role = this.prole === 'StoreKeeper' ? 'Cashier' : this.prole;
+    const modal = await this.modalCtrl.create({
+      component: IncentiveInfoModalComponent,
+      initialBreakpoint: 0.6,
+      breakpoints: [0, 0.6, 0.85],
+      handle: true,
+      componentProps: {
+        role,
+        items: this.incentiveInfoRows,
+        totalIncentive: this.totalIncentive,
+        riderQuota: this.riderQuota,
+        totalSoldCylinders: this.totalSoldCylinders,
+        totalExcessCylinders: this.totalExcessCylinders,
+      },
+    });
+    await modal.present();
+  }
+
+  isRestockCategory(category: string | null | undefined): boolean {
+    return (category ?? '').toUpperCase().includes('RESTOCK');
   }
 
   /** Pull-to-refresh */
@@ -267,6 +368,7 @@ export class PersoneltransactionComponent implements OnInit {
 
       // Pick function based on role
       switch (this.prole) {
+        case 'Cashier':
         case 'StoreKeeper':
           fetchFn =
             this.personelTransactionService.getCashierTransactionByIdAndDate;
@@ -289,7 +391,8 @@ export class PersoneltransactionComponent implements OnInit {
         pid,
         this.limit,
         this.offset,
-        loadingAll
+        loadingAll,
+        this.linked_userid ?? null
       );
 
       this.items = [...newItems];
@@ -327,6 +430,7 @@ export class PersoneltransactionComponent implements OnInit {
 
       // Pick function based on role
       switch (this.prole) {
+        case 'Cashier':
         case 'StoreKeeper':
           fetchFn =
             this.personelTransactionService.getCashierTransactionByIdAndDate;
@@ -349,7 +453,8 @@ export class PersoneltransactionComponent implements OnInit {
         pid,
         this.limit,
         this.offset,
-        loadingAll
+        loadingAll,
+        this.linked_userid ?? null
       );
 
       this.items.push(...newItems);
@@ -389,8 +494,9 @@ export class PersoneltransactionComponent implements OnInit {
           dateto: this.currentDateTo,
           pid: this.pid,
           pname: this.pname,
-          incentive: this.totalsalary,
+          commission: this.totalCommission,
           prole: this.prole,
+          linked_userid: this.linked_userid,
         },
       },
     });

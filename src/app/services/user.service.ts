@@ -126,6 +126,21 @@ export class UserService {
     }
   }
 
+  async getUserAccountsForPersonnel(): Promise<
+    Array<{ userid: number; usern: string; empname: string; accnttype: string }>
+  > {
+    try {
+      return await this.db.query(
+        `SELECT userid, usern, empname, accnttype
+         FROM useraccounts
+         ORDER BY empname ASC`
+      );
+    } catch (error) {
+      console.error('Error fetching personnel-linked user accounts:', error);
+      throw new Error('Failed to load user accounts.');
+    }
+  }
+
   async searchUserOfflineSpecific(query: string): Promise<any[]> {
     let sql = `
     SELECT * 

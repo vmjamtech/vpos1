@@ -26,7 +26,18 @@ export class PersonnelTransactionService {
     if (!connection?.ip || !connection?.port) {
       throw new Error('No connection settings found.');
     }
+
     return `${apiBaseUrl(connection.ip, connection.port)}/deltransact`;
+  }
+
+  private normalizeTransactionCategories(rows: any[]): any[] {
+    return rows.map((row) => ({
+      ...row,
+      salescat:
+        typeof row.salescat === 'string'
+          ? normalizeSalesCategory(row.salescat)
+          : row.salescat,
+    }));
   }
 
   async getAll(): Promise<any[]> {
@@ -158,7 +169,8 @@ export class PersonnelTransactionService {
     pid: number,
     limit: number = 20,
     offset: number = 0,
-    loadingAll: boolean = false
+    loadingAll: boolean = false,
+    linkedUserId: number | null = null
   ): Promise<any[]> {
     let sql = `
     SELECT 
@@ -166,7 +178,7 @@ export class PersonnelTransactionService {
       t2.salesdate,
       t2.salesrefnum,
       t2.salescust,
-      'Sales' AS salescat,
+      t2.salescat AS salescat,
       t3.itemsize,
       (CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) / NULLIF(s.saldiv, 0)) * t1.scqty AS salary,
       t2.salestatus,
@@ -175,10 +187,17 @@ export class PersonnelTransactionService {
     INNER JOIN salestbl t2 ON t1.screfnum = t2.salesrefnum
     INNER JOIN inventorytbl t3 ON t1.scitemcode = t3.itemcode
     INNER JOIN salsettings s ON s.salpid = ?
-    WHERE t2.salescashier = ?
+    INNER JOIN useraccounts u ON u.userid = ?
+    WHERE TRIM(COALESCE(t2.salescashier, '')) COLLATE NOCASE IN (
+      NULLIF(TRIM(COALESCE(u.empname, '')), ''),
+      NULLIF(TRIM(COALESCE(u.usern, '')), ''),
+      CAST(u.userid AS TEXT)
+    )
+      AND TRIM(COALESCE(t2.salescashier, '')) <> ''
+      AND COALESCE(t2.salestatus, '') <> 'CANCELLED'
   `;
 
-    const params: any[] = [pid, pname];
+    const params: any[] = [pid, linkedUserId];
 
     if (!loadingAll) {
       sql += ` AND ${sqliteInclusiveDateRange('t2.salesdate')} `;
@@ -192,7 +211,7 @@ export class PersonnelTransactionService {
       dtdate AS salesdate,
       dtrefnum AS salesrefnum,
       dtcustname AS salescust,
-      SUBSTR(t0.deltype, 3) AS salescat,
+      t0.deltype AS salescat,
       t1.itemsize,
       dsalary AS salary,
       dtstatus AS salestatus,
@@ -217,7 +236,9 @@ export class PersonnelTransactionService {
     params.push(limit, offset);
 
     try {
-      return await this.db.query(sql, params);
+      return this.normalizeTransactionCategories(
+        await this.db.query(sql, params)
+      );
     } catch (error) {
       console.error('Error fetching cashier transactions:', error);
       throw new Error('Failed to load transactions.');
@@ -233,7 +254,7 @@ export class PersonnelTransactionService {
     offset: number = 0,
     loadingAll: boolean = false
   ): Promise<any[]> {
-    let sql = `SELECT dtid as scid, dtdate as salesdate, dtrefnum as salesrefnum, dtcustname as salescust, SUBSTR(deltype, 3) as salescat, 
+    let sql = `SELECT dtid as scid, dtdate as salesdate, dtrefnum as salesrefnum, dtcustname as salescust, deltype as salescat,
               t1.itemsize, dsalary as salary, dtstatus as salestatus, delitemqty as scqty 
               FROM deltransacttbl t0    
               INNER JOIN inventorytbl t1 ON t1.itemcode = t0.delitemcode  
@@ -255,7 +276,9 @@ export class PersonnelTransactionService {
     params.push(limit, offset);
 
     try {
-      return await this.db.query(sql, params);
+      return this.normalizeTransactionCategories(
+        await this.db.query(sql, params)
+      );
     } catch (error) {
       console.error('Error fetching rider transactions:', error);
       throw new Error('Failed to load transactions.');
@@ -273,9 +296,13 @@ export class PersonnelTransactionService {
   ): Promise<any[]> {
     let sql = `SELECT t1.pid as scid, t2.pulldate as salesdate, t2.poutrefnum as salesrefnum, t2.pullsupplier as salescust, 
                        t3.itemsize, t2.pulloutremarks as salestatus, t1.poutqty as scqty, t2.pouttype as salescat, 
-                       CASE WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 11 THEN s.sal11kg * t1.poutqty
+                       CASE WHEN t3.itemsize IS NULL OR TRIM(t3.itemsize) = '' THEN s.salnosize * t1.poutqty
                        WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 2.7 THEN s.sal2kg * t1.poutqty
-                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 5 THEN s.sal5kg * t1.poutqty 
+                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 3 THEN s.sal3kg * t1.poutqty
+                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 5 THEN s.sal5kg * t1.poutqty
+                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 7 THEN s.sal7kg * t1.poutqty
+                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 11 THEN s.sal11kg * t1.poutqty
+                       WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 15 THEN s.sal15kg * t1.poutqty
                        WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 22 THEN s.sal22kg * t1.poutqty 
                        WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 50 THEN s.sal50kg * t1.poutqty
                        ELSE 0 END AS salary
@@ -283,7 +310,8 @@ export class PersonnelTransactionService {
                        INNER JOIN pouttbl t2 ON t1.poutref = t2.poutrefnum
                        INNER JOIN inventorytbl t3 ON t1.poutitemcode = t3.itemcode
                        INNER JOIN salsettings s ON s.salpid = t2.poutpid 
-                       WHERE t2.pouttype in ('RESTOCK IN', 'RESTOCK OUT') and t1.pouttype in ('RESTOCK INFILL', 'RESTOCK OUTEMPTY') 
+                       WHERE t2.pouttype IN ('RESTOCK IN', 'RESTOCK OUT', 'W.RESTOCK IN', 'W.RESTOCK OUT')
+                       AND t1.pouttype IN ('RESTOCK INFILL', 'RESTOCK OUTEMPTY', 'W.RESTOCK INFILL', 'W.RESTOCK OUTEMPTY')
                        AND t2.poutpid = ? AND t2.pulloutremarks <> 'Waiting'`;
 
     const params: any[] = [pid];
@@ -295,7 +323,7 @@ export class PersonnelTransactionService {
 
     sql += `UNION ALL
     SELECT t0.dtid AS scid, t0.dtdate AS salesdate, t0.dtrefnum AS salesrefnum, t0.dtcustname AS salescust, 
-    t1.itemsize, t0.dtstatus AS salestatus, t0.delitemqty AS scqty, SUBSTR(t0.deltype, 3) AS salescat, 
+    t1.itemsize, t0.dtstatus AS salestatus, t0.delitemqty AS scqty, t0.deltype AS salescat,
     t0.dsalary AS salary FROM deltransacttbl t0 INNER JOIN inventorytbl t1 ON t1.itemcode = t0.delitemcode 
     WHERE (t0.dtdelbyid = ? OR t0.dtdelbyid2 = ?)
   `;
@@ -315,7 +343,9 @@ export class PersonnelTransactionService {
     params.push(limit, offset);
 
     try {
-      return await this.db.query(sql, params);
+      return this.normalizeTransactionCategories(
+        await this.db.query(sql, params)
+      );
     } catch (error) {
       console.error('Error fetching driver transactions:', error);
       throw new Error('Failed to load transactions.');
@@ -327,7 +357,8 @@ export class PersonnelTransactionService {
     dateto: string,
     pname: string,
     pid: number,
-    loadingAll: boolean = false
+    loadingAll: boolean = false,
+    linkedUserId: number | null = null
   ): Promise<number> {
     let sql = `
     SELECT SUM(salary) AS totalsalary FROM (
@@ -339,10 +370,16 @@ export class PersonnelTransactionService {
       INNER JOIN salestbl t2 ON t1.screfnum = t2.salesrefnum
       INNER JOIN inventorytbl t3 ON t1.scitemcode = t3.itemcode
       INNER JOIN salsettings s ON s.salpid = ?
-      WHERE t2.salescashier = ?
+      INNER JOIN useraccounts u ON u.userid = ?
+      WHERE TRIM(COALESCE(t2.salescashier, '')) COLLATE NOCASE IN (
+        NULLIF(TRIM(COALESCE(u.empname, '')), ''),
+        NULLIF(TRIM(COALESCE(u.usern, '')), ''),
+        CAST(u.userid AS TEXT)
+      )
+        AND TRIM(COALESCE(t2.salescashier, '')) <> ''
   `;
 
-    const params: any[] = [pid, pname];
+    const params: any[] = [pid, linkedUserId];
 
     if (!loadingAll) {
       sql += ` AND ${sqliteInclusiveDateRange('t2.salesdate')} `;
@@ -358,6 +395,7 @@ export class PersonnelTransactionService {
       FROM deltransacttbl t0
       INNER JOIN inventorytbl t1 ON t1.itemcode = t0.delitemcode
       WHERE (dtdelbyid = ? OR dtdelbyid2 = ?)
+        AND COALESCE(t0.dtstatus, '') <> 'CANCELLED'
   `;
 
     params.push(pid, pid);
@@ -392,6 +430,7 @@ export class PersonnelTransactionService {
               FROM deltransacttbl t0    
               INNER JOIN inventorytbl t1 ON t1.itemcode = t0.delitemcode  
               WHERE (dtdelbyid = ? OR dtdelbyid2 = ?)
+                        AND COALESCE(dtstatus, '') <> 'CANCELLED'
   `;
 
     const params: any[] = [pid, pid];
@@ -418,48 +457,21 @@ export class PersonnelTransactionService {
     loadingAll: boolean = false
   ): Promise<number> {
     let sql = `
-    SELECT SUM(salary) AS totalsalary FROM (
-      
-      -- SALES PART
-    SELECT CASE WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 11 THEN s.sal11kg * t1.poutqty
-            WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 2.7 THEN s.sal2kg * t1.poutqty
-            WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 5 THEN s.sal5kg * t1.poutqty 
-            WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 22 THEN s.sal22kg * t1.poutqty 
-            WHEN CAST(REPLACE(t3.itemsize, 'kg', '') AS REAL) = 50 THEN s.sal50kg * t1.poutqty
-            ELSE 0 END AS salary
-            FROM pulloutcart t1
-            INNER JOIN pouttbl t2 ON t1.poutref = t2.poutrefnum
-            INNER JOIN inventorytbl t3 ON t1.poutitemcode = t3.itemcode
-            INNER JOIN salsettings s ON s.salpid = t2.poutpid 
-            WHERE t2.pouttype in ('RESTOCK IN', 'RESTOCK OUT') and t1.pouttype in ('RESTOCK INFILL', 'RESTOCK OUTEMPTY') 
-            AND t2.poutpid = ? AND t2.pulloutremarks <> 'Waiting'
+      SELECT SUM(t0.dsalary) AS totalsalary
+      FROM deltransacttbl t0
+      WHERE (t0.dtdelbyid = ? OR t0.dtdelbyid2 = ?)
+        AND UPPER(TRIM(t0.deltype)) IN (
+          'PICK UP', 'DELIVERY', '1-PICK UP', '2-DELIVERY'
+        )
+        AND COALESCE(t0.dtstatus, '') <> 'CANCELLED'
   `;
 
-    const params: any[] = [pid];
-
-    if (!loadingAll) {
-      sql += ` AND ${sqliteInclusiveDateRange('pulldate')} `;
-      params.push(datefrom, dateto);
-    }
-
-    sql += `
-      UNION ALL
-      
-      -- DELIVERY PART 
-    SELECT t0.dsalary AS salary FROM deltransacttbl t0 INNER JOIN inventorytbl t1 ON t1.itemcode = t0.delitemcode 
-    WHERE (t0.dtdelbyid = ? OR t0.dtdelbyid2 = ?)
-  `;
-
-    params.push(pid, pid);
+    const params: any[] = [pid, pid];
 
     if (!loadingAll) {
       sql += ` AND ${sqliteInclusiveDateRange('dtdate')} `;
       params.push(datefrom, dateto);
     }
-
-    sql += `
-    ) AS combined;
-  `;
 
     try {
       const result = await this.db.query(sql, params);
@@ -476,7 +488,8 @@ export class PersonnelTransactionService {
     pid: number,
     datefrom: string,
     dateto: string,
-    loadingAll: boolean = false
+    loadingAll: boolean = false,
+    linkedUserId: number | null = null
   ): Promise<number> {
     let sql = '';
     const params: any[] = [];
@@ -520,8 +533,14 @@ export class PersonnelTransactionService {
       sql = `
       SELECT COUNT(DISTINCT sales_date) AS total_days FROM (
         SELECT DATE(salesdate) AS sales_date 
-        FROM salestbl 
-        WHERE salescashier = ? 
+        FROM salestbl sales
+        INNER JOIN useraccounts u ON u.userid = ?
+        WHERE TRIM(COALESCE(sales.salescashier, '')) COLLATE NOCASE IN (
+          NULLIF(TRIM(COALESCE(u.empname, '')), ''),
+          NULLIF(TRIM(COALESCE(u.usern, '')), ''),
+          CAST(u.userid AS TEXT)
+        )
+          AND TRIM(COALESCE(sales.salescashier, '')) <> ''
         ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('salesdate')}`}
 
         UNION
@@ -532,7 +551,7 @@ export class PersonnelTransactionService {
         ${loadingAll ? '' : `AND ${sqliteInclusiveDateRange('dtdate')}`}
       )
     `;
-      params.push(pname);
+      params.push(linkedUserId);
       if (!loadingAll) params.push(datefrom, dateto);
       params.push(pid, pid);
       if (!loadingAll) params.push(datefrom, dateto);
@@ -554,7 +573,8 @@ export class PersonnelTransactionService {
     pid: number,
     dateFrom: string,
     dateTo: string,
-    loadingAll: boolean = false
+    loadingAll: boolean = false,
+    linkedUserId: number | null = null
   ): Promise<number> {
     try {
       const daily = await this.getDailyRate(pid);
@@ -564,13 +584,14 @@ export class PersonnelTransactionService {
         pid,
         dateFrom,
         dateTo,
-        loadingAll
+        loadingAll,
+        linkedUserId
       );
 
       return Number(daily) * Number(totalDays);
     } catch (err) {
       console.error('Error computing salary:', err);
-      return 0;
+      throw new Error('Failed to compute salary.');
     }
   }
 
@@ -594,6 +615,10 @@ export class PersonnelTransactionService {
     tendered: number;
     totalPay: number;
     dailyRate: number;
+    days: number;
+    salary: number;
+    commission: number;
+    commissionPaid: number;
     additional: number;
     lessPay: number;
     incentive: number;
@@ -607,38 +632,61 @@ export class PersonnelTransactionService {
     const startDate = moment(data.dateFrom);
     const endDate = moment(data.dateTo);
     const salRefDate = moment().format('YYYY-MM-DD HH:mm:ss');
-
-    let current = startDate.clone();
-    while (current.isSameOrBefore(endDate, 'day')) {
-      const day = current.format('YYYY-MM-DD');
-      const sql = `
-        INSERT INTO salhistory
-        (salpersonel, salpersonelid, salpaid, saldate, salpaidby, saltotal, saldailypay, saladdpay, sallesspay, salincentive, salremarks, salrefnum, salrefdate, salpaymethod)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-      await this.db.query(sql, [
-        data.pname,
-        data.pid,
-        data.tendered,
-        day,
-        data.paidBy,
-        data.totalPay,
-        data.dailyRate,
-        data.additional,
-        data.lessPay,
-        data.incentive,
-        data.remarks,
-        refnum,
-        salRefDate,
-        data.paymentMethod,
-      ]);
-
-      current.add(1, 'day');
+    if (!startDate.isValid() || !endDate.isValid() || endDate.isBefore(startDate, 'day')) {
+      throw new Error('Invalid salary date range.');
     }
 
-    // Update personnel total pay
-    const updateSql = `UPDATE personeltbl SET ptotalpay = ptotalpay - ? WHERE pid = ?`;
-    await this.db.query(updateSql, [data.totalPay - data.tendered, data.pid]);
+    const commissionPaid = Math.min(
+      Math.max(0, Number(data.commissionPaid) || 0),
+      Math.max(0, Number(data.commission) || 0)
+    );
+
+    await this.db.executeInTransaction(async () => {
+      let current = startDate.clone();
+      while (current.isSameOrBefore(endDate, 'day')) {
+        const day = current.format('YYYY-MM-DD');
+        const sql = `
+        INSERT INTO salhistory
+        (salpersonel, salpersonelid, salpaid, saldate, salpaidby, saltotal,
+         saldailypay, saladdpay, sallesspay, salincentive, salremarks, salrefnum,
+         salrefdate, salpaymethod, saldays, salsalary, salcommission)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+        await this.db.execute(
+          sql,
+          [
+            data.pname,
+            data.pid,
+            data.tendered,
+            day,
+            data.paidBy,
+            data.totalPay,
+            data.dailyRate,
+            data.additional,
+            data.lessPay,
+            data.incentive,
+            data.remarks,
+            refnum,
+            salRefDate,
+            data.paymentMethod,
+            data.days,
+            data.salary,
+            data.commission,
+          ],
+          false
+        );
+
+        current.add(1, 'day');
+      }
+
+      await this.db.execute(
+        `UPDATE personeltbl
+         SET ptotalpay = MAX(0, COALESCE(ptotalpay, 0) - ?)
+         WHERE pid = ?`,
+        [commissionPaid, data.pid],
+        false
+      );
+    });
   }
 
   async getSalaryHistory(

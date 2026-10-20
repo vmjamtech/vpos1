@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   IonButton,
@@ -47,15 +47,20 @@ export class RatesettingsComponent implements OnInit {
   pid?: number;
   saldaily: number = 0;
   saldiv: number = 0; 
+  salnosize: number = 0;
   sal2kg: number = 0;
+  sal3kg: number = 0;
   sal5kg: number = 0;
   sal7kg: number = 0;
   sal11kg: number = 0;
+  sal15kg: number = 0;
   sal22kg: number = 0;
   sal50kg: number = 0;
+  salriderquota: number = 0;
+  salriderrate: number = 0;
   salary: any[] = [];
   pname: string = '';
-  prole = ['Driver', 'Rider', 'StoreKeeper'];
+  prole = ['Cashier', 'Driver', 'Rider', 'StoreKeeper'];
   selectedRole: string | null = null;
   isHave: boolean = false;
 
@@ -85,12 +90,17 @@ export class RatesettingsComponent implements OnInit {
 
       this.saldaily = s.saldaily;
       this.saldiv = s.saldiv;
+      this.salnosize = s.salnosize ?? 0;
       this.sal2kg = s.sal2kg;
+      this.sal3kg = s.sal3kg ?? 0;
       this.sal5kg = s.sal5kg;
       this.sal7kg = s.sal7kg;
       this.sal11kg = s.sal11kg;
+      this.sal15kg = s.sal15kg ?? 0;
       this.sal22kg = s.sal22kg;
       this.sal50kg = s.sal50kg;
+      this.salriderquota = s.salriderquota ?? 0;
+      this.salriderrate = s.salriderrate ?? 0;
     } else {
       console.warn('No salary record found — clearing fields');
     }
@@ -106,12 +116,17 @@ export class RatesettingsComponent implements OnInit {
       pid: this.pid,
       saldaily: this.saldaily, 
       saldiv: this.saldiv,
+      salnosize: this.salnosize,
       sal2kg: this.sal2kg,
+      sal3kg: this.sal3kg,
       sal5kg: this.sal5kg,
       sal7kg: this.sal7kg,
       sal11kg: this.sal11kg,
-      sal22kg: this.sal5kg,
+      sal15kg: this.sal15kg,
+      sal22kg: this.sal22kg,
       sal50kg: this.sal50kg,
+      salriderquota: this.salriderquota,
+      salriderrate: this.salriderrate,
       isHave: this.isHave,
     };
 
